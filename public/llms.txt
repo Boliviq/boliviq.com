@@ -1,0 +1,24 @@
+# Boliviq
+
+> AI-powered real estate deal analysis, CRM, and lead management for investors and agents.
+
+Boliviq helps real estate professionals analyze deals, manage leads and contacts, run calculators, and automate follow-up — all in one platform.
+
+## Pages
+
+- [Home](/): Product overview and value proposition.
+- [Features](/features): Full list of Boliviq capabilities.
+- [Pricing](/pricing): Plans and pricing tiers.
+- [About](/about): About the Boliviq team and mission.
+- [Demo](/demo): Product demo and walkthrough.
+- [Contact](/contact): Get in touch with the Boliviq team.
+- [FAQ](/faq): Frequently asked questions.
+- [Help](/help): Help center and support resources.
+
+## Optional
+
+- [Privacy Policy](/privacy): How we handle user data.
+- [Terms of Service](/terms): Terms of use.
+- [Cookie Policy](/cookies): Cookie usage.
+- [Disclaimer](/disclaimer): Legal disclaimers.
+- [Acceptable Use](/acceptable-use): Acceptable use policy.
