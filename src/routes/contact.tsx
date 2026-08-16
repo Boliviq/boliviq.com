@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { z } from "zod";
+import { submitContactForm } from "@/lib/contact.functions";
+import { useServerFn } from "@tanstack/react-start";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
@@ -30,6 +32,7 @@ const schema = z.object({
 function Contact() {
   const [submitting, setSubmitting] = useState(false);
   const [sent, setSent] = useState(false);
+  const submitFn = useServerFn(submitContactForm);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -40,11 +43,15 @@ function Contact() {
       return;
     }
     setSubmitting(true);
-    // Placeholder: real submission wires to a server route when Email/CRM is connected.
-    await new Promise((r) => setTimeout(r, 700));
-    setSubmitting(false);
-    setSent(true);
-    toast.success("Message received. We'll be in touch.");
+    try {
+      await submitFn({ data: { ...parsed.data, kind: "contact" } });
+      setSent(true);
+      toast.success("Message received. We'll be in touch.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not send message.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (

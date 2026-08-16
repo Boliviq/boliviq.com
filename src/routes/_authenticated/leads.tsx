@@ -21,6 +21,9 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { LEAD_STATUSES, type LeadStatus } from "@/lib/demo-data";
+import { OFFER_STATUSES } from "@/lib/entitlements";
+import { dispatchAutomationEvent } from "@/lib/automations.functions";
+import { useServerFn } from "@tanstack/react-start";
 import { currency, dateShort } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/leads")({
@@ -43,6 +46,7 @@ function statusTone(s: string) {
 function LeadsPage() {
   const { userId } = useCurrentUser();
   const qc = useQueryClient();
+  const dispatchAuto = useServerFn(dispatchAutomationEvent);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [priorityFilter, setPriorityFilter] = useState<string>("");
@@ -80,6 +84,17 @@ function LeadsPage() {
     mutationFn: async ({ id, patch }: { id: string; patch: any }) => {
       const { error } = await (supabase.from("leads") as any).update(patch).eq("id", id);
       if (error) throw error;
+      if (patch.status && OFFER_STATUSES.has(patch.status)) {
+        const lead = (leadsQuery.data ?? []).find((l) => l.id === id);
+        try {
+          await dispatchAuto({
+            data: {
+              trigger: "offer_submitted",
+              payload: { leadId: id, propertyId: lead?.property_id || undefined },
+            },
+          });
+        } catch { /* non-blocking */ }
+      }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["leads-full"] }),
   });
@@ -221,14 +236,16 @@ function LeadsPage() {
 
       <NewLeadDialog open={openNew} onOpenChange={setOpenNew} userId={userId}
         properties={propsQuery.data ?? []} contacts={contactsQuery.data ?? []}
-        onCreated={() => qc.invalidateQueries({ queryKey: ["leads-full"] })} />
+        onCreated={() => qc.invalidateQueries({ queryKey: ["leads-full"] })}
+        onDispatch={dispatchAuto} />
     </>
   );
 }
 
-function NewLeadDialog({ open, onOpenChange, userId, properties, contacts, onCreated }: {
+function NewLeadDialog({ open, onOpenChange, userId, properties, contacts, onCreated, onDispatch }: {
   open: boolean; onOpenChange: (o: boolean) => void; userId: string | null;
   properties: Property[]; contacts: Contact[]; onCreated: () => void;
+  onDispatch: (args: { data: { trigger: "lead_created" | "offer_submitted"; payload?: { leadId?: string; propertyId?: string } } }) => Promise<unknown>;
 }) {
   const [f, setF] = useState<Record<string, any>>({ status: "new", priority: "medium" });
   const set = (k: string, v: any) => setF((p) => ({ ...p, [k]: v }));
@@ -243,8 +260,24 @@ function NewLeadDialog({ open, onOpenChange, userId, properties, contacts, onCre
       last_contact_at: f.last_contact_at || null,
       next_follow_up_at: f.next_follow_up_at || null,
     };
-    const { error } = await (supabase.from("leads") as any).insert(payload);
+    const { data, error } = await (supabase.from("leads") as any).insert(payload).select("id").single();
     if (error) { toast.error(error.message); return; }
+    try {
+      await onDispatch({
+        data: {
+          trigger: "lead_created",
+          payload: { leadId: data?.id, propertyId: payload.property_id || undefined },
+        },
+      });
+      if (OFFER_STATUSES.has(payload.status)) {
+        await onDispatch({
+          data: {
+            trigger: "offer_submitted",
+            payload: { leadId: data?.id, propertyId: payload.property_id || undefined },
+          },
+        });
+      }
+    } catch { /* non-blocking */ }
     toast.success("Lead created");
     setF({ status: "new", priority: "medium" });
     onOpenChange(false); onCreated();

@@ -17,6 +17,9 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { PIPELINE_STAGES } from "@/lib/demo-data";
+import { OFFER_STATUSES } from "@/lib/entitlements";
+import { dispatchAutomationEvent } from "@/lib/automations.functions";
+import { useServerFn } from "@tanstack/react-start";
 import { currency, dateShort } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/pipeline")({
@@ -30,6 +33,7 @@ type Contact = { id: string; name: string };
 function PipelinePage() {
   const { userId } = useCurrentUser();
   const qc = useQueryClient();
+  const dispatchAuto = useServerFn(dispatchAutomationEvent);
   const [activeId, setActiveId] = useState<string | null>(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
@@ -65,6 +69,17 @@ function PipelinePage() {
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
       const { error } = await (supabase.from("leads") as any).update({ status }).eq("id", id);
       if (error) throw error;
+      if (OFFER_STATUSES.has(status)) {
+        const lead = (leadsQuery.data ?? []).find((l) => l.id === id);
+        try {
+          await dispatchAuto({
+            data: {
+              trigger: "offer_submitted",
+              payload: { leadId: id, propertyId: lead?.property_id || undefined },
+            },
+          });
+        } catch { /* non-blocking */ }
+      }
     },
     onMutate: async ({ id, status }) => {
       await qc.cancelQueries({ queryKey: ["leads-pipeline"] });

@@ -37,7 +37,9 @@ Server-only variables (preferred independent-deploy names):
 
 Legacy aliases still work: `STRIPE_SANDBOX_API_KEY`, `STRIPE_LIVE_API_KEY`, `PAYMENTS_SANDBOX_WEBHOOK_SECRET`, `PAYMENTS_LIVE_WEBHOOK_SECRET`. If `LOVABLE_API_KEY` is unset, the `STRIPE_*_API_KEY` values are used as real Stripe secrets.
 
-Never prefix a Stripe secret key or webhook secret with `VITE_`.
+Optional AI: `OPENAI_API_KEY` on the server, or a user-pasted OpenAI key in Integrations. Professional unlocks GPT-4o mini; AI Max unlocks GPT-4o. Apply `supabase/migrations/20260816140000_fix_has_role_and_subscription_rls.sql` and `supabase/migrations/20260816153000_workspace_ai_and_inbound.sql` on the live project.
+
+Voice providers (Vapi/Retell/Twilio) and Google Calendar/Gmail store and test API keys only — they do not place live calls or sync mail without those vendors' OAuth apps.
 
 ## Remaining live verification
 

@@ -1,7 +1,8 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
+import { useServerFn } from "@tanstack/react-start";
 
 import { Printer, FileDown, Sparkles, AlertTriangle, CheckCircle2 } from "lucide-react";
 
@@ -15,6 +16,8 @@ import { Table, TableBody, TableCell, TableRow, TableHead, TableHeader } from "@
 
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { useEntitlement } from "@/hooks/use-entitlement";
+import { generateReportAi } from "@/lib/ai.functions";
 import {
   analyzeFlip, analyzeRental, analyzeBrrrr, dealScore, scoreBand,
   fmtMoney, fmtPct, mao,
@@ -40,6 +43,10 @@ export const Route = createFileRoute("/_authenticated/reports")({
 
 function ReportsPage() {
   const { userId } = useCurrentUser();
+  const { data: entitlement } = useEntitlement();
+  const generateFn = useServerFn(generateReportAi);
+  const [aiNarrative, setAiNarrative] = useState<string | null>(null);
+  const [aiBusy, setAiBusy] = useState(false);
   const search = Route.useSearch();
 
   const { data: property } = useQuery({
@@ -90,7 +97,31 @@ function ReportsPage() {
   const offerMax = mao(arv, rehab, 0.75, 25000, price * 0.02 + 6000);
 
   const handlePrint = () => window.print();
-  const handlePdf = () => toast("PDF export coming soon", { description: "Use Print → Save as PDF for now." });
+  const handlePdf = () => {
+    toast.success("Use your browser's Save as PDF", { description: "The print dialog is opening." });
+    window.print();
+  };
+  const handleAi = async () => {
+    if (entitlement?.ai === "none") {
+      toast.error("Upgrade to Professional or AI Max to generate an AI report summary.");
+      return;
+    }
+    setAiBusy(true);
+    try {
+      const res = await generateFn({
+        data: {
+          address,
+          summary: `Purchase ${fmtMoney(price)}, ARV ${fmtMoney(arv)}, rehab ${fmtMoney(rehab)}, flip profit ${fmtMoney(flip.netProfit)}, rental cash flow ${fmtMoney(rental.cashFlow)}/mo, cap ${fmtPct(rental.capRate)}, score ${overallScore}/100.`,
+        },
+      });
+      setAiNarrative(res.narrative);
+      toast.success("AI summary added to the report.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "AI summary failed");
+    } finally {
+      setAiBusy(false);
+    }
+  };
 
   return (
     <div className="flex flex-col">
@@ -100,7 +131,10 @@ function ReportsPage() {
           description="Printable investor summary. Perfect for lender packets and JV partners."
           action={
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={handlePdf}><FileDown className="mr-2 h-4 w-4" />PDF (soon)</Button>
+              <Button variant="outline" size="sm" onClick={handleAi} disabled={aiBusy}>
+                <Sparkles className="mr-2 h-4 w-4" />{aiBusy ? "Writing…" : entitlement?.ai === "none" ? "Upgrade for AI" : "AI summary"}
+              </Button>
+              <Button variant="outline" size="sm" onClick={handlePdf}><FileDown className="mr-2 h-4 w-4" />Save as PDF</Button>
               <Button size="sm" onClick={handlePrint}><Printer className="mr-2 h-4 w-4" />Print</Button>
             </div>
           }
@@ -143,6 +177,12 @@ function ReportsPage() {
               <Kpi label="Equity spread" value={fmtMoney(arv - price - rehab)} good={arv - price - rehab > 0} />
             </div>
           </Section>
+
+          {aiNarrative && (
+            <Section title="AI investor memo">
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">{aiNarrative}</p>
+            </Section>
+          )}
 
           {/* Assumptions */}
           <Section title="Assumptions">

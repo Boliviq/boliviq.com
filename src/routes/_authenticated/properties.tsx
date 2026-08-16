@@ -33,8 +33,13 @@ import { Slider } from "@/components/ui/slider";
 
 
 import { supabase } from "@/integrations/supabase/client";
+import { addressFromListingUrl, mapsEmbedUrl, mapsOpenUrl } from "@/lib/listing-url";
+import { useEntitlement } from "@/hooks/use-entitlement";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { currency, num, pct } from "@/lib/format";
+import { propertyQuotaError } from "@/lib/entitlements";
+import { dispatchAutomationEvent } from "@/lib/automations.functions";
+import { useServerFn } from "@tanstack/react-start";
 import {
   DEMO_PROPERTIES, PROPERTY_TYPES, STRATEGIES, CSV_FIELD_MAP, FILTER_PRESETS,
 } from "@/lib/demo-data";
@@ -61,6 +66,7 @@ const scoreBadge = (score: number | null | undefined) => {
 function PropertiesPage() {
   const qc = useQueryClient();
   const { userId } = useCurrentUser();
+  const { data: entitlement } = useEntitlement();
   const [view, setView] = useState<"table" | "cards" | "map">("cards");
   const [tab, setTab] = useState<"all" | "saved" | "archived">("all");
   const [search, setSearch] = useState("");
@@ -87,6 +93,8 @@ function PropertiesPage() {
   const seedDemo = useMutation({
     mutationFn: async () => {
       if (!userId) throw new Error("Not signed in");
+      const quota = propertyQuotaError((propertiesQuery.data?.length ?? 0), DEMO_PROPERTIES.length, entitlement);
+      if (quota) throw new Error(quota);
       const rows = DEMO_PROPERTIES.map((p) => ({ ...p, user_id: userId }));
       const { error } = await (supabase.from("properties") as any).insert(rows);
       if (error) throw error;
@@ -203,7 +211,7 @@ function PropertiesPage() {
           {FILTER_PRESETS.map((p) => (
             <Button
               key={p.name} variant="outline" size="sm" className="h-8"
-              onClick={() => toast.info(`Preset "${p.name}" — coming soon`)}
+              onClick={() => setFilters({ ...initialFilters, ...p.filters } as Filters)}
             >
               <Star className="h-3.5 w-3.5" /> {p.name}
             </Button>
@@ -238,17 +246,23 @@ function PropertiesPage() {
         ) : view === "table" ? (
           <PropertyTable items={filtered} onOpen={setSelected} />
         ) : (
-          <MapPlaceholder count={filtered.length} />
+          <PropertyMap items={filtered} onOpen={setSelected} />
         )}
       </div>
 
-      <ManualDialog open={openManual} onOpenChange={setOpenManual} userId={userId} onSaved={() =>
+      <ManualDialog open={openManual} onOpenChange={setOpenManual} userId={userId}
+        currentCount={items.length} entitlement={entitlement}
+        onSaved={() =>
         qc.invalidateQueries({ queryKey: ["properties"] })
       } />
-      <CsvImportDialog open={openImport} onOpenChange={setOpenImport} userId={userId} onSaved={() =>
+      <CsvImportDialog open={openImport} onOpenChange={setOpenImport} userId={userId}
+        currentCount={items.length} entitlement={entitlement}
+        onSaved={() =>
         qc.invalidateQueries({ queryKey: ["properties"] })
       } />
-      <UrlImportDialog open={openUrl} onOpenChange={setOpenUrl} userId={userId} onSaved={() =>
+      <UrlImportDialog open={openUrl} onOpenChange={setOpenUrl} userId={userId}
+        currentCount={items.length} entitlement={entitlement}
+        onSaved={() =>
         qc.invalidateQueries({ queryKey: ["properties"] })
       } />
       <FiltersSheet open={filterOpen} onOpenChange={setFilterOpen}
@@ -409,16 +423,48 @@ function PropertyTable({ items, onOpen }: { items: Property[]; onOpen: (p: Prope
   );
 }
 
-function MapPlaceholder({ count }: { count: number }) {
+function PropertyMap({ items, onOpen }: { items: Property[]; onOpen: (p: Property) => void }) {
+  const [active, setActive] = useState<Property | null>(items[0] ?? null);
+  const selected = active && items.some((p) => p.id === active.id) ? active : items[0] ?? null;
+  const address = selected
+    ? [selected.address, selected.city, selected.state, selected.zip].filter(Boolean).join(", ")
+    : "";
   return (
-    <div className="grid h-[420px] place-items-center rounded-2xl border-2 border-dashed bg-card text-center">
-      <div>
-        <MapIcon className="mx-auto mb-2 h-10 w-10 text-muted-foreground" />
-        <div className="font-display font-semibold">Map view</div>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Showing {count} propert{count === 1 ? "y" : "ies"}. Live map with pins coming soon
-          once a mapping provider is connected.
-        </p>
+    <div className="grid gap-3 lg:grid-cols-[280px_minmax(0,1fr)]">
+      <div className="max-h-[520px] space-y-2 overflow-auto rounded-xl border p-2">
+        {items.length === 0 && <p className="p-3 text-sm text-muted-foreground">No properties to map.</p>}
+        {items.map((p) => {
+          const label = [p.address, p.city, p.state].filter(Boolean).join(", ");
+          return (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => setActive(p)}
+              className={`w-full rounded-lg border p-3 text-left text-sm ${selected?.id === p.id ? "border-primary bg-primary/5" : ""}`}
+            >
+              <div className="font-medium">{p.address}</div>
+              <div className="text-xs text-muted-foreground">{label}</div>
+            </button>
+          );
+        })}
+      </div>
+      <div className="overflow-hidden rounded-xl border bg-card">
+        {address ? (
+          <>
+            <iframe title="Property map" className="h-[420px] w-full border-0" src={mapsEmbedUrl(address)} />
+            <div className="flex items-center justify-between gap-2 p-3 text-sm">
+              <span className="truncate">{address}</span>
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" asChild>
+                  <a href={mapsOpenUrl(address)} target="_blank" rel="noreferrer">Open Maps</a>
+                </Button>
+                {selected && <Button size="sm" onClick={() => onOpen(selected)}>Open</Button>}
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="grid h-[420px] place-items-center text-sm text-muted-foreground">Select a property</div>
+        )}
       </div>
     </div>
   );
@@ -578,14 +624,17 @@ function FieldPair({ children }: { children: React.ReactNode }) {
 
 /* ---------------- Manual add ---------------- */
 
-function ManualDialog({ open, onOpenChange, userId, onSaved }: {
+function ManualDialog({ open, onOpenChange, userId, onSaved, currentCount, entitlement }: {
   open: boolean; onOpenChange: (o: boolean) => void; userId: string | null; onSaved: () => void;
+  currentCount: number; entitlement: ReturnType<typeof useEntitlement>["data"];
 }) {
   const [f, setF] = useState<Record<string, any>>({});
   const set = (k: string, v: any) => setF((p) => ({ ...p, [k]: v }));
   const save = async () => {
     if (!userId) return;
     if (!f.address) { toast.error("Address is required"); return; }
+    const quota = propertyQuotaError(currentCount, 1, entitlement);
+    if (quota) { toast.error(quota); return; }
     const payload: any = { user_id: userId };
     for (const k of Object.keys(f)) {
       const v = f[k];
@@ -655,8 +704,9 @@ function ManualDialog({ open, onOpenChange, userId, onSaved }: {
 
 /* ---------------- CSV import ---------------- */
 
-function CsvImportDialog({ open, onOpenChange, userId, onSaved }: {
+function CsvImportDialog({ open, onOpenChange, userId, onSaved, currentCount, entitlement }: {
   open: boolean; onOpenChange: (o: boolean) => void; userId: string | null; onSaved: () => void;
+  currentCount: number; entitlement: ReturnType<typeof useEntitlement>["data"];
 }) {
   const [step, setStep] = useState<"upload" | "map" | "review">("upload");
   const [rows, setRows] = useState<Record<string, any>[]>([]);
@@ -705,6 +755,8 @@ function CsvImportDialog({ open, onOpenChange, userId, onSaved }: {
       return out;
     }).filter((p) => p.address);
     if (payload.length === 0) { toast.error("No valid rows with an address"); setBusy(false); return; }
+    const quota = propertyQuotaError(currentCount, payload.length, entitlement);
+    if (quota) { toast.error(quota); setBusy(false); return; }
     const { error } = await (supabase.from("properties") as any).insert(payload);
     setBusy(false);
     if (error) { toast.error(error.message); return; }
@@ -790,17 +842,22 @@ function CsvImportDialog({ open, onOpenChange, userId, onSaved }: {
 
 /* ---------------- URL import ---------------- */
 
-function UrlImportDialog({ open, onOpenChange, userId, onSaved }: {
+function UrlImportDialog({ open, onOpenChange, userId, onSaved, currentCount, entitlement }: {
   open: boolean; onOpenChange: (o: boolean) => void; userId: string | null; onSaved: () => void;
+  currentCount: number; entitlement: ReturnType<typeof useEntitlement>["data"];
 }) {
   const [url, setUrl] = useState("");
   const [address, setAddress] = useState("");
   const save = async () => {
     if (!userId) return;
     if (!url && !address) { toast.error("Enter a URL or address"); return; }
+    const quota = propertyQuotaError(currentCount, 1, entitlement);
+    if (quota) { toast.error(quota); return; }
+    const parsed = url ? addressFromListingUrl(url) : null;
     const { error } = await (supabase.from("properties") as any).insert({
       user_id: userId,
-      address: address || "Imported from URL",
+      address: address || parsed || "Imported from URL",
+      city: null,
       listing_url: url,
       source: "URL import",
       status: "warm",
@@ -848,11 +905,37 @@ function PropertyDetailSheet({ property, onOpenChange }: {
   property: Property | null; onOpenChange: (o: boolean) => void;
 }) {
   const qc = useQueryClient();
+  const dispatchAuto = useServerFn(dispatchAutomationEvent);
   const [draft, setDraft] = useState<Property | null>(property);
   const [saving, setSaving] = useState(false);
 
   // sync draft when property changes
   useEffect(() => { setDraft(property); }, [property]);
+
+  const { data: relatedCalls = [] } = useQuery({
+    queryKey: ["property-calls", property?.id],
+    enabled: !!property?.id,
+    queryFn: async () => {
+      const { data } = await supabase.from("calls").select("id, contact_name, purpose, status, called_at").eq("property_id", property!.id).order("called_at", { ascending: false }).limit(20);
+      return data ?? [];
+    },
+  });
+  const { data: relatedTasks = [] } = useQuery({
+    queryKey: ["property-tasks", property?.id],
+    enabled: !!property?.id,
+    queryFn: async () => {
+      const { data } = await supabase.from("tasks").select("id, title, status, due_at").eq("property_id", property!.id).order("created_at", { ascending: false }).limit(20);
+      return data ?? [];
+    },
+  });
+  const { data: relatedNotes = [] } = useQuery({
+    queryKey: ["property-notes", property?.id],
+    enabled: !!property?.id,
+    queryFn: async () => {
+      const { data } = await supabase.from("notes").select("id, body, created_at").eq("property_id", property!.id).order("created_at", { ascending: false }).limit(20);
+      return data ?? [];
+    },
+  });
 
   const patch = async (u: Partial<Property>) => {
     if (!property) return;
@@ -860,6 +943,20 @@ function PropertyDetailSheet({ property, onOpenChange }: {
     const { error } = await (supabase.from("properties") as any).update(u).eq("id", property.id);
     setSaving(false);
     if (error) { toast.error(error.message); return; }
+    if ("list_price" in u && u.list_price !== property.list_price) {
+      try {
+        await dispatchAuto({
+          data: {
+            trigger: "price_changed",
+            payload: {
+              propertyId: property.id,
+              previousPrice: property.list_price ?? null,
+              price: (u.list_price as number | null) ?? null,
+            },
+          },
+        });
+      } catch { /* non-blocking */ }
+    }
     qc.invalidateQueries({ queryKey: ["properties"] });
     toast.success("Saved");
   };
@@ -942,12 +1039,24 @@ function PropertyDetailSheet({ property, onOpenChange }: {
           </TabsContent>
 
           <TabsContent value="comps" className="pt-4">
-            <ComingSoonTab title="Comparable sales"
-              body="Connect a data provider (MLS, ATTOM) in Integrations to pull comps automatically." />
+            <div className="rounded-lg border p-4 text-sm">
+              <div className="font-medium">Comparable sales</div>
+              <p className="mt-1 text-muted-foreground">
+                Enter comps in Deal Analyzer, then save the analysis to this property. MLS/ATTOM auto-pull still needs a data-provider key.
+              </p>
+              <Button className="mt-3" size="sm" asChild>
+                <a href={`/deal-analyzer`}>Open Deal Analyzer</a>
+              </Button>
+            </div>
           </TabsContent>
           <TabsContent value="rehab" className="pt-4">
-            <ComingSoonTab title="Rehab estimator"
-              body="Room-by-room rehab estimator is in the Deal Analyzer module." />
+            <div className="rounded-lg border p-4 text-sm">
+              <div className="font-medium">Rehab estimator</div>
+              <p className="mt-1 text-muted-foreground">Room-by-room rehab lives in Deal Analyzer. Saved analyses write rehab and profit back to this record.</p>
+              <Button className="mt-3" size="sm" asChild>
+                <a href={`/deal-analyzer`}>Open rehab estimator</a>
+              </Button>
+            </div>
           </TabsContent>
           <TabsContent value="contacts" className="pt-4">
             <div className="space-y-2 text-sm">
@@ -957,10 +1066,33 @@ function PropertyDetailSheet({ property, onOpenChange }: {
               <KV label="Agent email" value={property.agent_email || "—"} />
             </div>
           </TabsContent>
-          {["calls", "notes", "tasks", "offers", "documents", "activity"].map((t) => (
+          <TabsContent value="calls" className="pt-4 space-y-2 text-sm">
+            {relatedCalls.length === 0 && <p className="text-muted-foreground">No calls linked yet.</p>}
+            {relatedCalls.map((c: any) => (
+              <div key={c.id} className="rounded-md border p-2">
+                <div className="font-medium">{c.contact_name || c.purpose || "Call"}</div>
+                <div className="text-xs text-muted-foreground">{c.status} · {c.called_at ? new Date(c.called_at).toLocaleString() : ""}</div>
+              </div>
+            ))}
+          </TabsContent>
+          <TabsContent value="tasks" className="pt-4 space-y-2 text-sm">
+            {relatedTasks.length === 0 && <p className="text-muted-foreground">No tasks linked yet.</p>}
+            {relatedTasks.map((t: any) => (
+              <div key={t.id} className="rounded-md border p-2">
+                <div className="font-medium">{t.title}</div>
+                <div className="text-xs text-muted-foreground">{t.status}{t.due_at ? ` · due ${new Date(t.due_at).toLocaleDateString()}` : ""}</div>
+              </div>
+            ))}
+          </TabsContent>
+          <TabsContent value="notes" className="pt-4 space-y-2 text-sm">
+            {relatedNotes.length === 0 && <p className="text-muted-foreground">{property.notes ? property.notes : "No notes yet."}</p>}
+            {relatedNotes.map((n: any) => (
+              <div key={n.id} className="rounded-md border p-2 whitespace-pre-wrap">{n.body}</div>
+            ))}
+          </TabsContent>
+          {["offers", "documents", "activity"].map((t) => (
             <TabsContent key={t} value={t} className="pt-4">
-              <ComingSoonTab title={t.charAt(0).toUpperCase() + t.slice(1)}
-                body="Linked records for this property will appear here as you use the CRM." />
+              <p className="text-sm text-muted-foreground">No {t} stored on this property yet.</p>
             </TabsContent>
           ))}
         </Tabs>
@@ -974,14 +1106,6 @@ function KV({ label, value, tone }: { label: string; value: React.ReactNode; ton
     <div className="rounded-md bg-muted/40 p-2">
       <div className="text-xs text-muted-foreground">{label}</div>
       <div className={`font-medium ${tone === "success" ? "text-success" : ""}`}>{value}</div>
-    </div>
-  );
-}
-function ComingSoonTab({ title, body }: { title: string; body: string }) {
-  return (
-    <div className="rounded-2xl border-2 border-dashed p-6 text-center">
-      <div className="font-display font-semibold">{title}</div>
-      <p className="mt-2 text-sm text-muted-foreground">{body}</p>
     </div>
   );
 }

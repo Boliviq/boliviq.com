@@ -9,6 +9,7 @@ import {
   CheckSquare, Sigma, BarChart3, Plug, CreditCard, Settings, Zap,
   Shield, Megaphone, LifeBuoy, Ticket, Users2,
 } from "lucide-react";
+import { useIsAdmin } from "@/hooks/use-entitlement";
 
 const nav = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
@@ -42,6 +43,7 @@ const secondary = [
 export function AppSidebar() {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const isActive = (u: string) => pathname === u || pathname.startsWith(u + "/");
+  const { isAdmin } = useIsAdmin();
 
   return (
     <Sidebar collapsible="icon">
@@ -69,6 +71,7 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        {isAdmin && (
         <SidebarGroup>
           <SidebarGroupLabel>Admin</SidebarGroupLabel>
           <SidebarGroupContent>
@@ -86,6 +89,7 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        )}
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>

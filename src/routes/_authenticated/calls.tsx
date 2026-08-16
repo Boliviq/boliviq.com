@@ -32,6 +32,10 @@ import {
   SCRIPT_TEMPLATES, TONES, CONTACT_TYPES, CALL_PURPOSES,
   fillScript, summarizeTranscript, type Tone,
 } from "@/lib/call-scripts";
+import { summarizeCallAi, generateCallScriptAi } from "@/lib/ai.functions";
+import { dispatchAutomationEvent } from "@/lib/automations.functions";
+import { useServerFn } from "@tanstack/react-start";
+import { useEntitlement } from "@/hooks/use-entitlement";
 import { currency, dateShort, relative } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/calls")({
@@ -257,6 +261,7 @@ function EmptyCalls({ onLog }: { onLog: () => void }) {
 
 // ============== LOG CALL DIALOG ==============
 function LogCallDialog({ open, onOpenChange, userId, onSaved }: { open: boolean; onOpenChange: (o: boolean) => void; userId: string | null; onSaved: () => void }) {
+  const dispatchAuto = useServerFn(dispatchAutomationEvent);
   const [form, setForm] = useState({
     contact_name: "", contact_type: "Listing agent", phone_number: "", purpose: "Initial outreach",
     status: "scheduled", duration_seconds: 0, motivation_score: 5, transcript: "", consent_note: "",
@@ -285,6 +290,16 @@ function LogCallDialog({ open, onOpenChange, userId, onSaved }: { open: boolean;
       }
       const { error } = await supabase.from("calls").insert(payload);
       if (error) throw error;
+      if (form.status === "completed" || form.status === "spoke") {
+        try {
+          await dispatchAuto({
+            data: {
+              trigger: "call_completed",
+              payload: { propertyId: property_id || undefined },
+            },
+          });
+        } catch { /* non-blocking */ }
+      }
     },
     onSuccess: () => { toast.success("Call logged"); onSaved(); onOpenChange(false); },
     onError: (e: any) => toast.error(e.message ?? "Failed to log"),
@@ -441,6 +456,8 @@ function ScriptGeneratorSheet({ open, onOpenChange }: { open: boolean; onOpenCha
   const [ctx, setCtx] = useState({ yourName: "", companyName: "", propertyAddress: "", agentName: "", sellerName: "", askingPrice: 0, offerAmount: 0 });
   const [customQuestions, setCustomQuestions] = useState<string[]>([]);
   const [editedText, setEditedText] = useState<string | null>(null);
+  const generateFn = useServerFn(generateCallScriptAi);
+  const { data: entitlement } = useEntitlement();
 
   const template = SCRIPT_TEMPLATES.find((t) => t.id === templateId)!;
   const generated = useMemo(() => {
@@ -497,7 +514,25 @@ function ScriptGeneratorSheet({ open, onOpenChange }: { open: boolean; onOpenCha
           <div className="text-sm font-medium">Generated script</div>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={() => { navigator.clipboard.writeText(text); toast.success("Copied to clipboard"); }}><Copy className="mr-2 h-4 w-4" />Copy</Button>
-            <Button variant="outline" size="sm" onClick={() => { toast.success("Saved as template", { description: "Persistent templates coming soon." }); }}><Save className="mr-2 h-4 w-4" />Save template</Button>
+            <Button size="sm" onClick={async () => {
+              try {
+                const res = await generateFn({
+                  data: {
+                    contactType: template.contactType,
+                    purpose: template.purpose,
+                    tone,
+                    propertyAddress: ctx.propertyAddress,
+                    yourName: ctx.yourName,
+                    companyName: ctx.companyName,
+                  },
+                });
+                setEditedText(res.script);
+              } catch (e) {
+                toast.error(e instanceof Error ? e.message : "AI script failed");
+              }
+            }} disabled={entitlement?.ai === "none"}>
+              <Sparkles className="mr-2 h-4 w-4" />{entitlement?.ai === "none" ? "Upgrade for AI" : "Rewrite with AI"}
+            </Button>
           </div>
         </div>
         <Textarea rows={16} className="mt-2 font-mono text-xs" value={text} onChange={(e) => setEditedText(e.target.value)} />
@@ -511,24 +546,31 @@ function CallDetailSheet({ call, onOpenChange, onUpdated, userId }: { call: any;
   const [transcript, setTranscript] = useState("");
   const [followUp, setFollowUp] = useState("");
   const summary = call?.ai_summary as any;
+  const summarizeFn = useServerFn(summarizeCallAi);
+  const dispatchAuto = useServerFn(dispatchAutomationEvent);
 
   const runSummary = useMutation({
     mutationFn: async () => {
       if (!call) return;
-      const { summary, tasks } = summarizeTranscript(transcript || call.transcript || "");
-      const { error } = await supabase.from("calls").update({ transcript: transcript || call.transcript, ai_summary: summary }).eq("id", call.id);
+      const text = transcript || call.transcript || "";
+      const result = await summarizeFn({ data: { transcript: text } });
+      const { error } = await supabase.from("calls").update({ transcript: text, ai_summary: result.summary as any }).eq("id", call.id);
       if (error) throw error;
-      // Create suggested tasks
-      if (userId && tasks.length > 0) {
-        await supabase.from("tasks").insert(tasks.map((t) => ({
+      if (userId && result.tasks.length > 0) {
+        await supabase.from("tasks").insert(result.tasks.map((t) => ({
           user_id: userId, title: t, task_type: "Follow up", priority: "medium",
-          related_call_id: call.id, related_property_id: call.property_id,
-        })).map(({ related_call_id, related_property_id, ...rest }) => ({ ...rest, property_id: related_property_id })));
+          property_id: call.property_id ?? null,
+        })) as any);
       }
-      return { tasks };
+      if (call.status === "completed" || call.status === "spoke") {
+        try { await dispatchAuto({ data: { trigger: "call_completed", payload: { propertyId: call.property_id, leadId: call.lead_id } } }); } catch { /* ignore */ }
+      }
+      return { tasks: result.tasks, provider: result.provider, upgradeRequired: result.upgradeRequired };
     },
     onSuccess: (r) => {
-      toast.success("Transcript summarized", { description: `${r?.tasks?.length ?? 0} follow-up tasks created` });
+      toast.success(r?.provider === "openai" ? "AI summary ready" : "Rule-based summary ready", {
+        description: `${r?.tasks?.length ?? 0} follow-up tasks created${r?.upgradeRequired ? " · Upgrade for GPT summaries" : ""}`,
+      });
       onUpdated();
     },
     onError: (e: any) => toast.error(e.message ?? "Failed"),
