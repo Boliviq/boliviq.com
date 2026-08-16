@@ -1,29 +1,22 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { createClient } from '@supabase/supabase-js';
-import { type StripeEnv, verifyWebhook } from '@/lib/stripe.server';
+import { type StripeEnv, createStripeClient, verifyWebhook } from '@/lib/stripe.server';
+import {
+  couponPlanFromCheckoutSession,
+  planFromPrice,
+  stripeId,
+  subscriptionIdFromInvoice,
+} from '@/lib/billing-mapping';
 
 let _supabase: any = null;
 function getSupabase(): any {
   if (!_supabase) {
-    _supabase = createClient(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    );
+    const url = process.env.SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!url || !key) throw new Error('Supabase service role is not configured');
+    _supabase = createClient(url, key);
   }
   return _supabase;
-}
-
-function planFromPrice(price: any): string | null {
-  const lookup = price?.lookup_key ?? price?.metadata?.lovable_external_id ?? null;
-  if (!lookup) return null;
-  // Order matters — check most-specific keys first.
-  if (lookup.startsWith('team_aimax')) return 'Team + AI Max';
-  if (lookup.startsWith('team_v2') || lookup.startsWith('team_')) return 'Team';
-  if (lookup.startsWith('pro_aimax')) return 'Professional + AI Max';
-  if (lookup.startsWith('pro_v2') || lookup.startsWith('pro_') || lookup.startsWith('professional')) return 'Professional';
-  if (lookup.startsWith('beginner')) return 'Beginner';
-  if (lookup.startsWith('free')) return 'Free';
-  return lookup;
 }
 
 async function upsertSubscription(subscription: any, env: StripeEnv) {
@@ -31,16 +24,21 @@ async function upsertSubscription(subscription: any, env: StripeEnv) {
   if (!userId) { console.error('No userId in subscription metadata'); return; }
   const item = subscription.items?.data?.[0];
   const priceLookup = item?.price?.lookup_key ?? item?.price?.metadata?.lovable_external_id ?? item?.price?.id;
-  const productId = typeof item?.price?.product === 'string' ? item.price.product : item?.price?.product?.id;
+  const productId = stripeId(item?.price?.product);
   const periodStart = item?.current_period_start ?? subscription.current_period_start;
   const periodEnd = item?.current_period_end ?? subscription.current_period_end;
+  const customerId = stripeId(subscription.customer);
+  if (!customerId) {
+    console.error('Subscription missing customer id', subscription.id);
+    return;
+  }
 
-  await getSupabase().from('subscriptions').upsert({
+  const { error } = await getSupabase().from('subscriptions').upsert({
     user_id: userId,
     plan: planFromPrice(item?.price) ?? 'Unknown',
     stripe_subscription_id: subscription.id,
-    stripe_customer_id: subscription.customer,
-    product_id: productId ?? null,
+    stripe_customer_id: customerId,
+    product_id: productId,
     price_id: priceLookup ?? null,
     status: subscription.status,
     current_period_start: periodStart ? new Date(periodStart * 1000).toISOString() : null,
@@ -50,14 +48,16 @@ async function upsertSubscription(subscription: any, env: StripeEnv) {
     coupon_code: subscription.metadata?.boliviq_coupon ?? null,
     updated_at: new Date().toISOString(),
   }, { onConflict: 'stripe_subscription_id' });
+  if (error) throw error;
 }
 
 async function markCanceled(subscription: any, env: StripeEnv) {
-  await getSupabase()
+  const { error } = await getSupabase()
     .from('subscriptions')
     .update({ status: 'canceled', updated_at: new Date().toISOString() })
     .eq('stripe_subscription_id', subscription.id)
     .eq('environment', env);
+  if (error) throw error;
 }
 
 async function logCouponRedemption(session: any) {
@@ -77,27 +77,59 @@ async function logCouponRedemption(session: any) {
   const totalPaid = ((session.amount_total ?? 0) as number) / 100;
   const discount = Math.max(0, +(orderAmount - totalPaid).toFixed(2));
 
-  await supabase.from('coupon_redemptions').insert({
+  const { error: redemptionError } = await supabase.from('coupon_redemptions').insert({
     coupon_id: (coupon as any).id,
     coupon_code: couponCode,
     user_id: userId,
-    plan: session.metadata?.plan ?? null,
+    plan: couponPlanFromCheckoutSession(session),
     order_amount: orderAmount,
     discount_amount: discount,
   });
-  await supabase
+  if (redemptionError && (redemptionError as any).code !== '23505') throw redemptionError;
+
+  const { error: usageError } = await supabase
     .from('coupons')
     .update({ current_uses: (((coupon as any).current_uses ?? 0) as number) + 1 })
     .eq('id', (coupon as any).id);
+  if (usageError) throw usageError;
 }
 
-async function updateSubscriptionStatusByCustomer(customerId: string, status: string, env: StripeEnv) {
+async function upsertSubscriptionFromCheckoutSession(session: any, env: StripeEnv) {
+  const subId = stripeId(session.subscription);
+  if (!subId) return;
+  const stripe = createStripeClient(env);
+  const subscription = await stripe.subscriptions.retrieve(subId, {
+    expand: ['items.data.price'],
+  });
+  if (!subscription.metadata?.userId && session.metadata?.userId) {
+    (subscription as any).metadata = {
+      ...(subscription.metadata ?? {}),
+      ...session.metadata,
+    };
+  }
+  await upsertSubscription(subscription, env);
+}
+
+async function updateSubscriptionStatus(invoice: any, status: string, env: StripeEnv) {
+  const subId = subscriptionIdFromInvoice(invoice);
+  if (subId) {
+    const { error } = await getSupabase()
+      .from('subscriptions')
+      .update({ status, updated_at: new Date().toISOString() })
+      .eq('stripe_subscription_id', subId)
+      .eq('environment', env);
+    if (error) throw error;
+    return;
+  }
+
+  const customerId = stripeId(invoice?.customer);
   if (!customerId) return;
-  await getSupabase()
+  const { error } = await getSupabase()
     .from('subscriptions')
     .update({ status, updated_at: new Date().toISOString() })
     .eq('stripe_customer_id', customerId)
     .eq('environment', env);
+  if (error) throw error;
 }
 
 async function handleWebhook(req: Request, env: StripeEnv) {
@@ -130,17 +162,14 @@ async function handleWebhook(req: Request, env: StripeEnv) {
       break;
     case 'checkout.session.completed':
       await logCouponRedemption(event.data.object);
+      await upsertSubscriptionFromCheckoutSession(event.data.object, env);
       break;
-    case 'invoice.paid': {
-      const inv = event.data.object;
-      if (inv?.customer) await updateSubscriptionStatusByCustomer(inv.customer, 'active', env);
+    case 'invoice.paid':
+      await updateSubscriptionStatus(event.data.object, 'active', env);
       break;
-    }
-    case 'invoice.payment_failed': {
-      const inv = event.data.object;
-      if (inv?.customer) await updateSubscriptionStatusByCustomer(inv.customer, 'past_due', env);
+    case 'invoice.payment_failed':
+      await updateSubscriptionStatus(event.data.object, 'past_due', env);
       break;
-    }
     default:
       console.log('Unhandled event:', event.type);
   }
@@ -153,7 +182,8 @@ export const Route = createFileRoute('/api/public/payments/webhook')({
       POST: async ({ request }) => {
         const rawEnv = new URL(request.url).searchParams.get('env');
         if (rawEnv !== 'sandbox' && rawEnv !== 'live') {
-          return Response.json({ received: true, ignored: 'invalid env' });
+          console.error('Webhook rejected: missing or invalid env query param');
+          return new Response('Webhook env query param must be sandbox or live', { status: 400 });
         }
         try {
           await handleWebhook(request, rawEnv);

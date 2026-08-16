@@ -109,7 +109,7 @@ function Billing() {
   });
 
   const currentPlan = (subscription as any)?.plan ?? "Free";
-  const currentStatus = (subscription as any)?.status ?? "trial";
+  const currentStatus = (subscription as any)?.status ?? "none";
 
   async function applyCoupon(planName: string, amount: number) {
     if (!couponInput.trim()) { toast.error("Enter a coupon code."); return; }

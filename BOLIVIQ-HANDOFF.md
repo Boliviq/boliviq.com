@@ -35,6 +35,8 @@ Server-only variables:
 - `STRIPE_WEBHOOK_SECRET_TEST=whsec_...`
 - `STRIPE_WEBHOOK_SECRET_LIVE=whsec_...`
 
+Legacy aliases still accepted: `STRIPE_SANDBOX_API_KEY` / `STRIPE_LIVE_API_KEY` (real `sk_`/`rk_` keys, or Lovable connection keys plus `LOVABLE_API_KEY`) and `PAYMENTS_*_WEBHOOK_SECRET`.
+
 Never prefix a Stripe secret key or webhook secret with `VITE_`.
 
 ## Remaining live verification

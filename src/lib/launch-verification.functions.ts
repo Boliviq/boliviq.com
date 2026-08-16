@@ -12,6 +12,8 @@ import { z } from 'zod';
 import {
   type StripeEnv,
   createStripeClient,
+  describeStripeApiConfiguration,
+  describeStripeWebhookConfiguration,
   getStripeErrorMessage,
 } from '@/lib/stripe.server';
 import { EXPECTED_PLANS, normalizeStatus, hasPaidAccess } from '@/lib/subscription-access';
@@ -55,24 +57,20 @@ export const runLaunchPrecheck = createServerFn({ method: 'POST' })
     const env = data.environment;
     const items: PrecheckItem[] = [];
 
-    // API key
-    const apiKeyVar = env === 'live' ? 'STRIPE_LIVE_API_KEY' : 'STRIPE_SANDBOX_API_KEY';
-    const hasApiKey = !!process.env[apiKeyVar];
+    const apiKey = describeStripeApiConfiguration(env);
     items.push({
       key: 'api_key',
       label: `${env === 'live' ? 'Live' : 'Sandbox'} Stripe API key`,
-      status: hasApiKey ? 'PASS' : 'FAIL',
-      detail: hasApiKey ? 'Configured (value never displayed).' : `Missing ${apiKeyVar}.`,
+      status: apiKey.configured ? 'PASS' : 'FAIL',
+      detail: apiKey.detail,
     });
 
-    // Webhook signing secret
-    const whVar = env === 'live' ? 'PAYMENTS_LIVE_WEBHOOK_SECRET' : 'PAYMENTS_SANDBOX_WEBHOOK_SECRET';
-    const hasWh = !!process.env[whVar];
+    const webhook = describeStripeWebhookConfiguration(env);
     items.push({
       key: 'webhook_secret',
       label: `${env === 'live' ? 'Live' : 'Sandbox'} webhook signing secret`,
-      status: hasWh ? 'PASS' : 'FAIL',
-      detail: hasWh ? 'Configured (value never displayed).' : `Missing ${whVar}.`,
+      status: webhook.configured ? 'PASS' : 'FAIL',
+      detail: webhook.detail,
     });
 
     // Approved origins
@@ -83,7 +81,7 @@ export const runLaunchPrecheck = createServerFn({ method: 'POST' })
       detail: `Return / cancel URLs are locked to: ${APPROVED_ORIGINS.join(', ')} plus *.lovable.app.`,
     });
 
-    if (!hasApiKey) {
+    if (!apiKey.configured) {
       return { environment: env, items };
     }
 
@@ -91,16 +89,15 @@ export const runLaunchPrecheck = createServerFn({ method: 'POST' })
     try {
       const stripe = createStripeClient(env);
 
-      // Verify keys actually work by fetching the account.
-      let accountId: string | null = null;
+      // Verify keys actually work by fetching the account balance (works with
+      // standard secret keys; stripe.accounts.retrieve() requires an account id).
       try {
-        const account = await (stripe.accounts as any).retrieve();
-        accountId = (account as any).id ?? null;
+        await stripe.balance.retrieve();
         items.push({
           key: 'stripe_auth',
           label: 'Stripe API authentication',
           status: 'PASS',
-          detail: `Connected to Stripe account ${mask(accountId)}.`,
+          detail: 'Authenticated with Stripe successfully.',
         });
       } catch (e) {
         items.push({

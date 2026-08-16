@@ -1,43 +1,31 @@
 import Stripe from "stripe";
+import {
+  type StripeEnv,
+  describeStripeApiConfiguration,
+  describeStripeWebhookConfiguration,
+  getDirectStripeSecretKey,
+  getLegacyConnectionApiKey,
+  getWebhookSecret,
+  isStripeApiConfigured,
+  isStripeWebhookConfigured,
+  optionalEnv,
+} from "@/lib/stripe-env";
 
-const optionalEnv = (key: string): string | undefined => {
-  const value = process.env[key]?.trim();
-  return value || undefined;
+export type { StripeEnv };
+export {
+  describeStripeApiConfiguration,
+  describeStripeWebhookConfiguration,
+  getDirectStripeSecretKey,
+  getLegacyConnectionApiKey,
+  getWebhookSecret,
+  isStripeApiConfigured,
+  isStripeWebhookConfigured,
 };
-
-const getEnv = (key: string): string => {
-  const value = optionalEnv(key);
-  if (!value) throw new Error(`${key} is not configured`);
-  return value;
-};
-
-export type StripeEnv = "sandbox" | "live";
 
 export const STRIPE_SDK_VERSION = "22.0.2";
 export const STRIPE_API_VERSION = "2026-03-25.dahlia";
 
 const GATEWAY_STRIPE_BASE = "https://connector-gateway.lovable.dev/stripe";
-
-/**
- * Prefer normal Stripe secret keys so Boliviq can deploy independently.
- * The Lovable connection key remains a backwards-compatible fallback for the
- * currently connected Lovable deployment.
- */
-export function getDirectStripeSecretKey(env: StripeEnv): string | undefined {
-  return env === "sandbox"
-    ? optionalEnv("STRIPE_SECRET_KEY_TEST")
-    : optionalEnv("STRIPE_SECRET_KEY_LIVE");
-}
-
-export function getLegacyConnectionApiKey(env: StripeEnv): string | undefined {
-  return env === "sandbox"
-    ? optionalEnv("STRIPE_SANDBOX_API_KEY")
-    : optionalEnv("STRIPE_LIVE_API_KEY");
-}
-
-export function isStripeApiConfigured(env: StripeEnv): boolean {
-  return !!getDirectStripeSecretKey(env) || (!!getLegacyConnectionApiKey(env) && !!optionalEnv("LOVABLE_API_KEY"));
-}
 
 export function createStripeClient(env: StripeEnv): Stripe {
   const directSecretKey = getDirectStripeSecretKey(env);
@@ -109,17 +97,11 @@ export function getStripeErrorMessage(error: unknown): string {
   return "Stripe request failed";
 }
 
-export function getWebhookSecret(env: StripeEnv): string {
-  if (env === "sandbox") {
-    return optionalEnv("STRIPE_WEBHOOK_SECRET_TEST") ?? getEnv("PAYMENTS_SANDBOX_WEBHOOK_SECRET");
-  }
-  return optionalEnv("STRIPE_WEBHOOK_SECRET_LIVE") ?? getEnv("PAYMENTS_LIVE_WEBHOOK_SECRET");
-}
-
-export function isStripeWebhookConfigured(env: StripeEnv): boolean {
-  return env === "sandbox"
-    ? !!optionalEnv("STRIPE_WEBHOOK_SECRET_TEST") || !!optionalEnv("PAYMENTS_SANDBOX_WEBHOOK_SECRET")
-    : !!optionalEnv("STRIPE_WEBHOOK_SECRET_LIVE") || !!optionalEnv("PAYMENTS_LIVE_WEBHOOK_SECRET");
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let mismatch = 0;
+  for (let i = 0; i < a.length; i++) mismatch |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return mismatch === 0;
 }
 
 export async function verifyWebhook(
@@ -157,7 +139,9 @@ export async function verifyWebhook(
     new TextEncoder().encode(`${timestamp}.${body}`),
   );
   const expected = Buffer.from(new Uint8Array(signed)).toString("hex");
-  if (!v1Signatures.includes(expected)) throw new Error("Invalid webhook signature");
+  if (!v1Signatures.some((candidate) => timingSafeEqual(candidate, expected))) {
+    throw new Error("Invalid webhook signature");
+  }
 
   const parsed = JSON.parse(body);
   if (!parsed?.id || typeof parsed.id !== "string") throw new Error("Webhook payload missing event id");
