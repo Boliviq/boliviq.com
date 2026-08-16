@@ -1,29 +1,16 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { createClient } from '@supabase/supabase-js';
 import { type StripeEnv, verifyWebhook } from '@/lib/stripe.server';
+import {
+  planFromPrice,
+  planFromCheckoutMetadata,
+  stripeId,
+  subscriptionIdFromInvoice,
+  subscriptionRowFromCheckoutSession,
+} from '@/lib/stripe-webhook';
 
-let _supabase: any = null;
-function getSupabase(): any {
-  if (!_supabase) {
-    _supabase = createClient(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    );
-  }
-  return _supabase;
-}
-
-function planFromPrice(price: any): string | null {
-  const lookup = price?.lookup_key ?? price?.metadata?.lovable_external_id ?? null;
-  if (!lookup) return null;
-  // Order matters — check most-specific keys first.
-  if (lookup.startsWith('team_aimax')) return 'Team + AI Max';
-  if (lookup.startsWith('team_v2') || lookup.startsWith('team_')) return 'Team';
-  if (lookup.startsWith('pro_aimax')) return 'Professional + AI Max';
-  if (lookup.startsWith('pro_v2') || lookup.startsWith('pro_') || lookup.startsWith('professional')) return 'Professional';
-  if (lookup.startsWith('beginner')) return 'Beginner';
-  if (lookup.startsWith('free')) return 'Free';
-  return lookup;
+async function getSupabase() {
+  const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
+  return supabaseAdmin;
 }
 
 async function upsertSubscription(subscription: any, env: StripeEnv) {
@@ -35,11 +22,11 @@ async function upsertSubscription(subscription: any, env: StripeEnv) {
   const periodStart = item?.current_period_start ?? subscription.current_period_start;
   const periodEnd = item?.current_period_end ?? subscription.current_period_end;
 
-  await getSupabase().from('subscriptions').upsert({
+  await (await getSupabase()).from('subscriptions').upsert({
     user_id: userId,
     plan: planFromPrice(item?.price) ?? 'Unknown',
     stripe_subscription_id: subscription.id,
-    stripe_customer_id: subscription.customer,
+    stripe_customer_id: stripeId(subscription.customer),
     product_id: productId ?? null,
     price_id: priceLookup ?? null,
     status: subscription.status,
@@ -53,7 +40,7 @@ async function upsertSubscription(subscription: any, env: StripeEnv) {
 }
 
 async function markCanceled(subscription: any, env: StripeEnv) {
-  await getSupabase()
+  await (await getSupabase())
     .from('subscriptions')
     .update({ status: 'canceled', updated_at: new Date().toISOString() })
     .eq('stripe_subscription_id', subscription.id)
@@ -65,7 +52,7 @@ async function logCouponRedemption(session: any) {
   const couponCode = session.metadata?.boliviq_coupon;
   if (!userId || !couponCode) return;
 
-  const supabase = getSupabase();
+  const supabase = await getSupabase();
   const { data: coupon } = await supabase
     .from('coupons')
     .select('id, current_uses')
@@ -81,7 +68,7 @@ async function logCouponRedemption(session: any) {
     coupon_id: (coupon as any).id,
     coupon_code: couponCode,
     user_id: userId,
-    plan: session.metadata?.plan ?? null,
+    plan: planFromCheckoutMetadata(session.metadata),
     order_amount: orderAmount,
     discount_amount: discount,
   });
@@ -91,13 +78,29 @@ async function logCouponRedemption(session: any) {
     .eq('id', (coupon as any).id);
 }
 
-async function updateSubscriptionStatusByCustomer(customerId: string, status: string, env: StripeEnv) {
-  if (!customerId) return;
-  await getSupabase()
-    .from('subscriptions')
-    .update({ status, updated_at: new Date().toISOString() })
-    .eq('stripe_customer_id', customerId)
-    .eq('environment', env);
+async function upsertFromCheckoutSession(session: any, env: StripeEnv) {
+  const row = subscriptionRowFromCheckoutSession(session, env);
+  if (!row) return;
+  await (await getSupabase()).from('subscriptions').upsert(row, { onConflict: 'stripe_subscription_id' });
+}
+
+async function updateSubscriptionStatus(subscriptionId: string | null, customerId: string | null, status: string, env: StripeEnv) {
+  const supabase = await getSupabase();
+  if (subscriptionId) {
+    await supabase
+      .from('subscriptions')
+      .update({ status, updated_at: new Date().toISOString() })
+      .eq('stripe_subscription_id', subscriptionId)
+      .eq('environment', env);
+    return;
+  }
+  if (customerId) {
+    await supabase
+      .from('subscriptions')
+      .update({ status, updated_at: new Date().toISOString() })
+      .eq('stripe_customer_id', customerId)
+      .eq('environment', env);
+  }
 }
 
 async function handleWebhook(req: Request, env: StripeEnv) {
@@ -105,7 +108,7 @@ async function handleWebhook(req: Request, env: StripeEnv) {
 
   // Idempotency: try to record this event id first. Duplicate delivery from
   // Stripe hits the unique (stripe_event_id, environment) constraint and we skip.
-  const supabase = getSupabase();
+  const supabase = await getSupabase();
   const { error: insertErr } = await supabase.from('webhook_events').insert({
     stripe_event_id: event.id,
     event_type: event.type,
@@ -130,15 +133,26 @@ async function handleWebhook(req: Request, env: StripeEnv) {
       break;
     case 'checkout.session.completed':
       await logCouponRedemption(event.data.object);
+      await upsertFromCheckoutSession(event.data.object, env);
       break;
     case 'invoice.paid': {
       const inv = event.data.object;
-      if (inv?.customer) await updateSubscriptionStatusByCustomer(inv.customer, 'active', env);
+      await updateSubscriptionStatus(
+        subscriptionIdFromInvoice(inv),
+        stripeId(inv?.customer),
+        'active',
+        env,
+      );
       break;
     }
     case 'invoice.payment_failed': {
       const inv = event.data.object;
-      if (inv?.customer) await updateSubscriptionStatusByCustomer(inv.customer, 'past_due', env);
+      await updateSubscriptionStatus(
+        subscriptionIdFromInvoice(inv),
+        stripeId(inv?.customer),
+        'past_due',
+        env,
+      );
       break;
     }
     default:
@@ -153,7 +167,7 @@ export const Route = createFileRoute('/api/public/payments/webhook')({
       POST: async ({ request }) => {
         const rawEnv = new URL(request.url).searchParams.get('env');
         if (rawEnv !== 'sandbox' && rawEnv !== 'live') {
-          return Response.json({ received: true, ignored: 'invalid env' });
+          return new Response('Missing or invalid env query parameter. Use ?env=sandbox or ?env=live.', { status: 400 });
         }
         try {
           await handleWebhook(request, rawEnv);

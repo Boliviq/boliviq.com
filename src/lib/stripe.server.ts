@@ -18,25 +18,51 @@ export const STRIPE_API_VERSION = "2026-03-25.dahlia";
 
 const GATEWAY_STRIPE_BASE = "https://connector-gateway.lovable.dev/stripe";
 
+function looksLikeStripeSecretKey(value: string | undefined): boolean {
+  return !!value && (value.startsWith("sk_test_") || value.startsWith("sk_live_") || value.startsWith("rk_test_") || value.startsWith("rk_live_"));
+}
+
+function preferredSecretKeyVar(env: StripeEnv): string {
+  return env === "sandbox" ? "STRIPE_SECRET_KEY_TEST" : "STRIPE_SECRET_KEY_LIVE";
+}
+
+function legacyApiKeyVar(env: StripeEnv): string {
+  return env === "sandbox" ? "STRIPE_SANDBOX_API_KEY" : "STRIPE_LIVE_API_KEY";
+}
+
 /**
- * Prefer normal Stripe secret keys so Boliviq can deploy independently.
- * The Lovable connection key remains a backwards-compatible fallback for the
- * currently connected Lovable deployment.
+ * Prefer independent Stripe secret keys (STRIPE_SECRET_KEY_TEST/LIVE).
+ * Also accept sk_/rk_ values in the legacy Lovable variable names so
+ * `.env.example` and older deployments keep working without a Lovable gateway.
  */
 export function getDirectStripeSecretKey(env: StripeEnv): string | undefined {
-  return env === "sandbox"
-    ? optionalEnv("STRIPE_SECRET_KEY_TEST")
-    : optionalEnv("STRIPE_SECRET_KEY_LIVE");
+  const preferred = optionalEnv(preferredSecretKeyVar(env));
+  if (looksLikeStripeSecretKey(preferred)) return preferred;
+  const legacy = optionalEnv(legacyApiKeyVar(env));
+  if (looksLikeStripeSecretKey(legacy)) return legacy;
+  return undefined;
 }
 
 export function getLegacyConnectionApiKey(env: StripeEnv): string | undefined {
-  return env === "sandbox"
-    ? optionalEnv("STRIPE_SANDBOX_API_KEY")
-    : optionalEnv("STRIPE_LIVE_API_KEY");
+  const legacy = optionalEnv(legacyApiKeyVar(env));
+  if (!legacy || looksLikeStripeSecretKey(legacy)) return undefined;
+  return legacy;
 }
 
 export function isStripeApiConfigured(env: StripeEnv): boolean {
   return !!getDirectStripeSecretKey(env) || (!!getLegacyConnectionApiKey(env) && !!optionalEnv("LOVABLE_API_KEY"));
+}
+
+export function stripeApiKeyEnvLabel(env: StripeEnv): string {
+  if (optionalEnv(preferredSecretKeyVar(env))) return preferredSecretKeyVar(env);
+  return legacyApiKeyVar(env);
+}
+
+export function stripeWebhookSecretEnvLabel(env: StripeEnv): string {
+  if (env === "sandbox") {
+    return optionalEnv("STRIPE_WEBHOOK_SECRET_TEST") ? "STRIPE_WEBHOOK_SECRET_TEST" : "PAYMENTS_SANDBOX_WEBHOOK_SECRET";
+  }
+  return optionalEnv("STRIPE_WEBHOOK_SECRET_LIVE") ? "STRIPE_WEBHOOK_SECRET_LIVE" : "PAYMENTS_LIVE_WEBHOOK_SECRET";
 }
 
 export function createStripeClient(env: StripeEnv): Stripe {
@@ -122,6 +148,13 @@ export function isStripeWebhookConfigured(env: StripeEnv): boolean {
     : !!optionalEnv("STRIPE_WEBHOOK_SECRET_LIVE") || !!optionalEnv("PAYMENTS_LIVE_WEBHOOK_SECRET");
 }
 
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let mismatch = 0;
+  for (let i = 0; i < a.length; i++) mismatch |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return mismatch === 0;
+}
+
 export async function verifyWebhook(
   req: Request,
   env: StripeEnv,
@@ -157,7 +190,9 @@ export async function verifyWebhook(
     new TextEncoder().encode(`${timestamp}.${body}`),
   );
   const expected = Buffer.from(new Uint8Array(signed)).toString("hex");
-  if (!v1Signatures.includes(expected)) throw new Error("Invalid webhook signature");
+  if (!v1Signatures.some((signature) => timingSafeEqual(signature, expected))) {
+    throw new Error("Invalid webhook signature");
+  }
 
   const parsed = JSON.parse(body);
   if (!parsed?.id || typeof parsed.id !== "string") throw new Error("Webhook payload missing event id");

@@ -8,11 +8,16 @@
  */
 import { createServerFn } from '@tanstack/react-start';
 import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
+import { assertAdminUser } from '@/lib/assert-admin';
 import { z } from 'zod';
 import {
   type StripeEnv,
   createStripeClient,
   getStripeErrorMessage,
+  isStripeApiConfigured,
+  isStripeWebhookConfigured,
+  stripeApiKeyEnvLabel,
+  stripeWebhookSecretEnvLabel,
 } from '@/lib/stripe.server';
 import { EXPECTED_PLANS, normalizeStatus, hasPaidAccess } from '@/lib/subscription-access';
 
@@ -23,11 +28,7 @@ function mask(id: string | null | undefined): string {
 }
 
 async function assertAdmin(context: { supabase: any; userId: string }) {
-  const { data: isAdmin } = await context.supabase.rpc('has_role', {
-    _user_id: context.userId,
-    _role: 'admin',
-  });
-  if (!isAdmin) throw new Error('Forbidden');
+  await assertAdminUser(context.userId);
 }
 
 const APPROVED_ORIGINS = [
@@ -56,18 +57,18 @@ export const runLaunchPrecheck = createServerFn({ method: 'POST' })
     const items: PrecheckItem[] = [];
 
     // API key
-    const apiKeyVar = env === 'live' ? 'STRIPE_LIVE_API_KEY' : 'STRIPE_SANDBOX_API_KEY';
-    const hasApiKey = !!process.env[apiKeyVar];
+    const apiKeyVar = stripeApiKeyEnvLabel(env);
+    const hasApiKey = isStripeApiConfigured(env);
     items.push({
       key: 'api_key',
       label: `${env === 'live' ? 'Live' : 'Sandbox'} Stripe API key`,
       status: hasApiKey ? 'PASS' : 'FAIL',
-      detail: hasApiKey ? 'Configured (value never displayed).' : `Missing ${apiKeyVar}.`,
+      detail: hasApiKey ? 'Configured (value never displayed).' : `Missing ${apiKeyVar} (or STRIPE_SECRET_KEY_${env === 'live' ? 'LIVE' : 'TEST'}).`,
     });
 
     // Webhook signing secret
-    const whVar = env === 'live' ? 'PAYMENTS_LIVE_WEBHOOK_SECRET' : 'PAYMENTS_SANDBOX_WEBHOOK_SECRET';
-    const hasWh = !!process.env[whVar];
+    const whVar = stripeWebhookSecretEnvLabel(env);
+    const hasWh = isStripeWebhookConfigured(env);
     items.push({
       key: 'webhook_secret',
       label: `${env === 'live' ? 'Live' : 'Sandbox'} webhook signing secret`,

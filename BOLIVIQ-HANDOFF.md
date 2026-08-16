@@ -12,6 +12,9 @@
 - Added direct Stripe publishable-key selection for sandbox and live builds.
 - Added direct webhook secret support with backwards-compatible legacy variable aliases.
 
+Independent Stripe keys (`STRIPE_SECRET_KEY_TEST` / `STRIPE_SECRET_KEY_LIVE`) are preferred.
+If you instead set `STRIPE_SANDBOX_API_KEY` / `STRIPE_LIVE_API_KEY` to real `sk_test_` / `sk_live_` values, those are also used as direct Stripe secrets. Non-`sk_` values in those names are treated as Lovable connection keys and still require `LOVABLE_API_KEY`.
+
 ## Verified locally
 
 - `npm ci` — passes
@@ -34,6 +37,8 @@ Server-only variables:
 - `STRIPE_SECRET_KEY_LIVE=sk_live_...`
 - `STRIPE_WEBHOOK_SECRET_TEST=whsec_...`
 - `STRIPE_WEBHOOK_SECRET_LIVE=whsec_...`
+
+Legacy aliases (still accepted): `STRIPE_SANDBOX_API_KEY`, `STRIPE_LIVE_API_KEY`, `PAYMENTS_SANDBOX_WEBHOOK_SECRET`, `PAYMENTS_LIVE_WEBHOOK_SECRET`.
 
 Never prefix a Stripe secret key or webhook secret with `VITE_`.
 
