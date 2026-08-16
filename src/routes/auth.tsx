@@ -47,6 +47,12 @@ function AuthPage() {
           },
         });
         if (error) throw error;
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (!sessionData.session) {
+          toast.success("Account created. Check your email to confirm, then sign in.");
+          setMode("signin");
+          return;
+        }
         toast.success("Account created! Redirecting…");
         navigate({ to: "/onboarding" });
       } else {
@@ -64,10 +70,23 @@ function AuthPage() {
 
   const handleGoogle = async () => {
     setLoading(true);
-    const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
-    if (result.error) { toast.error(result.error.message ?? "Google sign-in failed"); setLoading(false); return; }
-    if (result.redirected) return;
-    navigate({ to: "/dashboard" });
+    try {
+      const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: `${window.location.origin}/dashboard` });
+      if (result.redirected) return;
+      if (!result.error) {
+        navigate({ to: "/dashboard" });
+        return;
+      }
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: `${window.location.origin}/dashboard` },
+      });
+      if (error) throw error;
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Google sign-in failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

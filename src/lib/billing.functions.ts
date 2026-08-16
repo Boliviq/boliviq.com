@@ -2,7 +2,7 @@ import { createServerFn } from '@tanstack/react-start';
 import { setResponseHeader } from '@tanstack/react-start/server';
 import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
 import { z } from 'zod';
-import { type StripeEnv, createStripeClient, getStripeErrorMessage, STRIPE_API_VERSION, STRIPE_SDK_VERSION } from '@/lib/stripe.server';
+import { type StripeEnv, createStripeClient, getStripeErrorMessage, stripeApiKeyCheck, stripeWebhookSecretCheck, STRIPE_API_VERSION, STRIPE_SDK_VERSION } from '@/lib/stripe.server';
 import { BLOCKING_SUB_STATES, EXPECTED_PLANS } from '@/lib/subscription-access';
 import {
   BILLING_IMPLEMENTATION_VERSION,
@@ -302,6 +302,18 @@ export const createBoliviqCheckout = createServerFn({ method: 'POST' })
           order_amount: option.amount,
           discount_amount: option.amount,
         });
+
+        const { data: couponRow } = await supabaseAdmin
+          .from('coupons')
+          .select('current_uses, admin_only')
+          .eq('id', coupon.couponId)
+          .maybeSingle();
+        if (couponRow && !couponRow.admin_only) {
+          await supabaseAdmin
+            .from('coupons')
+            .update({ current_uses: (couponRow.current_uses ?? 0) + 1 })
+            .eq('id', coupon.couponId);
+        }
 
         return { granted: true, couponCode: coupon.couponCode };
       }
@@ -660,8 +672,8 @@ export const runBillingDiagnostics = createServerFn({ method: 'POST' })
 
       return {
         environment: data.environment,
-        webhookConfigured: !!(data.environment === 'sandbox' ? process.env.PAYMENTS_SANDBOX_WEBHOOK_SECRET : process.env.PAYMENTS_LIVE_WEBHOOK_SECRET),
-        apiKeyConfigured: !!(data.environment === 'sandbox' ? process.env.STRIPE_SANDBOX_API_KEY : process.env.STRIPE_LIVE_API_KEY),
+        webhookConfigured: stripeWebhookSecretCheck(data.environment).configured,
+        apiKeyConfigured: stripeApiKeyCheck(data.environment).configured,
         prices: rows,
       };
     } catch (e) {
@@ -786,11 +798,11 @@ export const runCheckoutVerification = createServerFn({ method: 'POST' })
     const applicationUrl = assertApprovedReturnUrl(data.applicationUrl ?? 'https://boliviq.com');
     const returnUrl = assertApprovedReturnUrl(new URL(CHECKOUT_RETURN_PATH, applicationUrl).toString());
     const environmentChecks: CheckoutVerificationReport['environmentChecks'] = [];
-    const apiKeyVar = data.environment === 'live' ? 'STRIPE_LIVE_API_KEY' : 'STRIPE_SANDBOX_API_KEY';
-    const webhookVar = data.environment === 'live' ? 'PAYMENTS_LIVE_WEBHOOK_SECRET' : 'PAYMENTS_SANDBOX_WEBHOOK_SECRET';
-    environmentChecks.push({ key: 'stripe_api_key', status: process.env[apiKeyVar] ? 'PASS' : 'FAIL', detail: `${apiKeyVar} ${process.env[apiKeyVar] ? 'exists' : 'is missing'}.` });
+    const apiKey = stripeApiKeyCheck(data.environment);
+    const webhook = stripeWebhookSecretCheck(data.environment);
+    environmentChecks.push({ key: 'stripe_api_key', status: apiKey.configured ? 'PASS' : 'FAIL', detail: apiKey.configured ? `${apiKey.variable} exists.` : `${apiKey.variable} is missing.` });
     environmentChecks.push({ key: 'publishable_key', status: 'PASS', detail: `Publishable key is supplied by the ${data.environment} frontend build.` });
-    environmentChecks.push({ key: 'webhook_secret', status: process.env[webhookVar] ? 'PASS' : 'FAIL', detail: `${webhookVar} ${process.env[webhookVar] ? 'exists' : 'is missing'}.` });
+    environmentChecks.push({ key: 'webhook_secret', status: webhook.configured ? 'PASS' : 'FAIL', detail: webhook.configured ? `${webhook.variable} exists.` : `${webhook.variable} is missing.` });
     environmentChecks.push({ key: 'app_url', status: applicationUrl ? 'PASS' : 'FAIL', detail: applicationUrl });
     environmentChecks.push({ key: 'return_url', status: returnUrl.includes('/billing?checkout=success') ? 'PASS' : 'FAIL', detail: returnUrl });
     environmentChecks.push({ key: 'lovable_cloud', status: process.env.SUPABASE_URL && process.env.SUPABASE_PUBLISHABLE_KEY ? 'PASS' : 'FAIL', detail: 'Required backend environment variables checked without exposing values.' });

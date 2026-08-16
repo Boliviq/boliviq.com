@@ -13,6 +13,8 @@ import {
   type StripeEnv,
   createStripeClient,
   getStripeErrorMessage,
+  stripeApiKeyCheck,
+  stripeWebhookSecretCheck,
 } from '@/lib/stripe.server';
 import { EXPECTED_PLANS, normalizeStatus, hasPaidAccess } from '@/lib/subscription-access';
 
@@ -55,24 +57,22 @@ export const runLaunchPrecheck = createServerFn({ method: 'POST' })
     const env = data.environment;
     const items: PrecheckItem[] = [];
 
-    // API key
-    const apiKeyVar = env === 'live' ? 'STRIPE_LIVE_API_KEY' : 'STRIPE_SANDBOX_API_KEY';
-    const hasApiKey = !!process.env[apiKeyVar];
+    // API key — accept dedicated independent-deploy names and the legacy Lovable aliases.
+    const apiKey = stripeApiKeyCheck(env);
     items.push({
       key: 'api_key',
       label: `${env === 'live' ? 'Live' : 'Sandbox'} Stripe API key`,
-      status: hasApiKey ? 'PASS' : 'FAIL',
-      detail: hasApiKey ? 'Configured (value never displayed).' : `Missing ${apiKeyVar}.`,
+      status: apiKey.configured ? 'PASS' : 'FAIL',
+      detail: apiKey.configured ? `${apiKey.variable} is configured (value never displayed).` : `Missing ${apiKey.variable}.`,
     });
 
     // Webhook signing secret
-    const whVar = env === 'live' ? 'PAYMENTS_LIVE_WEBHOOK_SECRET' : 'PAYMENTS_SANDBOX_WEBHOOK_SECRET';
-    const hasWh = !!process.env[whVar];
+    const webhook = stripeWebhookSecretCheck(env);
     items.push({
       key: 'webhook_secret',
       label: `${env === 'live' ? 'Live' : 'Sandbox'} webhook signing secret`,
-      status: hasWh ? 'PASS' : 'FAIL',
-      detail: hasWh ? 'Configured (value never displayed).' : `Missing ${whVar}.`,
+      status: webhook.configured ? 'PASS' : 'FAIL',
+      detail: webhook.configured ? `${webhook.variable} is configured (value never displayed).` : `Missing ${webhook.variable}.`,
     });
 
     // Approved origins
@@ -83,7 +83,7 @@ export const runLaunchPrecheck = createServerFn({ method: 'POST' })
       detail: `Return / cancel URLs are locked to: ${APPROVED_ORIGINS.join(', ')} plus *.lovable.app.`,
     });
 
-    if (!hasApiKey) {
+    if (!apiKey.configured) {
       return { environment: env, items };
     }
 

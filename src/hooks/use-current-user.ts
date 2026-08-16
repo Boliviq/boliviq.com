@@ -11,7 +11,15 @@ export function useCurrentUser() {
       setUserId(data.user?.id ?? null);
       setLoading(false);
     });
-    return () => { mounted = false; };
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!mounted) return;
+      setUserId(session?.user?.id ?? null);
+      setLoading(false);
+    });
+    return () => {
+      mounted = false;
+      sub.subscription.unsubscribe();
+    };
   }, []);
   return { userId, loading };
 }

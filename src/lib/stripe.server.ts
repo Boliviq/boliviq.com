@@ -19,24 +19,52 @@ export const STRIPE_API_VERSION = "2026-03-25.dahlia";
 const GATEWAY_STRIPE_BASE = "https://connector-gateway.lovable.dev/stripe";
 
 /**
- * Prefer normal Stripe secret keys so Boliviq can deploy independently.
- * The Lovable connection key remains a backwards-compatible fallback for the
- * currently connected Lovable deployment.
+ * Prefer dedicated Stripe secret keys so Boliviq can deploy independently.
+ *
+ * `.env.example` documents `STRIPE_SANDBOX_API_KEY` / `STRIPE_LIVE_API_KEY` as
+ * `sk_test_…` / `sk_live_…`. Those names were originally Lovable connection
+ * keys and only work through the Lovable gateway when `LOVABLE_API_KEY` is
+ * set. For independent deploys (no Lovable gateway), treat them as real
+ * Stripe secrets.
  */
-export function getDirectStripeSecretKey(env: StripeEnv): string | undefined {
-  return env === "sandbox"
-    ? optionalEnv("STRIPE_SECRET_KEY_TEST")
-    : optionalEnv("STRIPE_SECRET_KEY_LIVE");
-}
-
 export function getLegacyConnectionApiKey(env: StripeEnv): string | undefined {
   return env === "sandbox"
     ? optionalEnv("STRIPE_SANDBOX_API_KEY")
     : optionalEnv("STRIPE_LIVE_API_KEY");
 }
 
+export function getDirectStripeSecretKey(env: StripeEnv): string | undefined {
+  const dedicated = env === "sandbox"
+    ? optionalEnv("STRIPE_SECRET_KEY_TEST")
+    : optionalEnv("STRIPE_SECRET_KEY_LIVE");
+  if (dedicated) return dedicated;
+  if (!optionalEnv("LOVABLE_API_KEY")) return getLegacyConnectionApiKey(env);
+  return undefined;
+}
+
 export function isStripeApiConfigured(env: StripeEnv): boolean {
   return !!getDirectStripeSecretKey(env) || (!!getLegacyConnectionApiKey(env) && !!optionalEnv("LOVABLE_API_KEY"));
+}
+
+export function stripeApiKeyCheck(env: StripeEnv): { configured: boolean; variable: string } {
+  const dedicatedVar = env === "sandbox" ? "STRIPE_SECRET_KEY_TEST" : "STRIPE_SECRET_KEY_LIVE";
+  const legacyVar = env === "sandbox" ? "STRIPE_SANDBOX_API_KEY" : "STRIPE_LIVE_API_KEY";
+  if (optionalEnv(dedicatedVar)) return { configured: true, variable: dedicatedVar };
+  if (optionalEnv(legacyVar) && !optionalEnv("LOVABLE_API_KEY")) {
+    return { configured: true, variable: legacyVar };
+  }
+  if (optionalEnv(legacyVar) && optionalEnv("LOVABLE_API_KEY")) {
+    return { configured: true, variable: `${legacyVar} + LOVABLE_API_KEY` };
+  }
+  return { configured: false, variable: `${dedicatedVar} or ${legacyVar}` };
+}
+
+export function stripeWebhookSecretCheck(env: StripeEnv): { configured: boolean; variable: string } {
+  const dedicatedVar = env === "sandbox" ? "STRIPE_WEBHOOK_SECRET_TEST" : "STRIPE_WEBHOOK_SECRET_LIVE";
+  const legacyVar = env === "sandbox" ? "PAYMENTS_SANDBOX_WEBHOOK_SECRET" : "PAYMENTS_LIVE_WEBHOOK_SECRET";
+  if (optionalEnv(dedicatedVar)) return { configured: true, variable: dedicatedVar };
+  if (optionalEnv(legacyVar)) return { configured: true, variable: legacyVar };
+  return { configured: false, variable: `${dedicatedVar} or ${legacyVar}` };
 }
 
 export function createStripeClient(env: StripeEnv): Stripe {
@@ -52,8 +80,8 @@ export function createStripeClient(env: StripeEnv): Stripe {
   if (!connectionApiKey || !lovableApiKey) {
     throw new Error(
       env === "sandbox"
-        ? "STRIPE_SECRET_KEY_TEST is not configured"
-        : "STRIPE_SECRET_KEY_LIVE is not configured",
+        ? "Stripe is not configured. Set STRIPE_SECRET_KEY_TEST or STRIPE_SANDBOX_API_KEY."
+        : "Stripe is not configured. Set STRIPE_SECRET_KEY_LIVE or STRIPE_LIVE_API_KEY.",
     );
   }
 
@@ -156,10 +184,25 @@ export async function verifyWebhook(
     key,
     new TextEncoder().encode(`${timestamp}.${body}`),
   );
-  const expected = Buffer.from(new Uint8Array(signed)).toString("hex");
-  if (!v1Signatures.includes(expected)) throw new Error("Invalid webhook signature");
+  const expected = toHex(signed);
+  if (!v1Signatures.some((signature) => timingSafeEqual(signature, expected))) {
+    throw new Error("Invalid webhook signature");
+  }
 
   const parsed = JSON.parse(body);
   if (!parsed?.id || typeof parsed.id !== "string") throw new Error("Webhook payload missing event id");
   return parsed;
+}
+
+function toHex(bytes: ArrayBuffer): string {
+  return Array.from(new Uint8Array(bytes))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let mismatch = 0;
+  for (let i = 0; i < a.length; i += 1) mismatch |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return mismatch === 0;
 }

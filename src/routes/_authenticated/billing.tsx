@@ -97,13 +97,16 @@ function Billing() {
     queryKey: ["subscription", userId],
     enabled: !!userId,
     queryFn: async () => {
-      const { data } = await supabase
+      let query = supabase
         .from("subscriptions")
         .select("*")
         .eq("user_id", userId!)
         .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .limit(1);
+      if (isPaymentsConfigured()) {
+        query = query.eq("environment", getStripeEnvironment());
+      }
+      const { data } = await query.maybeSingle();
       return data;
     },
   });

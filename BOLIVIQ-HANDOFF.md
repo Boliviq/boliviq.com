@@ -28,12 +28,14 @@ Client/public variables:
 - `VITE_STRIPE_PUBLISHABLE_KEY_LIVE=pk_live_...`
 - Supabase variables listed in `.env.example`
 
-Server-only variables:
+Server-only variables (preferred independent-deploy names):
 
 - `STRIPE_SECRET_KEY_TEST=sk_test_...`
 - `STRIPE_SECRET_KEY_LIVE=sk_live_...`
 - `STRIPE_WEBHOOK_SECRET_TEST=whsec_...`
 - `STRIPE_WEBHOOK_SECRET_LIVE=whsec_...`
+
+Legacy aliases still work: `STRIPE_SANDBOX_API_KEY`, `STRIPE_LIVE_API_KEY`, `PAYMENTS_SANDBOX_WEBHOOK_SECRET`, `PAYMENTS_LIVE_WEBHOOK_SECRET`. If `LOVABLE_API_KEY` is unset, the `STRIPE_*_API_KEY` values are used as real Stripe secrets.
 
 Never prefix a Stripe secret key or webhook secret with `VITE_`.
 
