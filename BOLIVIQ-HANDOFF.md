@@ -11,6 +11,7 @@
 - Kept the existing Lovable Stripe connector as a backwards-compatible fallback.
 - Added direct Stripe publishable-key selection for sandbox and live builds.
 - Added direct webhook secret support with backwards-compatible legacy variable aliases.
+- Admin diagnostics and launch precheck now recognize both the preferred `STRIPE_SECRET_KEY_*` / `STRIPE_WEBHOOK_SECRET_*` names and the legacy Lovable aliases.
 
 ## Verified locally
 
@@ -34,6 +35,8 @@ Server-only variables:
 - `STRIPE_SECRET_KEY_LIVE=sk_live_...`
 - `STRIPE_WEBHOOK_SECRET_TEST=whsec_...`
 - `STRIPE_WEBHOOK_SECRET_LIVE=whsec_...`
+
+Legacy aliases still work: `STRIPE_SANDBOX_API_KEY` / `STRIPE_LIVE_API_KEY` (treated as direct Stripe secrets when they start with `sk_` or `rk_`) and `PAYMENTS_SANDBOX_WEBHOOK_SECRET` / `PAYMENTS_LIVE_WEBHOOK_SECRET`. The Lovable connector path additionally needs `LOVABLE_API_KEY`.
 
 Never prefix a Stripe secret key or webhook secret with `VITE_`.
 

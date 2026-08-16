@@ -26,6 +26,9 @@ describe('Boliviq checkout configuration', () => {
       expect('success_url' in params).toBe(false);
       expect(params.metadata.priceLookupKey).toBe(option.lookupKey);
       expect(params.metadata.billingInterval).toBe(option.interval);
+      expect(params.metadata.planName).toBe(option.planName);
+      expect(params.metadata.plan).toBe(option.planName);
+      expect(params.subscription_data.metadata.plan).toBe(option.planName);
     }
   });
 

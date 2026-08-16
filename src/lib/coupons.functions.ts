@@ -68,10 +68,8 @@ export const validateCoupon = createServerFn({ method: "POST" })
     }
 
     if (coupon.admin_only) {
-      const { data: isAdmin } = await context.supabase.rpc("has_role", {
-        _user_id: context.userId,
-        _role: "admin",
-      });
+      const { isAdminUser } = await import("@/lib/admin-auth.server");
+      const isAdmin = await isAdminUser(context.userId);
       if (!isAdmin) return { ok: false, error: "Coupon code not found." };
     }
 

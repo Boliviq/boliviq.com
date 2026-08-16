@@ -209,6 +209,12 @@ function Billing() {
       if ("clientSecret" in res && res.clientSecret) {
         sessionStorage.setItem("boliviq:last-receipt", JSON.stringify(receiptData));
         setClientSecret(res.clientSecret);
+      } else {
+        setCheckoutError({
+          title: "We couldn't open secure checkout",
+          message: "Stripe did not return a client secret for this session. No payment was taken.",
+          retryPlan: plan,
+        });
       }
     } catch (e) {
       const message = e instanceof Error ? e.message : "Checkout failed.";

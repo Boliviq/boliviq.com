@@ -1,20 +1,15 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertAdminUser } from "@/lib/admin-auth.server";
 
 type AppRole = "admin" | "moderator" | "user";
-
-async function assertAdmin(supabase: any, userId: string) {
-  const { data, error } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
-  if (error) throw new Error(error.message);
-  if (!data) throw new Error("Forbidden");
-}
 
 export const listAllUsers = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input: { search?: string; page?: number; perPage?: number }) => input)
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdminUser(context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const perPage = Math.min(data.perPage ?? 100, 200);
@@ -71,7 +66,7 @@ export const setUserRole = createServerFn({ method: "POST" })
     z.object({ userId: z.string().uuid(), role: roleSchema, grant: z.boolean() }).parse(input),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdminUser(context.userId);
 
     if (!data.grant && data.role === "admin" && data.userId === context.userId) {
       throw new Error("You cannot remove your own admin role");

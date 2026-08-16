@@ -33,6 +33,10 @@ export function getStripe(): Promise<Stripe | null> {
   return stripePromise;
 }
 
+export function getStripePublishableKey(): string {
+  return resolveClientConfiguration().publishableKey;
+}
+
 export function getStripeEnvironment(): StripeEnv {
   return resolveClientConfiguration().environment;
 }

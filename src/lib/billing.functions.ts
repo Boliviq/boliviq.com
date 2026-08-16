@@ -2,7 +2,16 @@ import { createServerFn } from '@tanstack/react-start';
 import { setResponseHeader } from '@tanstack/react-start/server';
 import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
 import { z } from 'zod';
-import { type StripeEnv, createStripeClient, getStripeErrorMessage, STRIPE_API_VERSION, STRIPE_SDK_VERSION } from '@/lib/stripe.server';
+import {
+  type StripeEnv,
+  createStripeClient,
+  describeStripeApiKeyConfig,
+  describeStripeWebhookConfig,
+  getStripeErrorMessage,
+  STRIPE_API_VERSION,
+  STRIPE_SDK_VERSION,
+} from '@/lib/stripe.server';
+import { assertAdminUser, isAdminUser } from '@/lib/admin-auth.server';
 import { BLOCKING_SUB_STATES, EXPECTED_PLANS } from '@/lib/subscription-access';
 import {
   BILLING_IMPLEMENTATION_VERSION,
@@ -116,7 +125,7 @@ async function resolveCouponForCheckout(params: {
 }): Promise<
   | { kind: 'none' }
   | { kind: 'stripe'; promotionCodeId: string; couponId: string; couponCode: string }
-  | { kind: 'grant'; couponId: string; couponCode: string }
+  | { kind: 'grant'; couponId: string; couponCode: string; adminOnly: boolean }
 > {
   const { code, plan, amount, userId, isAdmin, stripe } = params;
   if (!code || !code.trim()) return { kind: 'none' };
@@ -153,7 +162,7 @@ async function resolveCouponForCheckout(params: {
 
   // Admin-only OR fully-discounting coupon → grant directly, never expose to Stripe
   if (coupon.admin_only || isFullDiscount) {
-    return { kind: 'grant', couponId: coupon.id, couponCode: coupon.code };
+    return { kind: 'grant', couponId: coupon.id, couponCode: coupon.code, adminOnly: !!coupon.admin_only };
   }
 
   // Otherwise ensure a Stripe coupon + promotion code exist; create if missing.
@@ -264,14 +273,14 @@ export const createBoliviqCheckout = createServerFn({ method: 'POST' })
       const { data: { user } } = await supabase.auth.getUser();
       const email = user?.email ?? undefined;
 
-      const { data: isAdmin } = await supabase.rpc('has_role', { _user_id: userId, _role: 'admin' });
+      const isAdmin = await isAdminUser(userId);
 
       const coupon = await resolveCouponForCheckout({
         code: data.couponCode,
         plan: option.planName,
         amount: option.amount,
         userId,
-        isAdmin: !!isAdmin,
+        isAdmin,
         stripe,
       });
 
@@ -281,7 +290,7 @@ export const createBoliviqCheckout = createServerFn({ method: 'POST' })
         const periodEnd = new Date();
         periodEnd.setFullYear(periodEnd.getFullYear() + 1);
 
-        await supabaseAdmin.from('subscriptions').insert({
+        const { error: subErr } = await supabaseAdmin.from('subscriptions').insert({
           user_id: userId,
           plan: option.planName,
           status: 'active',
@@ -293,8 +302,9 @@ export const createBoliviqCheckout = createServerFn({ method: 'POST' })
           environment: data.environment,
           coupon_code: coupon.couponCode,
         });
+        if (subErr) throw new Error(subErr.message);
 
-        await supabaseAdmin.from('coupon_redemptions').insert({
+        const { error: redemptionErr } = await supabaseAdmin.from('coupon_redemptions').insert({
           coupon_id: coupon.couponId,
           coupon_code: coupon.couponCode,
           user_id: userId,
@@ -302,6 +312,19 @@ export const createBoliviqCheckout = createServerFn({ method: 'POST' })
           order_amount: option.amount,
           discount_amount: option.amount,
         });
+        if (redemptionErr) throw new Error(redemptionErr.message);
+
+        if (!coupon.adminOnly) {
+          const { data: current } = await supabaseAdmin
+            .from('coupons')
+            .select('current_uses')
+            .eq('id', coupon.couponId)
+            .maybeSingle();
+          await supabaseAdmin
+            .from('coupons')
+            .update({ current_uses: (current?.current_uses ?? 0) + 1 })
+            .eq('id', coupon.couponId);
+        }
 
         return { granted: true, couponCode: coupon.couponCode };
       }
@@ -429,9 +452,7 @@ export const syncCouponsToStripe = createServerFn({ method: 'POST' })
   .middleware([requireSupabaseAuth])
   .validator((data: { environment: StripeEnv }) => data)
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    const { data: isAdmin } = await supabase.rpc('has_role', { _user_id: userId, _role: 'admin' });
-    if (!isAdmin) throw new Error('Forbidden');
+    await assertAdminUser(context.userId);
 
     const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
     const stripe = createStripeClient(data.environment);
@@ -575,9 +596,8 @@ export const runBillingDiagnostics = createServerFn({ method: 'POST' })
   .middleware([requireSupabaseAuth])
   .validator((data: { environment: StripeEnv }) => data)
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    const { data: isAdmin } = await supabase.rpc('has_role', { _user_id: userId, _role: 'admin' });
-    if (!isAdmin) throw new Error('Forbidden');
+    const { userId } = context;
+    await assertAdminUser(userId);
 
     const rows: DiagnosticRow[] = [];
 
@@ -660,8 +680,8 @@ export const runBillingDiagnostics = createServerFn({ method: 'POST' })
 
       return {
         environment: data.environment,
-        webhookConfigured: !!(data.environment === 'sandbox' ? process.env.PAYMENTS_SANDBOX_WEBHOOK_SECRET : process.env.PAYMENTS_LIVE_WEBHOOK_SECRET),
-        apiKeyConfigured: !!(data.environment === 'sandbox' ? process.env.STRIPE_SANDBOX_API_KEY : process.env.STRIPE_LIVE_API_KEY),
+        webhookConfigured: describeStripeWebhookConfig(data.environment).configured,
+        apiKeyConfigured: describeStripeApiKeyConfig(data.environment).configured,
         prices: rows,
       };
     } catch (e) {
@@ -721,11 +741,7 @@ export type CheckoutVerificationReport = {
 };
 
 async function assertAdmin(context: { supabase: any; userId: string }) {
-  const { data: isAdmin } = await context.supabase.rpc('has_role', {
-    _user_id: context.userId,
-    _role: 'admin',
-  });
-  if (!isAdmin) throw new Error('Forbidden');
+  await assertAdminUser(context.userId);
 }
 
 function planFromLookupKeyForVerification(lookupKey: string): string | null {
@@ -786,11 +802,19 @@ export const runCheckoutVerification = createServerFn({ method: 'POST' })
     const applicationUrl = assertApprovedReturnUrl(data.applicationUrl ?? 'https://boliviq.com');
     const returnUrl = assertApprovedReturnUrl(new URL(CHECKOUT_RETURN_PATH, applicationUrl).toString());
     const environmentChecks: CheckoutVerificationReport['environmentChecks'] = [];
-    const apiKeyVar = data.environment === 'live' ? 'STRIPE_LIVE_API_KEY' : 'STRIPE_SANDBOX_API_KEY';
-    const webhookVar = data.environment === 'live' ? 'PAYMENTS_LIVE_WEBHOOK_SECRET' : 'PAYMENTS_SANDBOX_WEBHOOK_SECRET';
-    environmentChecks.push({ key: 'stripe_api_key', status: process.env[apiKeyVar] ? 'PASS' : 'FAIL', detail: `${apiKeyVar} ${process.env[apiKeyVar] ? 'exists' : 'is missing'}.` });
-    environmentChecks.push({ key: 'publishable_key', status: 'PASS', detail: `Publishable key is supplied by the ${data.environment} frontend build.` });
-    environmentChecks.push({ key: 'webhook_secret', status: process.env[webhookVar] ? 'PASS' : 'FAIL', detail: `${webhookVar} ${process.env[webhookVar] ? 'exists' : 'is missing'}.` });
+    const apiKey = describeStripeApiKeyConfig(data.environment);
+    const webhook = describeStripeWebhookConfig(data.environment);
+    const publishableVar = data.environment === 'live' ? 'VITE_STRIPE_PUBLISHABLE_KEY_LIVE' : 'VITE_STRIPE_PUBLISHABLE_KEY_TEST';
+    const publishablePresent = !!(process.env[publishableVar] || process.env.VITE_PAYMENTS_CLIENT_TOKEN);
+    environmentChecks.push({ key: 'stripe_api_key', status: apiKey.configured ? 'PASS' : 'FAIL', detail: apiKey.detail });
+    environmentChecks.push({
+      key: 'publishable_key',
+      status: publishablePresent ? 'PASS' : 'WARNING',
+      detail: publishablePresent
+        ? `${publishableVar} is visible to this process.`
+        : `${publishableVar} is not visible to the server process (it may still be baked into the client bundle).`,
+    });
+    environmentChecks.push({ key: 'webhook_secret', status: webhook.configured ? 'PASS' : 'FAIL', detail: webhook.detail });
     environmentChecks.push({ key: 'app_url', status: applicationUrl ? 'PASS' : 'FAIL', detail: applicationUrl });
     environmentChecks.push({ key: 'return_url', status: returnUrl.includes('/billing?checkout=success') ? 'PASS' : 'FAIL', detail: returnUrl });
     environmentChecks.push({ key: 'lovable_cloud', status: process.env.SUPABASE_URL && process.env.SUPABASE_PUBLISHABLE_KEY ? 'PASS' : 'FAIL', detail: 'Required backend environment variables checked without exposing values.' });
