@@ -178,7 +178,7 @@ const THREAD_SEED: Thread[] = [
 
 export function listThreads(userId: string | null): Thread[] {
   const mine = userId ? read<Thread>(userId, "threads") : [];
-  return [...mine, ...THREAD_SEED];
+  return mergeById(mine, THREAD_SEED);
 }
 
 export function sendMessage(userId: string, threadId: string, body: string) {
@@ -252,7 +252,7 @@ const PROJECT_SEED: ProjectRecord[] = [
 
 export function listProjects(userId: string | null): ProjectRecord[] {
   const mine = userId ? read<ProjectRecord>(userId, "projects") : [];
-  return [...mine, ...PROJECT_SEED];
+  return mergeById(mine, PROJECT_SEED);
 }
 
 export function createProject(userId: string, input: Omit<ProjectRecord, "id">) {
@@ -292,7 +292,7 @@ const DOC_SEED: DocRecord[] = [
 
 export function listDocuments(userId: string | null): DocRecord[] {
   const mine = userId ? read<DocRecord>(userId, "documents") : [];
-  return [...mine, ...DOC_SEED];
+  return mergeById(mine, DOC_SEED);
 }
 
 export function addDocument(userId: string, input: Omit<DocRecord, "id" | "updatedAt">) {
