@@ -77,12 +77,12 @@ function AuthPage() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_35%,rgba(112,191,43,.16),transparent_30rem)]" />
         <Link to="/" className="relative"><BrandLogo inverse showTagline /></Link>
         <div className="relative max-w-lg">
-          <div className="brand-eyebrow">Professional investment operations</div>
-          <h2 className="mt-4 font-display text-5xl font-extrabold leading-tight">One platform for better deals and better builds.</h2>
+          <div className="brand-eyebrow">Real estate and construction community</div>
+          <h2 className="mt-4 font-display text-5xl font-extrabold leading-tight">One operating system for better deals and better builds.</h2>
           <div className="mt-8 grid gap-4 text-sm text-white/70">
-            <div className="flex items-center gap-3"><LineChart className="h-5 w-5 text-[#7ccc35]"/>Analyze opportunities with clearer numbers.</div>
-            <div className="flex items-center gap-3"><HardHat className="h-5 w-5 text-[#7ccc35]"/>Plan construction, materials, and labor.</div>
-            <div className="flex items-center gap-3"><CheckCircle2 className="h-5 w-5 text-[#7ccc35]"/>Manage every lead and project in one workspace.</div>
+            <div className="flex items-center gap-3"><LineChart className="h-5 w-5 text-[#7ccc35]"/>Marketplace, CRM, and deal analysis in one login.</div>
+            <div className="flex items-center gap-3"><HardHat className="h-5 w-5 text-[#7ccc35]"/>Repairs, estimates, and projects stay on the property record.</div>
+            <div className="flex items-center gap-3"><CheckCircle2 className="h-5 w-5 text-[#7ccc35]"/>Homeowners, contractors, realtors, investors, lenders, and trades.</div>
           </div>
         </div>
         <p className="relative text-xs text-white/45">© 2026 Boliviq</p>
@@ -94,7 +94,7 @@ function AuthPage() {
             {mode === "signup" ? "Create your account" : "Welcome to Boliviq"}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {mode === "signup" ? "AI That Builds Better Investors." : "AI That Builds Better Investors."}
+            {mode === "signup" ? "Join the marketplace, CRM, and professional network." : "Sign in to your connected workspace."}
           </p>
 
           <Button type="button" variant="outline" className="mt-6 w-full" onClick={handleGoogle} disabled={loading}>

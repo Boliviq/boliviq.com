@@ -1,6 +1,8 @@
 // Demo seed data used to bootstrap a helpful first-run experience.
 // Users can add / edit / delete via the UI; these are inserted only on demand.
 
+import { CRM_PIPELINE_STAGES } from "@/lib/canons";
+
 export const DEMO_PROPERTIES = [
   {
     address: "412 Oak Street", city: "Austin", state: "TX", zip: "78702",
@@ -63,33 +65,27 @@ export const DEMO_CONTACTS = [
 ];
 
 export const LEAD_STATUSES = [
-  { value: "new", label: "New", tone: "default" },
+  { value: "new", label: "New lead", tone: "default" },
   { value: "researching", label: "Researching", tone: "default" },
   { value: "attempting_contact", label: "Attempting contact", tone: "default" },
   { value: "contacted", label: "Contacted", tone: "default" },
   { value: "qualified", label: "Qualified", tone: "success" },
+  { value: "appointment_scheduled", label: "Appointment scheduled", tone: "success" },
   { value: "offer_preparation", label: "Offer preparation", tone: "warning" },
   { value: "offer_submitted", label: "Offer submitted", tone: "warning" },
-  { value: "negotiating", label: "Negotiating", tone: "warning" },
+  { value: "proposal_created", label: "Offer, estimate, or proposal created", tone: "warning" },
+  { value: "negotiating", label: "Negotiation", tone: "warning" },
   { value: "under_contract", label: "Under contract", tone: "success" },
-  { value: "closed", label: "Closed", tone: "success" },
-  { value: "follow_up_later", label: "Follow up later", tone: "default" },
+  { value: "in_progress", label: "In progress", tone: "success" },
+  { value: "closed", label: "Closed or completed", tone: "success" },
+  { value: "follow_up_later", label: "Long-term follow-up", tone: "default" },
   { value: "lost", label: "Lost", tone: "destructive" },
   { value: "dead", label: "Dead", tone: "destructive" },
 ] as const;
 
 export type LeadStatus = (typeof LEAD_STATUSES)[number]["value"];
 
-export const PIPELINE_STAGES = [
-  { key: "new", label: "New", color: "#64748b" },
-  { key: "researching", label: "Researching", color: "#0ea5e9" },
-  { key: "attempting_contact", label: "Attempting", color: "#0ea5e9" },
-  { key: "qualified", label: "Qualified", color: "#22c55e" },
-  { key: "offer_submitted", label: "Offer sent", color: "#f59e0b" },
-  { key: "negotiating", label: "Negotiating", color: "#f59e0b" },
-  { key: "under_contract", label: "Under contract", color: "#16a34a" },
-  { key: "closed", label: "Closed", color: "#15803d" },
-] as const;
+export const PIPELINE_STAGES = CRM_PIPELINE_STAGES;
 
 export const TASK_TYPES = [
   "Research property", "Call agent", "Call seller", "Run comps",

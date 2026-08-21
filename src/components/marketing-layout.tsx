@@ -10,6 +10,7 @@ const navLinks = [
   { to: "/pricing", label: "Pricing" },
   { to: "/demo", label: "Demo" },
   { to: "/about", label: "About" },
+  { to: "/marketplace", label: "Marketplace" },
   { to: "/contact", label: "Contact" },
 ] as const;
 
@@ -45,8 +46,8 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
       <main>{children}</main>
       <footer className="border-t border-white/10 bg-[#071729] text-white">
         <div className="mx-auto grid max-w-7xl gap-10 px-6 py-14 md:grid-cols-[1.5fr_1fr_1fr_1fr]">
-          <div><BrandLogo inverse showTagline /><p className="mt-5 max-w-sm text-sm leading-6 text-white/60">One professional platform for finding real estate opportunities, analyzing investments, estimating construction, and managing every deal from lead to completion.</p></div>
-          <FooterCol title="Platform" links={[["/features","Features"],["/pricing","Pricing"],["/demo","Product Demo"],["/faq","FAQ"]]} />
+          <div><BrandLogo inverse showTagline /><p className="mt-5 max-w-sm text-sm leading-6 text-white/60">One operating system for the real estate and construction community — find, connect, analyze, finance, repair, and manage property in a single connected workspace.</p></div>
+          <FooterCol title="Platform" links={[["/features","Features"],["/pricing","Pricing"],["/demo","Product Demo"],["/marketplace","Marketplace"],["/faq","FAQ"]]} />
           <FooterCol title="Company" links={[["/about","About"],["/contact","Contact"],["/help","Help Center"]]} />
           <FooterCol title="Legal" links={[["/terms","Terms"],["/privacy","Privacy"],["/acceptable-use","Acceptable Use"],["/disclaimer","Disclaimer"],["/cookies","Cookies"]]} />
         </div>

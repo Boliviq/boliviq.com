@@ -36,6 +36,13 @@ import { Route as AuthenticatedPromotionsRouteImport } from './routes/_authentic
 import { Route as AuthenticatedPipelineRouteImport } from './routes/_authenticated/pipeline'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedMarketingRouteImport } from './routes/_authenticated/marketing'
+import { Route as AuthenticatedAssistantRouteImport } from './routes/_authenticated/assistant'
+import { Route as AuthenticatedDocumentsRouteImport } from './routes/_authenticated/documents'
+import { Route as AuthenticatedMarketplaceRouteImport } from './routes/_authenticated/marketplace'
+import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticated/messages'
+import { Route as AuthenticatedProfessionalsRouteImport } from './routes/_authenticated/professionals'
+import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated/projects'
+import { Route as AuthenticatedVerificationRouteImport } from './routes/_authenticated/verification'
 import { Route as AuthenticatedLeadsRouteImport } from './routes/_authenticated/leads'
 import { Route as AuthenticatedIntegrationsRouteImport } from './routes/_authenticated/integrations'
 import { Route as AuthenticatedDealAnalyzerRouteImport } from './routes/_authenticated/deal-analyzer'
@@ -185,6 +192,41 @@ const AuthenticatedMarketingRoute = AuthenticatedMarketingRouteImport.update({
   path: '/marketing',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAssistantRoute = AuthenticatedAssistantRouteImport.update({
+  id: '/assistant',
+  path: '/assistant',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedDocumentsRoute = AuthenticatedDocumentsRouteImport.update({
+  id: '/documents',
+  path: '/documents',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedMarketplaceRoute = AuthenticatedMarketplaceRouteImport.update({
+  id: '/marketplace',
+  path: '/marketplace',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedMessagesRoute = AuthenticatedMessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedProfessionalsRoute = AuthenticatedProfessionalsRouteImport.update({
+  id: '/professionals',
+  path: '/professionals',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedProjectsRoute = AuthenticatedProjectsRouteImport.update({
+  id: '/projects',
+  path: '/projects',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedVerificationRoute = AuthenticatedVerificationRouteImport.update({
+  id: '/verification',
+  path: '/verification',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedLeadsRoute = AuthenticatedLeadsRouteImport.update({
   id: '/leads',
   path: '/leads',
@@ -292,6 +334,13 @@ export interface FileRoutesByFullPath {
   '/integrations': typeof AuthenticatedIntegrationsRoute
   '/leads': typeof AuthenticatedLeadsRoute
   '/marketing': typeof AuthenticatedMarketingRoute
+  '/assistant': typeof AuthenticatedAssistantRoute
+  '/documents': typeof AuthenticatedDocumentsRoute
+  '/marketplace': typeof AuthenticatedMarketplaceRoute
+  '/messages': typeof AuthenticatedMessagesRoute
+  '/professionals': typeof AuthenticatedProfessionalsRoute
+  '/projects': typeof AuthenticatedProjectsRoute
+  '/verification': typeof AuthenticatedVerificationRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/pipeline': typeof AuthenticatedPipelineRoute
   '/promotions': typeof AuthenticatedPromotionsRoute
@@ -334,6 +383,13 @@ export interface FileRoutesByTo {
   '/integrations': typeof AuthenticatedIntegrationsRoute
   '/leads': typeof AuthenticatedLeadsRoute
   '/marketing': typeof AuthenticatedMarketingRoute
+  '/assistant': typeof AuthenticatedAssistantRoute
+  '/documents': typeof AuthenticatedDocumentsRoute
+  '/marketplace': typeof AuthenticatedMarketplaceRoute
+  '/messages': typeof AuthenticatedMessagesRoute
+  '/professionals': typeof AuthenticatedProfessionalsRoute
+  '/projects': typeof AuthenticatedProjectsRoute
+  '/verification': typeof AuthenticatedVerificationRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/pipeline': typeof AuthenticatedPipelineRoute
   '/promotions': typeof AuthenticatedPromotionsRoute
@@ -378,6 +434,13 @@ export interface FileRoutesById {
   '/_authenticated/integrations': typeof AuthenticatedIntegrationsRoute
   '/_authenticated/leads': typeof AuthenticatedLeadsRoute
   '/_authenticated/marketing': typeof AuthenticatedMarketingRoute
+  '/_authenticated/assistant': typeof AuthenticatedAssistantRoute
+  '/_authenticated/documents': typeof AuthenticatedDocumentsRoute
+  '/_authenticated/marketplace': typeof AuthenticatedMarketplaceRoute
+  '/_authenticated/messages': typeof AuthenticatedMessagesRoute
+  '/_authenticated/professionals': typeof AuthenticatedProfessionalsRoute
+  '/_authenticated/projects': typeof AuthenticatedProjectsRoute
+  '/_authenticated/verification': typeof AuthenticatedVerificationRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/pipeline': typeof AuthenticatedPipelineRoute
   '/_authenticated/promotions': typeof AuthenticatedPromotionsRoute
@@ -422,6 +485,13 @@ export interface FileRouteTypes {
     | '/integrations'
     | '/leads'
     | '/marketing'
+    | '/assistant'
+    | '/documents'
+    | '/marketplace'
+    | '/messages'
+    | '/professionals'
+    | '/projects'
+    | '/verification'
     | '/onboarding'
     | '/pipeline'
     | '/promotions'
@@ -464,6 +534,13 @@ export interface FileRouteTypes {
     | '/integrations'
     | '/leads'
     | '/marketing'
+    | '/assistant'
+    | '/documents'
+    | '/marketplace'
+    | '/messages'
+    | '/professionals'
+    | '/projects'
+    | '/verification'
     | '/onboarding'
     | '/pipeline'
     | '/promotions'
@@ -507,6 +584,13 @@ export interface FileRouteTypes {
     | '/_authenticated/integrations'
     | '/_authenticated/leads'
     | '/_authenticated/marketing'
+    | '/_authenticated/assistant'
+    | '/_authenticated/documents'
+    | '/_authenticated/marketplace'
+    | '/_authenticated/messages'
+    | '/_authenticated/professionals'
+    | '/_authenticated/projects'
+    | '/_authenticated/verification'
     | '/_authenticated/onboarding'
     | '/_authenticated/pipeline'
     | '/_authenticated/promotions'
@@ -734,6 +818,55 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMarketingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/assistant': {
+      id: '/_authenticated/assistant'
+      path: '/assistant'
+      fullPath: '/assistant'
+      preLoaderRoute: typeof AuthenticatedAssistantRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/documents': {
+      id: '/_authenticated/documents'
+      path: '/documents'
+      fullPath: '/documents'
+      preLoaderRoute: typeof AuthenticatedDocumentsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/marketplace': {
+      id: '/_authenticated/marketplace'
+      path: '/marketplace'
+      fullPath: '/marketplace'
+      preLoaderRoute: typeof AuthenticatedMarketplaceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/messages': {
+      id: '/_authenticated/messages'
+      path: '/messages'
+      fullPath: '/messages'
+      preLoaderRoute: typeof AuthenticatedMessagesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/professionals': {
+      id: '/_authenticated/professionals'
+      path: '/professionals'
+      fullPath: '/professionals'
+      preLoaderRoute: typeof AuthenticatedProfessionalsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/projects': {
+      id: '/_authenticated/projects'
+      path: '/projects'
+      fullPath: '/projects'
+      preLoaderRoute: typeof AuthenticatedProjectsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/verification': {
+      id: '/_authenticated/verification'
+      path: '/verification'
+      fullPath: '/verification'
+      preLoaderRoute: typeof AuthenticatedVerificationRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/leads': {
       id: '/_authenticated/leads'
       path: '/leads'
@@ -864,6 +997,13 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedIntegrationsRoute: typeof AuthenticatedIntegrationsRoute
   AuthenticatedLeadsRoute: typeof AuthenticatedLeadsRoute
   AuthenticatedMarketingRoute: typeof AuthenticatedMarketingRoute
+  AuthenticatedAssistantRoute: typeof AuthenticatedAssistantRoute
+  AuthenticatedDocumentsRoute: typeof AuthenticatedDocumentsRoute
+  AuthenticatedMarketplaceRoute: typeof AuthenticatedMarketplaceRoute
+  AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRoute
+  AuthenticatedProfessionalsRoute: typeof AuthenticatedProfessionalsRoute
+  AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRoute
+  AuthenticatedVerificationRoute: typeof AuthenticatedVerificationRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedPipelineRoute: typeof AuthenticatedPipelineRoute
   AuthenticatedPromotionsRoute: typeof AuthenticatedPromotionsRoute
@@ -886,6 +1026,13 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedIntegrationsRoute: AuthenticatedIntegrationsRoute,
   AuthenticatedLeadsRoute: AuthenticatedLeadsRoute,
   AuthenticatedMarketingRoute: AuthenticatedMarketingRoute,
+  AuthenticatedAssistantRoute: AuthenticatedAssistantRoute,
+  AuthenticatedDocumentsRoute: AuthenticatedDocumentsRoute,
+  AuthenticatedMarketplaceRoute: AuthenticatedMarketplaceRoute,
+  AuthenticatedMessagesRoute: AuthenticatedMessagesRoute,
+  AuthenticatedProfessionalsRoute: AuthenticatedProfessionalsRoute,
+  AuthenticatedProjectsRoute: AuthenticatedProjectsRoute,
+  AuthenticatedVerificationRoute: AuthenticatedVerificationRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedPipelineRoute: AuthenticatedPipelineRoute,
   AuthenticatedPromotionsRoute: AuthenticatedPromotionsRoute,
