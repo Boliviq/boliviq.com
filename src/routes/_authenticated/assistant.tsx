@@ -19,23 +19,27 @@ import {
   getProfileRole,
 } from "@/lib/canons";
 import { CREDIT_WALLET_SEED } from "@/lib/platform-seed";
-import { useCurrentUser } from "@/hooks/use-current-user";
+import { useWorkspace } from "@/hooks/use-workspace";
 import { isMissingRelation, fromTable } from "@/lib/supabase-safe";
+import { creditBalance, creditLedger, loadAssistantLog, saveAssistantLog } from "@/lib/workspace-store";
 
 export const Route = createFileRoute("/_authenticated/assistant")({
   component: AssistantPage,
 });
 
 function AssistantPage() {
-  const { primaryRole, userId } = useCurrentUser();
+  const { primaryRole, userId } = useWorkspace();
   const role = getProfileRole(primaryRole);
   const [prompt, setPrompt] = useState("");
-  const [log, setLog] = useState<{ role: "user" | "assistant"; text: string }[]>([
-    {
-      role: "assistant",
-      text: `I understand you as a ${role.label}. I can search Boliviq, draft listings and messages, summarize conversations, create tasks, analyze properties, estimate repairs, and organize documents — only with data you are authorized to see.`,
-    },
-  ]);
+  const [log, setLog] = useState<{ role: "user" | "assistant"; text: string }[]>(() => {
+    const stored = loadAssistantLog(userId);
+    return stored.length
+      ? stored
+      : [{
+          role: "assistant",
+          text: `I understand you as a ${role.label}. I can search Boliviq, draft listings and messages, summarize conversations, create tasks, analyze properties, estimate repairs, and organize documents — only with data you are authorized to see.`,
+        }];
+  });
 
   const wallet = useQuery({
     queryKey: ["credit-wallet", userId],
@@ -80,7 +84,11 @@ function AssistantPage() {
       role.id === "lender" ? LENDING_DECISION_NOTICE : LEGAL_ADVICE_NOTICE,
       "Credits: this preview does not charge the workspace wallet.",
     ].join("\n");
-    setLog((prev) => [...prev, { role: "user", text: q }, { role: "assistant", text: reply }]);
+    setLog((prev) => {
+      const next = [...prev, { role: "user" as const, text: q }, { role: "assistant" as const, text: reply }];
+      if (userId) saveAssistantLog(userId, next);
+      return next;
+    });
     setPrompt("");
     toast.message("Assistant reply generated", { description: "No autonomous side effects." });
   };
@@ -138,12 +146,12 @@ function AssistantPage() {
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
               <div className="font-display text-3xl font-bold">{credits.balance}</div>
-              <div className="text-xs text-muted-foreground">Reserved {CREDIT_WALLET_SEED.reserved} · Monthly grant {CREDIT_WALLET_SEED.monthlyGrant}</div>
+              <div className="text-xs text-muted-foreground">Workspace wallet {creditBalance()} · Reserved {CREDIT_WALLET_SEED.reserved} · Monthly grant {CREDIT_WALLET_SEED.monthlyGrant}</div>
               <div className="space-y-1 pt-2">
-                {CREDIT_WALLET_SEED.ledger.map((row) => (
+                {creditLedger().map((row) => (
                   <div key={row.id} className="flex justify-between text-xs">
-                    <span className="truncate pr-2">{row.description}</span>
-                    <span className={row.amount < 0 ? "text-destructive" : "text-success"}>{row.amount > 0 ? "+" : ""}{row.amount}</span>
+                    <span className="truncate pr-2">{row.label}</span>
+                    <span className={row.delta < 0 ? "text-destructive" : "text-success"}>{row.delta > 0 ? "+" : ""}{row.delta}</span>
                   </div>
                 ))}
               </div>

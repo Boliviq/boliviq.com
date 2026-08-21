@@ -10,6 +10,11 @@ import { toast } from "sonner";
 import { Loader2, CheckCircle2, HardHat, LineChart } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
 
+function goAuthed(meta: Record<string, unknown> | undefined, navigate: ReturnType<typeof useNavigate>) {
+  const ready = Boolean(meta?.onboarded || meta?.primary_role);
+  void navigate({ to: ready ? "/dashboard" : "/onboarding" });
+}
+
 const searchSchema = z.object({
   mode: z.enum(["signin", "signup"]).optional(),
 });
@@ -30,7 +35,7 @@ function AuthPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/dashboard" });
+      if (data.session) goAuthed(data.session.user.user_metadata as Record<string, unknown> | undefined, navigate);
     });
   }, [navigate]);
 
@@ -50,10 +55,10 @@ function AuthPage() {
         toast.success("Account created! Redirecting…");
         navigate({ to: "/onboarding" });
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         toast.success("Welcome back!");
-        navigate({ to: "/dashboard" });
+        goAuthed(data.user?.user_metadata as Record<string, unknown> | undefined, navigate);
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong");
@@ -67,7 +72,9 @@ function AuthPage() {
     const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
     if (result.error) { toast.error(result.error.message ?? "Google sign-in failed"); setLoading(false); return; }
     if (result.redirected) return;
-    navigate({ to: "/dashboard" });
+    const { data } = await supabase.auth.getUser();
+    goAuthed(data.user?.user_metadata, navigate);
+    setLoading(false);
   };
 
   return (

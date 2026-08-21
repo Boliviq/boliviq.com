@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { MapPin, MessageSquare, Search, Star } from "lucide-react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { MapPin, MessageSquare, Search } from "lucide-react";
+import { toast } from "sonner";
 
 import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -11,55 +11,29 @@ import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { VerificationBadgeRow } from "@/components/verification-badge";
 import { PROFILE_ROLES, TRADE_LABELS, VERIFICATION_DISCLAIMER, type ProfileRoleId } from "@/lib/canons";
-import { PROFESSIONAL_SEED, type SeedProfessional } from "@/lib/professional-seed";
-import { isMissingRelation, fromTable } from "@/lib/supabase-safe";
-import { useCurrentUser } from "@/hooks/use-current-user";
+import { PROFESSIONAL_SEED } from "@/lib/professional-seed";
+import { useAccount } from "@/hooks/use-current-user";
+import { useWorkspace } from "@/hooks/use-workspace";
+import { createProject, startConversation } from "@/lib/workspace-store";
 
 export const Route = createFileRoute("/_authenticated/professionals")({
   component: ProfessionalsPage,
 });
 
 function ProfessionalsPage() {
-  const { userId } = useCurrentUser();
+  const { userId } = useWorkspace();
+  const { account } = useAccount();
+  const navigate = useNavigate();
   const [q, setQ] = useState("");
   const [role, setRole] = useState<ProfileRoleId | "all">("all");
 
-  const remote = useQuery({
-    queryKey: ["professional-profiles", userId],
-    enabled: !!userId,
-    queryFn: async () => {
-      const { data, error } = await fromTable("professional_profiles").select("*");
-      if (error) {
-        if (isMissingRelation(error)) return [] as SeedProfessional[];
-        throw error;
-      }
-      return ((data ?? []) as Record<string, unknown>[]).map((row): SeedProfessional => ({
-        id: String(row.id),
-        name: String(row.company_name || "Professional"),
-        company: String(row.company_name || ""),
-        role: (row.role as ProfileRoleId) || "other",
-        serviceArea: String(row.service_area || ""),
-        rating: 0,
-        reviews: 0,
-        responseTime: "—",
-        tiers: ["unverified"],
-        specialties: Array.isArray(row.categories) ? row.categories as string[] : [],
-        license: row.license_number ? String(row.license_number) : undefined,
-        insurance: row.insurance_info ? String(row.insurance_info) : undefined,
-        years: Number(row.years_in_business || 0),
-        bio: String(row.description || ""),
-      }));
-    },
-  });
-
   const people = useMemo(() => {
-    const merged = [...(remote.data ?? []), ...PROFESSIONAL_SEED];
-    return merged.filter((p) => {
+    return PROFESSIONAL_SEED.filter((p) => {
       const okRole = role === "all" || p.role === role;
       const hay = `${p.name} ${p.company} ${p.serviceArea} ${p.specialties.join(" ")}`.toLowerCase();
       return okRole && (!q || hay.includes(q.toLowerCase()));
     });
-  }, [remote.data, role, q]);
+  }, [role, q]);
 
   const directoryRoles = PROFILE_ROLES.filter((r) => r.id !== "homeowner" && r.id !== "administrator");
 
@@ -100,7 +74,6 @@ function ProfessionalsPage() {
                       <div className="text-sm text-muted-foreground">{p.company} · {roleLabel}</div>
                     </div>
                     <div className="flex items-center gap-1 text-sm font-semibold">
-                      <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
                       {p.rating || "—"}
                       <span className="font-normal text-muted-foreground">({p.reviews})</span>
                     </div>
@@ -116,10 +89,59 @@ function ProfessionalsPage() {
                   <div className="flex items-center gap-1 text-xs text-muted-foreground">
                     <MapPin className="h-3 w-3" /> {p.serviceArea} · {p.years} yrs · responds {p.responseTime}
                   </div>
-                  <div className="flex gap-2">
-                    <Link to="/messages"><Button size="sm" className="gap-1"><MessageSquare className="h-3.5 w-3.5" /> Message</Button></Link>
-                    <Link to="/verification"><Button size="sm" variant="outline">Verification</Button></Link>
-                    <Link to="/projects"><Button size="sm" variant="outline">Invite to project</Button></Link>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      className="gap-1"
+                      onClick={() => {
+                        if (!userId) {
+                          toast.error("Sign in to connect with professionals");
+                          return;
+                        }
+                        const thread = startConversation(
+                          userId,
+                          `Inquiry — ${p.name}`,
+                          `Professional · ${roleLabel}`,
+                          `Hi ${p.name}, ${account.full_name || "I"} would like to discuss a job in ${p.serviceArea}.`,
+                          { participants: [account.full_name || "You", p.name] },
+                        );
+                        toast.success("Conversation started");
+                        void navigate({ to: "/messages", search: { thread } });
+                      }}
+                    >
+                      <MessageSquare className="h-3.5 w-3.5" /> Message
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => void navigate({ to: "/verification" })}>Verification</Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        if (!userId) {
+                          toast.error("Sign in to connect with professionals");
+                          return;
+                        }
+                        const project = createProject(userId, {
+                          name: `${p.company} — invited`,
+                          address: p.serviceArea,
+                          status: "new",
+                          roleView: `Invited ${p.name}`,
+                          budget: 0,
+                          spent: 0,
+                          nextMilestone: "Share scope and schedule a walk-through",
+                        });
+                        startConversation(
+                          userId,
+                          project.name,
+                          `Project · ${p.name}`,
+                          `Invited ${p.name} (${roleLabel}) onto a project.`,
+                          { project: project.name, participants: [account.full_name || "You", p.name] },
+                        );
+                        toast.success("Professional invited to a project");
+                        void navigate({ to: "/projects" });
+                      }}
+                    >
+                      Invite to project
+                    </Button>
                   </div>
                 </CardContent>
               </Card>

@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Flag, Heart, MapPin, MessageSquare, Plus, Search, Store } from "lucide-react";
+import { Flag, FolderKanban, Heart, MapPin, MessageSquare, Plus, Search, Store } from "lucide-react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/page-header";
@@ -14,24 +14,38 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MARKETPLACE_CATEGORIES, type MarketplaceCategoryId } from "@/lib/canons";
-import { MARKETPLACE_SEED, type SeedListing } from "@/lib/marketplace-seed";
-import { isMissingRelation, fromTable } from "@/lib/supabase-safe";
-import { useCurrentUser } from "@/hooks/use-current-user";
+import type { SeedListing } from "@/lib/marketplace-seed";
+import { fromTable, isMissingRelation } from "@/lib/supabase-safe";
+import { useAccount } from "@/hooks/use-current-user";
+import { useWorkspace } from "@/hooks/use-workspace";
 import { currency } from "@/lib/format";
+import {
+  categoryLabel,
+  createListing,
+  createProjectFromListing,
+  listListings,
+  mergeById,
+  reportListing,
+  savedListingIds,
+  startConversation,
+  toggleSavedListing,
+  type MarketplaceListing,
+} from "@/lib/workspace-store";
 
 export const Route = createFileRoute("/_authenticated/marketplace")({
   component: MarketplacePage,
 });
 
 function MarketplacePage() {
-  const { userId } = useCurrentUser();
+  const { userId, tick } = useWorkspace();
+  const { account } = useAccount();
+  const navigate = useNavigate();
   const [q, setQ] = useState("");
   const [category, setCategory] = useState<MarketplaceCategoryId | "all">("all");
   const [view, setView] = useState<"list" | "cards">("cards");
-  const [saved, setSaved] = useState<Record<string, boolean>>({});
-  const [posted, setPosted] = useState<SeedListing[]>([]);
   const [compose, setCompose] = useState(false);
   const [draft, setDraft] = useState({ title: "", description: "", category: "repairs" as MarketplaceCategoryId, location: "", price: "" });
+  void tick;
 
   const remote = useQuery({
     queryKey: ["marketplace-listings", userId],
@@ -41,10 +55,10 @@ function MarketplacePage() {
         .select("*")
         .order("created_at", { ascending: false });
       if (error) {
-        if (isMissingRelation(error)) return [] as SeedListing[];
+        if (isMissingRelation(error)) return [] as MarketplaceListing[];
         throw error;
       }
-      return ((data ?? []) as Record<string, unknown>[]).map((row): SeedListing => ({
+      return ((data ?? []) as Record<string, unknown>[]).map((row): MarketplaceListing => ({
         id: String(row.id),
         title: String(row.title ?? "Listing"),
         description: String(row.description ?? ""),
@@ -56,60 +70,97 @@ function MarketplacePage() {
         budget: row.budget != null ? Number(row.budget) : undefined,
         photos: Array.isArray(row.photos) ? row.photos as string[] : [],
         postedBy: "You",
-        role: "homeowner",
+        role: account.primary_role,
         createdAt: String(row.created_at ?? "").slice(0, 10),
-        propertyLabel: undefined,
-        projectLabel: undefined,
+        ownerId: userId ?? undefined,
       }));
     },
   });
 
+  const saved = savedListingIds(userId);
   const listings = useMemo(() => {
-    const merged = [...posted, ...(remote.data ?? []), ...MARKETPLACE_SEED];
+    const merged = mergeById(listListings(userId), remote.data ?? []);
     return merged.filter((l) => {
       const hay = `${l.title} ${l.description} ${l.location}`.toLowerCase();
       const okQ = !q || hay.includes(q.toLowerCase());
       const okC = category === "all" || l.category === category;
       return okQ && okC;
     });
-  }, [posted, remote.data, q, category]);
+  }, [userId, remote.data, q, category, tick]);
 
   const publish = async () => {
     if (!draft.title.trim()) {
       toast.error("Add a title");
       return;
     }
-    const local: SeedListing = {
-      id: `local-${Date.now()}`,
+    if (!userId) {
+      toast.error("Sign in to use your workspace");
+      return;
+    }
+    const row = createListing(userId, {
       title: draft.title,
       description: draft.description,
       category: draft.category,
       location: draft.location || "Unspecified",
-      city: draft.location,
-      state: "",
       price: draft.price ? Number(draft.price) : undefined,
-      photos: [],
-      postedBy: "You",
-      role: "homeowner",
-      createdAt: new Date().toISOString().slice(0, 10),
-    };
-    setPosted((p) => [local, ...p]);
+      role: account.primary_role,
+      authorRole: account.primary_role,
+      authorName: account.full_name || "You",
+      postedBy: account.full_name || "You",
+    });
     setCompose(false);
     setDraft({ title: "", description: "", category: "repairs", location: "", price: "" });
-    toast.success("Listing posted", { description: "It can become a lead, project, or conversation from Messages." });
+    toast.success("Listing posted", { description: "Message a professional or convert it into a project from this card." });
 
-    if (!userId) return;
     const { error } = await fromTable("marketplace_listings").insert({
       user_id: userId,
-      title: local.title,
-      description: local.description,
-      category: local.category,
-      location: local.location,
-      price: local.price ?? null,
+      title: row.title,
+      description: row.description,
+      category: row.category,
+      location: row.location,
+      price: row.price ?? null,
       visibility: "public",
       status: "active",
     });
     if (error && !isMissingRelation(error)) toast.error(error.message);
+  };
+
+  const messageAbout = (listing: MarketplaceListing) => {
+    if (!userId) {
+      toast.error("Sign in to use your workspace");
+      return;
+    }
+    const thread = startConversation(
+      userId,
+      `Re: ${listing.title}`,
+      `Listing · ${listing.location}`,
+      `I'm interested in "${listing.title}" at ${listing.location}.`,
+      {
+        listing: listing.title,
+        listingId: listing.id,
+        property: listing.propertyLabel,
+        participants: [account.full_name || "You", listing.postedBy],
+      },
+    );
+    toast.success("Conversation started");
+    void navigate({ to: "/messages", search: { thread } });
+  };
+
+  const convert = (listing: MarketplaceListing) => {
+    if (!userId) {
+      toast.error("Sign in to use your workspace");
+      return;
+    }
+    const project = createProjectFromListing(userId, listing);
+    startConversation(
+      userId,
+      project.name,
+      `Project · ${project.address}`,
+      `Opened a project from marketplace listing "${listing.title}".`,
+      { project: project.name, property: project.address, listing: listing.title, listingId: listing.id },
+    );
+    toast.success("Project created", { description: "The listing, conversation, and project now share a record." });
+    void navigate({ to: "/projects" });
   };
 
   return (
@@ -167,8 +218,25 @@ function MarketplacePage() {
               <ListingCard
                 key={l.id}
                 listing={l}
-                saved={!!saved[l.id]}
-                onSave={() => setSaved((s) => ({ ...s, [l.id]: !s[l.id] }))}
+                saved={saved.has(l.id)}
+                onSave={() => {
+                  if (!userId) {
+                    toast.error("Sign in to use your workspace");
+                    return;
+                  }
+                  toggleSavedListing(userId, l.id);
+                  toast.success(saved.has(l.id) ? "Removed from saved" : "Saved");
+                }}
+                onMessage={() => messageAbout(l)}
+                onProject={() => convert(l)}
+                onReport={() => {
+                  if (!userId) {
+                    toast.error("Sign in to use your workspace");
+                    return;
+                  }
+                  reportListing(userId, l.id, "User reported from marketplace");
+                  toast.message("Report received", { description: "Moderation queue will review this listing." });
+                }}
               />
             ))}
           </div>
@@ -178,11 +246,11 @@ function MarketplacePage() {
               <div key={l.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
                 <div className="min-w-0">
                   <div className="font-medium">{l.title}</div>
-                  <div className="text-xs text-muted-foreground">{l.location} · {catLabel(l.category)} · {l.postedBy}</div>
+                  <div className="text-xs text-muted-foreground">{l.location} · {categoryLabel(l.category)} · {l.postedBy}</div>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-semibold">{priceLabel(l)}</span>
-                  <Link to="/messages"><Button size="sm" variant="outline">Message</Button></Link>
+                  <Button size="sm" variant="outline" onClick={() => messageAbout(l)}>Message</Button>
                 </div>
               </div>
             ))}
@@ -212,16 +280,12 @@ function MarketplacePage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCompose(false)}>Cancel</Button>
-            <Button onClick={publish} className="bg-[#70bf2b] hover:bg-[#80ce38]">Publish</Button>
+            <Button onClick={() => void publish()} className="bg-[#70bf2b] hover:bg-[#80ce38]">Publish</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </>
   );
-}
-
-function catLabel(id: string) {
-  return MARKETPLACE_CATEGORIES.find((c) => c.id === id)?.label ?? id;
 }
 
 function priceLabel(l: SeedListing) {
@@ -230,7 +294,21 @@ function priceLabel(l: SeedListing) {
   return "Contact";
 }
 
-function ListingCard({ listing: l, saved, onSave }: { listing: SeedListing; saved: boolean; onSave: () => void }) {
+function ListingCard({
+  listing: l,
+  saved,
+  onSave,
+  onMessage,
+  onProject,
+  onReport,
+}: {
+  listing: SeedListing;
+  saved: boolean;
+  onSave: () => void;
+  onMessage: () => void;
+  onProject: () => void;
+  onReport: () => void;
+}) {
   return (
     <Card className="overflow-hidden">
       {l.photos[0] ? (
@@ -241,7 +319,7 @@ function ListingCard({ listing: l, saved, onSave }: { listing: SeedListing; save
       <CardContent className="space-y-2 p-4">
         <div className="flex items-start justify-between gap-2">
           <div className="font-semibold leading-snug">{l.title}</div>
-          <Badge variant="outline" className="shrink-0">{catLabel(l.category)}</Badge>
+          <Badge variant="outline" className="shrink-0">{categoryLabel(l.category)}</Badge>
         </div>
         <p className="line-clamp-2 text-sm text-muted-foreground">{l.description}</p>
         <div className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -256,14 +334,17 @@ function ListingCard({ listing: l, saved, onSave }: { listing: SeedListing; save
           <div className="font-display text-lg font-bold">{priceLabel(l)}</div>
           <div className="text-xs text-muted-foreground">{l.postedBy}</div>
         </div>
-        <div className="flex gap-2">
-          <Link to="/messages" className="flex-1">
-            <Button size="sm" className="w-full gap-1"><MessageSquare className="h-3.5 w-3.5" /> Message</Button>
-          </Link>
-          <Button size="sm" variant="outline" onClick={() => { onSave(); toast.success(saved ? "Removed from saved" : "Saved"); }}>
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" className="flex-1 gap-1" onClick={onMessage}>
+            <MessageSquare className="h-3.5 w-3.5" /> Message
+          </Button>
+          <Button size="sm" variant="outline" onClick={onProject} title="Convert to project">
+            <FolderKanban className="h-3.5 w-3.5" />
+          </Button>
+          <Button size="sm" variant="outline" onClick={onSave}>
             <Heart className={`h-3.5 w-3.5 ${saved ? "fill-destructive text-destructive" : ""}`} />
           </Button>
-          <Button size="sm" variant="outline" onClick={() => toast.message("Report received", { description: "Moderation queue will review this listing." })}>
+          <Button size="sm" variant="outline" onClick={onReport}>
             <Flag className="h-3.5 w-3.5" />
           </Button>
         </div>

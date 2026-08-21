@@ -6,6 +6,8 @@ import { PageHeader } from "@/components/page-header";
 import { ArrowUpRight, Sparkles } from "lucide-react";
 import { dashboardForRole, LIFECYCLE } from "@/lib/canons";
 import { useAccount } from "@/hooks/use-current-user";
+import { useWorkspace } from "@/hooks/use-workspace";
+import { listDocuments, listListings, listProjects, listThreads } from "@/lib/workspace-store";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
@@ -13,7 +15,15 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 
 function Dashboard() {
   const { account } = useAccount();
+  const { userId, tick } = useWorkspace();
   const dash = dashboardForRole(account.primary_role);
+  const live = {
+    listings: listListings(userId).length,
+    messages: listThreads(userId).length,
+    projects: listProjects(userId).length,
+    documents: listDocuments(userId).length,
+  };
+  void tick;
 
   return (
     <>
@@ -34,7 +44,12 @@ function Dashboard() {
         </Badge>
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {dash.stats.map((s) => (
+          {[
+            { label: "Marketplace posts", value: String(live.listings), hint: "Including your saved workspace listings" },
+            { label: "Conversations", value: String(live.messages), hint: "Property- and project-linked threads" },
+            { label: "Projects", value: String(live.projects), hint: "Repair requests that became jobs" },
+            { label: "Documents", value: String(live.documents), hint: "Filed against the matching record" },
+          ].map((s) => (
             <Card key={s.label}>
               <CardContent className="p-5">
                 <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{s.label}</div>

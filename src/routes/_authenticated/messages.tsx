@@ -1,71 +1,54 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { Building2, FolderKanban, MessageSquare, Sparkles } from "lucide-react";
+import { z } from "zod";
+import { Building2, FolderKanban, MessageSquare, Sparkles, Store } from "lucide-react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { MESSAGE_SEED, type SeedThread } from "@/lib/platform-seed";
-import { isMissingRelation, fromTable } from "@/lib/supabase-safe";
-import { useCurrentUser } from "@/hooks/use-current-user";
+import { useWorkspace } from "@/hooks/use-workspace";
 import { cn } from "@/lib/utils";
+import { listThreads, sendMessage } from "@/lib/workspace-store";
+
+const searchSchema = z.object({
+  thread: z.string().optional(),
+});
 
 export const Route = createFileRoute("/_authenticated/messages")({
+  validateSearch: searchSchema,
   component: MessagesPage,
 });
 
 function MessagesPage() {
-  const { userId } = useCurrentUser();
-  const [activeId, setActiveId] = useState(MESSAGE_SEED[0].id);
+  const { thread: threadParam } = Route.useSearch();
+  const { userId, tick } = useWorkspace();
+  const [activeId, setActiveId] = useState(threadParam ?? "");
   const [q, setQ] = useState("");
   const [draft, setDraft] = useState("");
-  const [local, setLocal] = useState<Record<string, { from: string; body: string; time: string }[]>>({});
 
-  const remote = useQuery({
-    queryKey: ["conversations", userId],
-    enabled: !!userId,
-    queryFn: async () => {
-      const { data, error } = await fromTable("conversations").select("*").order("updated_at", { ascending: false });
-      if (error) {
-        if (isMissingRelation(error)) return [] as SeedThread[];
-        throw error;
-      }
-      return ((data ?? []) as Record<string, unknown>[]).map((row): SeedThread => ({
-        id: String(row.id),
-        title: String(row.title ?? "Conversation"),
-        participants: ["You"],
-        property: undefined,
-        project: undefined,
-        preview: "Connected to your workspace",
-        time: "now",
-        unread: 0,
-        messages: [],
-      }));
-    },
-  });
+  useEffect(() => {
+    if (threadParam) setActiveId(threadParam);
+  }, [threadParam]);
 
   const threads = useMemo(() => {
-    const merged = [...(remote.data ?? []), ...MESSAGE_SEED];
+    const merged = listThreads(userId);
     if (!q) return merged;
     const needle = q.toLowerCase();
-    return merged.filter((t) => `${t.title} ${t.preview} ${t.property ?? ""} ${t.project ?? ""}`.toLowerCase().includes(needle));
-  }, [remote.data, q]);
+    return merged.filter((t) => `${t.title} ${t.lastMessage} ${t.property ?? ""} ${t.project ?? ""} ${t.listing ?? ""}`.toLowerCase().includes(needle));
+  }, [userId, q, tick]);
 
   const active = threads.find((t) => t.id === activeId) ?? threads[0];
-  const extra = active ? (local[active.id] ?? []) : [];
-  const messages = active ? [...active.messages, ...extra] : [];
 
   const send = () => {
     if (!draft.trim() || !active) return;
-    setLocal((prev) => ({
-      ...prev,
-      [active.id]: [...(prev[active.id] ?? []), { from: "You", body: draft.trim(), time: "Just now" }],
-    }));
+    if (!userId) {
+      toast.error("Sign in to send messages");
+      return;
+    }
+    sendMessage(userId, active.id, draft.trim());
     setDraft("");
     toast.success("Message sent in-platform");
   };
@@ -91,9 +74,9 @@ function MessagesPage() {
               >
                 <div className="flex items-center justify-between gap-2">
                   <div className="truncate text-sm font-semibold">{t.title}</div>
-                  <span className="text-[11px] text-muted-foreground">{t.time}</span>
+                  <span className="text-[11px] text-muted-foreground">{formatWhen(t.updatedAt)}</span>
                 </div>
-                <div className="truncate text-xs text-muted-foreground">{t.preview}</div>
+                <div className="truncate text-xs text-muted-foreground">{t.lastMessage}</div>
                 {t.unread > 0 && <Badge className="mt-1 h-5">{t.unread}</Badge>}
               </button>
             ))}
@@ -113,7 +96,7 @@ function MessagesPage() {
                     <Link to="/projects"><Badge variant="outline" className="gap-1"><FolderKanban className="h-3 w-3" /> {active.project}</Badge></Link>
                   )}
                   {active.listing && (
-                    <Link to="/marketplace"><Badge variant="outline">{active.listing}</Badge></Link>
+                    <Link to="/marketplace"><Badge variant="outline" className="gap-1"><Store className="h-3 w-3" /> {active.listing}</Badge></Link>
                   )}
                 </div>
                 <div className="mt-1 text-xs text-muted-foreground">{active.participants.join(" · ")}</div>
@@ -128,16 +111,16 @@ function MessagesPage() {
               <div className="mx-4 mb-3 rounded-lg border border-[#70bf2b]/30 bg-[#70bf2b]/5 p-3 text-sm">
                 <div className="flex items-center gap-2 font-medium"><Sparkles className="h-4 w-4 text-[#2f6b12]" /> AI summary (preview)</div>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Parties agreed the repair post should convert into a project after estimate approval. No messages were sent outside the platform. Agents will not send follow-ups without authorization.
+                  {active.messages.slice(-2).map((m) => m.body).join(" · ") || "No messages yet. Agents will not send follow-ups without authorization."}
                 </p>
               </div>
 
               <div className="flex-1 space-y-3 overflow-y-auto px-4 pb-4">
-                {messages.map((m, i) => (
-                  <div key={i} className={cn("max-w-xl rounded-xl border bg-white p-3", m.from === "You" && "ml-auto border-[#70bf2b]/40")}>
+                {active.messages.map((m) => (
+                  <div key={m.id} className={cn("max-w-xl rounded-xl border bg-white p-3", (m.mine || m.from === "You") && "ml-auto border-[#70bf2b]/40")}>
                     <div className="text-xs font-semibold">{m.from}</div>
                     <div className="mt-1 text-sm">{m.body}</div>
-                    <div className="mt-1 text-[11px] text-muted-foreground">{m.time}</div>
+                    <div className="mt-1 text-[11px] text-muted-foreground">{formatWhen(m.at)}</div>
                   </div>
                 ))}
               </div>
@@ -159,4 +142,10 @@ function MessagesPage() {
       </div>
     </>
   );
+}
+
+function formatWhen(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 }
