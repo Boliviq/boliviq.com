@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Users, DollarSign, TrendingUp, TrendingDown, AlertTriangle, Search, FileText, Phone, Building2, ShieldAlert, CheckCircle2, XCircle, CreditCard } from "lucide-react";
+import { Users, DollarSign, TrendingUp, TrendingDown, AlertTriangle, Search, FileText, Phone, Building2, ShieldAlert, CheckCircle2, XCircle, CreditCard, Store, BadgeCheck, Sparkles, Wallet, Flag, ScrollText, ToggleLeft } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -88,8 +88,35 @@ function Admin() {
 
   return (
     <>
-      <PageHeader title="Admin dashboard" description="Operational overview. Placeholder metrics shown until real analytics are wired up." />
+      <PageHeader title="Intelligence Center" description="Administrative actions are recorded with administrator identity, time, affected record, previous and new values, reason, and support reference." />
       <div className="space-y-6 p-4 sm:p-8">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {[
+            { title: "User management", desc: "Accounts, roles, suspension, and appeals.", href: "/admin/users", icon: Users },
+            { title: "Workspace management", desc: "Team workspaces, members, and isolation.", href: "/admin/users", icon: Building2 },
+            { title: "Verification review", desc: "Identity, license, and insurance queues.", href: "/verification", icon: BadgeCheck },
+            { title: "Marketplace moderation", desc: "Reported listings and content review.", href: "/marketplace", icon: Store },
+            { title: "AI controls & costs", desc: "Agent permissions and credit pricing.", href: "/assistant", icon: Sparkles },
+            { title: "Credit wallets", desc: "Balances, adjustments, and ledger history.", href: "/assistant", icon: Wallet },
+            { title: "Audit logs", desc: "Who changed what, when, and why.", href: "/admin", icon: ScrollText },
+            { title: "Feature flags", desc: "Gradual rollout of marketplace and AI surfaces.", href: "/admin", icon: ToggleLeft },
+            { title: "Subscriptions", desc: "Plans, coupons, and failed-payment recovery.", href: "/admin/checkout-verification", icon: CreditCard },
+            { title: "Support tickets", desc: "Templates, disputes, and deletion requests.", href: "/support", icon: Flag },
+            { title: "Launch verification", desc: "Owner checks before public launch.", href: "/admin/launch-verification", icon: CheckCircle2 },
+            { title: "Integrations health", desc: "Modular providers and fallback status.", href: "/integrations", icon: Phone },
+          ].map((c) => (
+            <Link key={c.title} to={c.href as "/admin"}>
+              <Card className="h-full transition hover:border-[#70bf2b]/50">
+                <CardContent className="p-5">
+                  <c.icon className="h-5 w-5 text-[#70bf2b]" />
+                  <div className="mt-3 font-semibold">{c.title}</div>
+                  <p className="mt-1 text-sm text-muted-foreground">{c.desc}</p>
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
+        </div>
+
         <div className="rounded-lg border border-primary/40 bg-primary/5 p-3 text-sm flex items-center justify-between gap-3 flex-wrap">
           <div>
             <strong>Billing Launch Verification</strong> — guided owner checks that must pass before public launch.

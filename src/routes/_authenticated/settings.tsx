@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { LANGUAGES, PROFILE_ROLES, type LanguageId, type ProfileRoleId } from "@/lib/canons";
+import { isMissingRelation } from "@/lib/supabase-safe";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
@@ -27,7 +29,7 @@ function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [email, setEmail] = useState("");
-  const [profile, setProfile] = useState({ full_name: "", phone: "" });
+  const [profile, setProfile] = useState({ full_name: "", phone: "", primary_role: "" as ProfileRoleId | "", language: "en" as LanguageId });
   const [company, setCompany] = useState({ id: "", name: "", phone: "", website: "" });
   const [prefs, setPrefs] = useState({
     primary_market: "", investor_type: "", strategy: "",
@@ -40,13 +42,28 @@ function SettingsPage() {
       const user = userData.user;
       if (!user) return;
       setEmail(user.email ?? "");
+      const meta = user.user_metadata ?? {};
+      setProfile((p) => ({
+        ...p,
+        primary_role: (meta.primary_role as ProfileRoleId) || p.primary_role,
+        language: (meta.language as LanguageId) || p.language,
+      }));
 
       const [{ data: p }, { data: pref }] = await Promise.all([
         supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
         supabase.from("user_preferences").select("*").eq("user_id", user.id).maybeSingle(),
       ]);
       if (p) {
-        setProfile({ full_name: p.full_name ?? "", phone: p.phone ?? "" });
+        setProfile({
+          full_name: p.full_name ?? "",
+          phone: p.phone ?? "",
+          primary_role: ((p as { primary_role?: ProfileRoleId }).primary_role
+            || (meta.primary_role as ProfileRoleId)
+            || "") as ProfileRoleId | "",
+          language: (((p as { language?: LanguageId }).language
+            || meta.language
+            || "en") as LanguageId),
+        });
         if (p.company_id) {
           const { data: co } = await supabase.from("companies").select("*").eq("id", p.company_id).maybeSingle();
           if (co) setCompany({ id: co.id, name: co.name, phone: co.phone ?? "", website: co.website ?? "" });
@@ -85,8 +102,26 @@ function SettingsPage() {
           if (companyId) setCompany((c) => ({ ...c, id: companyId! }));
         }
       }
-      await supabase.from("profiles").upsert({
-        id: user.id, full_name: profile.full_name, phone: profile.phone || null, company_id: companyId,
+      const { error: profErr } = await (supabase.from("profiles") as any).upsert({
+        id: user.id,
+        full_name: profile.full_name,
+        phone: profile.phone || null,
+        company_id: companyId,
+        primary_role: profile.primary_role || null,
+        language: profile.language,
+      });
+      if (profErr && !isMissingRelation(profErr)) {
+        const { error: fb } = await supabase.from("profiles").upsert({
+          id: user.id, full_name: profile.full_name, phone: profile.phone || null, company_id: companyId,
+        });
+        if (fb) throw fb;
+      }
+      await supabase.auth.updateUser({
+        data: {
+          full_name: profile.full_name,
+          primary_role: profile.primary_role || null,
+          language: profile.language,
+        },
       });
       const num = (v: string) => (v ? Number(v) : null);
       await supabase.from("user_preferences").upsert({
@@ -112,7 +147,7 @@ function SettingsPage() {
 
   return (
     <>
-      <PageHeader title="Settings" description="Your profile, company, and buy box." action={
+      <PageHeader title="Settings" description="Your profile, role, language, company, and buy box." action={
         <Button onClick={save} disabled={saving}>{saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Save changes</Button>
       } />
       <div className="grid gap-6 p-4 sm:p-8 lg:grid-cols-2">
@@ -122,6 +157,26 @@ function SettingsPage() {
             <div className="space-y-2"><Label>Email</Label><Input value={email} disabled /></div>
             <div className="space-y-2"><Label>Full name</Label><Input value={profile.full_name} onChange={(e) => setProfile({ ...profile, full_name: e.target.value })} /></div>
             <div className="space-y-2"><Label>Phone</Label><Input value={profile.phone} onChange={(e) => setProfile({ ...profile, phone: e.target.value })} /></div>
+            <div className="space-y-2">
+              <Label>Primary role</Label>
+              <Select value={profile.primary_role} onValueChange={(v) => setProfile({ ...profile, primary_role: v as ProfileRoleId })}>
+                <SelectTrigger><SelectValue placeholder="Choose a profile" /></SelectTrigger>
+                <SelectContent>
+                  {PROFILE_ROLES.filter((r) => r.id !== "administrator").map((r) => (
+                    <SelectItem key={r.id} value={r.id}>{r.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Language</Label>
+              <Select value={profile.language} onValueChange={(v) => setProfile({ ...profile, language: v as LanguageId })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {LANGUAGES.map((l) => <SelectItem key={l.id} value={l.id}>{l.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
           </CardContent>
         </Card>
 

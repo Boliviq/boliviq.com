@@ -6,9 +6,14 @@ import { UserMenu } from "@/components/user-menu";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
-  beforeLoad: async () => {
+  beforeLoad: async ({ location }) => {
     const { data, error } = await supabase.auth.getUser();
     if (error || !data.user) throw redirect({ to: "/auth" });
+    const meta = (data.user.user_metadata ?? {}) as Record<string, unknown>;
+    const ready = Boolean(meta.onboarded || meta.primary_role);
+    if (!ready && !location.pathname.startsWith("/onboarding")) {
+      throw redirect({ to: "/onboarding" });
+    }
     return { user: data.user };
   },
   component: AuthedLayout,
