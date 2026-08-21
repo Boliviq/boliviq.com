@@ -1,9 +1,11 @@
 import { afterEach, describe, expect, test } from "vitest";
 import {
   couponPlanFromCheckoutSession,
+  isUniqueViolation,
   planFromPrice,
   planFromPriceLookup,
   stripeId,
+  subscriptionIdFromCheckoutSession,
   subscriptionIdFromInvoice,
 } from "../src/lib/billing-mapping";
 import {
@@ -54,6 +56,24 @@ describe("Stripe object id coercion", () => {
     expect(subscriptionIdFromInvoice({ subscription: "sub_legacy" })).toBe("sub_legacy");
     expect(subscriptionIdFromInvoice({ parent: { type: "quote_details" }, subscription: undefined })).toBeNull();
   });
+
+  test("reads checkout.session.subscription and expanded invoice fallback", () => {
+    expect(subscriptionIdFromCheckoutSession({ subscription: "sub_from_session" })).toBe("sub_from_session");
+    expect(subscriptionIdFromCheckoutSession({ subscription: { id: "sub_expanded" } })).toBe("sub_expanded");
+    expect(
+      subscriptionIdFromCheckoutSession({
+        invoice: {
+          parent: { type: "subscription_details", subscription_details: { subscription: "sub_from_invoice" } },
+        },
+      }),
+    ).toBe("sub_from_invoice");
+  });
+
+  test("treats Postgres unique_violation as a duplicate", () => {
+    expect(isUniqueViolation({ code: "23505" })).toBe(true);
+    expect(isUniqueViolation({ code: "42501" })).toBe(false);
+    expect(isUniqueViolation(null)).toBe(false);
+  });
 });
 
 const STRIPE_ENV_KEYS = [
@@ -101,5 +121,11 @@ describe("Stripe env resolution", () => {
     delete process.env.PAYMENTS_SANDBOX_WEBHOOK_SECRET;
     process.env.STRIPE_WEBHOOK_SECRET_TEST = "whsec_direct";
     expect(isStripeWebhookConfigured("sandbox")).toBe(true);
+  });
+
+  test("live diagnostics pass when only STRIPE_SECRET_KEY_LIVE is set", () => {
+    process.env.STRIPE_SECRET_KEY_LIVE = "sk_live_abc";
+    expect(isStripeApiConfigured("live")).toBe(true);
+    expect(describeStripeApiConfiguration("live").configured).toBe(true);
   });
 });

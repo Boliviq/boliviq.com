@@ -54,7 +54,7 @@ function AuthPage() {
         if (error) throw error;
         if (data.session) {
           toast.success("Account created! Redirecting…");
-          navigate({ to: "/onboarding" });
+          goAuthed(data.session.user.user_metadata as Record<string, unknown> | undefined, navigate);
         } else {
           toast.success("Check your email to confirm your account, then sign in.");
         }

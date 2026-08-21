@@ -3,8 +3,10 @@ import { createClient } from '@supabase/supabase-js';
 import { type StripeEnv, createStripeClient, verifyWebhook } from '@/lib/stripe.server';
 import {
   couponPlanFromCheckoutSession,
+  isUniqueViolation,
   planFromPrice,
   stripeId,
+  subscriptionIdFromCheckoutSession,
   subscriptionIdFromInvoice,
 } from '@/lib/billing-mapping';
 
@@ -85,7 +87,10 @@ async function logCouponRedemption(session: any) {
     order_amount: orderAmount,
     discount_amount: discount,
   });
-  if (redemptionError && (redemptionError as any).code !== '23505') throw redemptionError;
+  if (redemptionError) {
+    if (isUniqueViolation(redemptionError)) return;
+    throw redemptionError;
+  }
 
   const { error: usageError } = await supabase
     .from('coupons')
@@ -95,7 +100,7 @@ async function logCouponRedemption(session: any) {
 }
 
 async function upsertSubscriptionFromCheckoutSession(session: any, env: StripeEnv) {
-  const subId = stripeId(session.subscription);
+  const subId = subscriptionIdFromCheckoutSession(session);
   if (!subId) return;
   const stripe = createStripeClient(env);
   const subscription = await stripe.subscriptions.retrieve(subId, {
@@ -145,33 +150,43 @@ async function handleWebhook(req: Request, env: StripeEnv) {
   });
   if (insertErr) {
     // 23505 = unique_violation → already processed, safe to skip.
-    if ((insertErr as any).code === '23505') {
+    if (isUniqueViolation(insertErr)) {
       console.log('Skipping duplicate webhook', event.id, event.type);
       return;
     }
     throw insertErr;
   }
 
-  switch (event.type) {
-    case 'customer.subscription.created':
-    case 'customer.subscription.updated':
-      await upsertSubscription(event.data.object, env);
-      break;
-    case 'customer.subscription.deleted':
-      await markCanceled(event.data.object, env);
-      break;
-    case 'checkout.session.completed':
-      await logCouponRedemption(event.data.object);
-      await upsertSubscriptionFromCheckoutSession(event.data.object, env);
-      break;
-    case 'invoice.paid':
-      await updateSubscriptionStatus(event.data.object, 'active', env);
-      break;
-    case 'invoice.payment_failed':
-      await updateSubscriptionStatus(event.data.object, 'past_due', env);
-      break;
-    default:
-      console.log('Unhandled event:', event.type);
+  try {
+    switch (event.type) {
+      case 'customer.subscription.created':
+      case 'customer.subscription.updated':
+        await upsertSubscription(event.data.object, env);
+        break;
+      case 'customer.subscription.deleted':
+        await markCanceled(event.data.object, env);
+        break;
+      case 'checkout.session.completed':
+        await logCouponRedemption(event.data.object);
+        await upsertSubscriptionFromCheckoutSession(event.data.object, env);
+        break;
+      case 'invoice.paid':
+        await updateSubscriptionStatus(event.data.object, 'active', env);
+        break;
+      case 'invoice.payment_failed':
+        await updateSubscriptionStatus(event.data.object, 'past_due', env);
+        break;
+      default:
+        console.log('Unhandled event:', event.type);
+    }
+  } catch (error) {
+    // Drop the idempotency row so Stripe's retry can actually process the event.
+    await supabase
+      .from('webhook_events')
+      .delete()
+      .eq('stripe_event_id', event.id)
+      .eq('environment', env);
+    throw error;
   }
 }
 

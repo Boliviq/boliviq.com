@@ -61,3 +61,19 @@ export function couponPlanFromCheckoutSession(session: {
   const meta = session?.metadata ?? {};
   return meta.planName ?? meta.plan ?? null;
 }
+
+export function subscriptionIdFromCheckoutSession(session: {
+  subscription?: unknown;
+  invoice?: unknown;
+} | null | undefined): string | null {
+  const fromSession = stripeId(session?.subscription);
+  if (fromSession) return fromSession;
+  if (session?.invoice && typeof session.invoice === "object") {
+    return subscriptionIdFromInvoice(session.invoice as Parameters<typeof subscriptionIdFromInvoice>[0]);
+  }
+  return null;
+}
+
+export function isUniqueViolation(error: { code?: string } | null | undefined): boolean {
+  return error?.code === "23505";
+}
