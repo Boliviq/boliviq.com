@@ -7,7 +7,7 @@ import {
 import {
   LayoutDashboard, Building2, Calculator, Users, UserRound, Kanban, Phone,
   CheckSquare, Sigma, BarChart3, Plug, CreditCard, Settings, Zap,
-  Shield, Megaphone, LifeBuoy, Ticket, Users2,
+  Shield, Megaphone, LifeBuoy, Ticket, Users2, DollarSign,
 } from "lucide-react";
 
 const nav = [
@@ -29,6 +29,7 @@ const adminNav = [
   { title: "Checkout Verify", url: "/admin/checkout-verification", icon: CreditCard },
   { title: "Users", url: "/admin/users", icon: Users2 },
   { title: "Promotions", url: "/promotions", icon: Ticket },
+  { title: "Plan pricing", url: "/admin/pricing", icon: DollarSign },
   { title: "Marketing", url: "/marketing", icon: Megaphone },
 ] as const;
 

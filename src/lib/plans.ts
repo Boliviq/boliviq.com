@@ -14,6 +14,8 @@ export type Plan = {
   aiMax?: boolean;
   badge?: string;
   seatNote?: string;
+  extraSeatMonthly?: number;
+  includedSeats?: number;
 };
 
 export const plans: Plan[] = [
@@ -95,6 +97,8 @@ export const plans: Plan[] = [
     annual: 3830,
     priceMonthly: "team_v2_monthly",
     priceYearly: "team_v2_yearly",
+    extraSeatMonthly: 99,
+    includedSeats: 5,
     seatNote: "5 users included · $99/mo per additional seat",
     features: [
       "Shared CRM, Pipeline, Properties & Credit Wallet",
@@ -114,6 +118,8 @@ export const plans: Plan[] = [
     priceYearly: "team_aimax_yearly",
     aiMax: true,
     badge: "AI Max",
+    extraSeatMonthly: 99,
+    includedSeats: 5,
     seatNote: "5 users included · $99/mo per additional seat",
     features: [
       "Everything in Team",

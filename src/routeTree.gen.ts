@@ -47,6 +47,7 @@ import { Route as AuthenticatedBillingRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedAutomationsRouteImport } from './routes/_authenticated/automations'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin.users'
+import { Route as AuthenticatedAdminPricingRouteImport } from './routes/_authenticated/admin.pricing'
 import { Route as AuthenticatedAdminLaunchVerificationRouteImport } from './routes/_authenticated/admin.launch-verification'
 import { Route as AuthenticatedAdminCheckoutVerificationRouteImport } from './routes/_authenticated/admin.checkout-verification'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
@@ -244,6 +245,12 @@ const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersRouteImport.update({
   path: '/users',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminPricingRoute =
+  AuthenticatedAdminPricingRouteImport.update({
+    id: '/pricing',
+    path: '/pricing',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminLaunchVerificationRoute =
   AuthenticatedAdminLaunchVerificationRouteImport.update({
     id: '/launch-verification',
@@ -302,6 +309,7 @@ export interface FileRoutesByFullPath {
   '/tasks': typeof AuthenticatedTasksRoute
   '/admin/checkout-verification': typeof AuthenticatedAdminCheckoutVerificationRoute
   '/admin/launch-verification': typeof AuthenticatedAdminLaunchVerificationRoute
+  '/admin/pricing': typeof AuthenticatedAdminPricingRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
@@ -344,6 +352,7 @@ export interface FileRoutesByTo {
   '/tasks': typeof AuthenticatedTasksRoute
   '/admin/checkout-verification': typeof AuthenticatedAdminCheckoutVerificationRoute
   '/admin/launch-verification': typeof AuthenticatedAdminLaunchVerificationRoute
+  '/admin/pricing': typeof AuthenticatedAdminPricingRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
@@ -388,6 +397,7 @@ export interface FileRoutesById {
   '/_authenticated/tasks': typeof AuthenticatedTasksRoute
   '/_authenticated/admin/checkout-verification': typeof AuthenticatedAdminCheckoutVerificationRoute
   '/_authenticated/admin/launch-verification': typeof AuthenticatedAdminLaunchVerificationRoute
+  '/_authenticated/admin/pricing': typeof AuthenticatedAdminPricingRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
@@ -432,6 +442,7 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/admin/checkout-verification'
     | '/admin/launch-verification'
+    | '/admin/pricing'
     | '/admin/users'
     | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
@@ -474,6 +485,7 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/admin/checkout-verification'
     | '/admin/launch-verification'
+    | '/admin/pricing'
     | '/admin/users'
     | '/api/public/payments/webhook'
   id:
@@ -517,6 +529,7 @@ export interface FileRouteTypes {
     | '/_authenticated/tasks'
     | '/_authenticated/admin/checkout-verification'
     | '/_authenticated/admin/launch-verification'
+    | '/_authenticated/admin/pricing'
     | '/_authenticated/admin/users'
     | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
@@ -811,6 +824,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminUsersRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/pricing': {
+      id: '/_authenticated/admin/pricing'
+      path: '/pricing'
+      fullPath: '/admin/pricing'
+      preLoaderRoute: typeof AuthenticatedAdminPricingRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/launch-verification': {
       id: '/_authenticated/admin/launch-verification'
       path: '/launch-verification'
@@ -838,6 +858,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminCheckoutVerificationRoute: typeof AuthenticatedAdminCheckoutVerificationRoute
   AuthenticatedAdminLaunchVerificationRoute: typeof AuthenticatedAdminLaunchVerificationRoute
+  AuthenticatedAdminPricingRoute: typeof AuthenticatedAdminPricingRoute
   AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
 }
 
@@ -846,6 +867,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
     AuthenticatedAdminCheckoutVerificationRoute,
   AuthenticatedAdminLaunchVerificationRoute:
     AuthenticatedAdminLaunchVerificationRoute,
+  AuthenticatedAdminPricingRoute: AuthenticatedAdminPricingRoute,
   AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
 }
 

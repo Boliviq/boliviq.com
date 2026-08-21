@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { MarketingLayout } from "@/components/marketing-layout";
 import { Check, Sparkles } from "lucide-react";
 import { plans, AI_MAX_DISCLAIMER } from "@/lib/plans";
+import { useCatalogPlans } from "@/hooks/use-catalog-plans";
 
 export const Route = createFileRoute("/pricing")({
   head: () => ({
@@ -21,8 +22,9 @@ export const Route = createFileRoute("/pricing")({
 
 function Pricing() {
   const [annual, setAnnual] = useState(false);
-  const core = plans.filter((p) => !p.aiMax);
-  const aiMax = plans.filter((p) => p.aiMax);
+  const { data: catalog = plans } = useCatalogPlans();
+  const core = catalog.filter((p) => !p.aiMax);
+  const aiMax = catalog.filter((p) => p.aiMax);
 
   return (
     <MarketingLayout>

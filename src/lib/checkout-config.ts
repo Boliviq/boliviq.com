@@ -1,4 +1,4 @@
-import { plans, type PlanTier } from '@/lib/plans';
+import { plans, type Plan, type PlanTier } from '@/lib/plans';
 
 export type BillingInterval = 'month' | 'year';
 
@@ -17,8 +17,8 @@ export type BillingOption = {
   buttonLabel: string;
 };
 
-export function listBillingOptions(): BillingOption[] {
-  return plans.flatMap((plan) => {
+export function listBillingOptions(catalog: Plan[] = plans): BillingOption[] {
+  return catalog.flatMap((plan) => {
     if (!plan.priceMonthly || !plan.priceYearly || plan.tier === 'free') return [];
     return [
       {
@@ -41,14 +41,14 @@ export function listBillingOptions(): BillingOption[] {
   });
 }
 
-export function getBillingOption(planTier: string, interval: string): BillingOption {
-  const option = listBillingOptions().find((item) => item.planTier === planTier && item.interval === interval);
+export function getBillingOption(planTier: string, interval: string, catalog: Plan[] = plans): BillingOption {
+  const option = listBillingOptions(catalog).find((item) => item.planTier === planTier && item.interval === interval);
   if (!option) throw new Error('Invalid plan or billing interval.');
   return option;
 }
 
-export function getBillingOptionByLookupKey(lookupKey: string): BillingOption {
-  const option = listBillingOptions().find((item) => item.lookupKey === lookupKey);
+export function getBillingOptionByLookupKey(lookupKey: string, catalog: Plan[] = plans): BillingOption {
+  const option = listBillingOptions(catalog).find((item) => item.lookupKey === lookupKey);
   if (!option) throw new Error('Invalid checkout price lookup key.');
   return option;
 }

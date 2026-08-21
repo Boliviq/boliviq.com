@@ -19,7 +19,9 @@ import {
   stripeApiKeyEnvLabel,
   stripeWebhookSecretEnvLabel,
 } from '@/lib/stripe.server';
-import { EXPECTED_PLANS, normalizeStatus, hasPaidAccess } from '@/lib/subscription-access';
+import { listBillingOptions } from '@/lib/checkout-config';
+import { loadCatalogPlans } from '@/lib/plan-prices.functions';
+import { normalizeStatus, hasPaidAccess } from '@/lib/subscription-access';
 
 function mask(id: string | null | undefined): string {
   if (!id) return '—';
@@ -113,11 +115,15 @@ export const runLaunchPrecheck = createServerFn({ method: 'POST' })
         return { environment: env, items };
       }
 
-      // Prices — all 10 expected lookup keys, active, and matching amount/interval.
+      const expectedPlans = listBillingOptions(await loadCatalogPlans()).map((option) => ({
+        lookupKey: option.lookupKey,
+        amount: option.amount,
+        interval: option.interval,
+      }));
       let priceFailures = 0;
       let priceWarnings = 0;
       const priceNotes: string[] = [];
-      for (const expected of EXPECTED_PLANS) {
+      for (const expected of expectedPlans) {
         try {
           const list = await stripe.prices.list({ lookup_keys: [expected.lookupKey], limit: 5 });
           if (!list.data.length) {
@@ -145,7 +151,7 @@ export const runLaunchPrecheck = createServerFn({ method: 'POST' })
       }
       items.push({
         key: 'prices',
-        label: `All ${EXPECTED_PLANS.length} Boliviq lookup keys`,
+        label: `All ${expectedPlans.length} Boliviq lookup keys`,
         status: priceFailures ? 'FAIL' : priceWarnings ? 'WARNING' : 'PASS',
         detail:
           priceFailures || priceWarnings

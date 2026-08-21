@@ -20,6 +20,7 @@ import { createBoliviqCheckout, createBoliviqPortalSession } from "@/lib/billing
 import { getStripeEnvironment, isPaymentsConfigured } from "@/lib/stripe";
 
 import { plans, AI_MAX_DISCLAIMER, type Plan } from "@/lib/plans";
+import { useCatalogPlans } from "@/hooks/use-catalog-plans";
 
 export const Route = createFileRoute("/_authenticated/billing")({
   component: Billing,
@@ -44,6 +45,7 @@ function Billing() {
   const [confirmTimedOut, setConfirmTimedOut] = useState(false);
   const { userId } = useCurrentUser();
   const qc = useQueryClient();
+  const { data: catalog = plans } = useCatalogPlans();
 
 
   useEffect(() => {
@@ -355,7 +357,7 @@ function Billing() {
           </Card>
 
           <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {plans.map((p) => {
+            {catalog.map((p) => {
               const price = annual ? p.annual : p.monthly;
               const suffix = annual ? "/yr" : "/mo";
               const isCurrent = p.name === currentPlan;

@@ -607,6 +607,51 @@ export type Database = {
         }
         Relationships: []
       }
+      plan_prices: {
+        Row: {
+          annual: number
+          extra_seat_monthly: number | null
+          monthly: number
+          tier: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          annual: number
+          extra_seat_monthly?: number | null
+          monthly: number
+          tier: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          annual?: number
+          extra_seat_monthly?: number | null
+          monthly?: number
+          tier?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      platform_settings: {
+        Row: {
+          id: string
+          master_admin_user_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          master_admin_user_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          master_admin_user_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -1011,6 +1056,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_master_admin: {
+        Args: { _user_id: string }
         Returns: boolean
       }
     }

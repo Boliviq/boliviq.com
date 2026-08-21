@@ -92,6 +92,12 @@ function Admin() {
       <div className="space-y-6 p-4 sm:p-8">
         <div className="rounded-lg border border-primary/40 bg-primary/5 p-3 text-sm flex items-center justify-between gap-3 flex-wrap">
           <div>
+            <strong>Plan pricing</strong> — master admin can change every plan price, extra-seat rate, and sync Stripe lookup keys.
+          </div>
+          <Link to="/admin/pricing" className="text-primary underline text-sm">Open Plan pricing →</Link>
+        </div>
+        <div className="rounded-lg border border-primary/40 bg-primary/5 p-3 text-sm flex items-center justify-between gap-3 flex-wrap">
+          <div>
             <strong>Billing Launch Verification</strong> — guided owner checks that must pass before public launch.
           </div>
           <Link to="/admin/launch-verification" className="text-primary underline text-sm">Open Launch Verification →</Link>

@@ -4,7 +4,8 @@ import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
 import { assertAdminUser, isAdminUser } from '@/lib/assert-admin';
 import { z } from 'zod';
 import { type StripeEnv, createStripeClient, getStripeErrorMessage, isStripeApiConfigured, isStripeWebhookConfigured, stripeApiKeyEnvLabel, stripeWebhookSecretEnvLabel, STRIPE_API_VERSION, STRIPE_SDK_VERSION } from '@/lib/stripe.server';
-import { BLOCKING_SUB_STATES, EXPECTED_PLANS } from '@/lib/subscription-access';
+import { loadCatalogPlans } from '@/lib/plan-prices.functions';
+import { BLOCKING_SUB_STATES } from '@/lib/subscription-access';
 import {
   BILLING_IMPLEMENTATION_VERSION,
   CHECKOUT_BUILD_ID,
@@ -257,7 +258,8 @@ export const createBoliviqCheckout = createServerFn({ method: 'POST' })
   .validator((data: unknown) => checkoutInput.parse(data))
   .handler(async ({ data, context }): Promise<CheckoutResult> => {
     setResponseHeader('Cache-Control', 'no-store, max-age=0');
-    const option = getBillingOption(data.planTier, data.interval);
+    const catalog = await loadCatalogPlans();
+    const option = getBillingOption(data.planTier, data.interval, catalog);
     try {
       const returnUrl = assertApprovedReturnUrl(data.returnUrl);
       const stripe = createStripeClient(data.environment as StripeEnv);
@@ -592,11 +594,17 @@ export const runBillingDiagnostics = createServerFn({ method: 'POST' })
     const { userId } = context;
     await assertAdminUser(userId);
 
+    const catalog = await loadCatalogPlans();
+    const expectedPlans = listBillingOptions(catalog).map((option) => ({
+      lookupKey: option.lookupKey,
+      amount: option.amount,
+      interval: option.interval,
+    }));
     const rows: DiagnosticRow[] = [];
 
     try {
       const stripe = createStripeClient(data.environment);
-      for (const expected of EXPECTED_PLANS) {
+      for (const expected of expectedPlans) {
         const notes: string[] = [];
         try {
           // Omit `active` to include BOTH active and inactive — so we can
@@ -804,7 +812,8 @@ export const runCheckoutVerification = createServerFn({ method: 'POST' })
     environmentChecks.push({ key: 'return_url', status: returnUrl.includes('/billing?checkout=success') ? 'PASS' : 'FAIL', detail: returnUrl });
     environmentChecks.push({ key: 'lovable_cloud', status: process.env.SUPABASE_URL && process.env.SUPABASE_PUBLISHABLE_KEY ? 'PASS' : 'FAIL', detail: 'Required backend environment variables checked without exposing values.' });
 
-    const plansRows = listBillingOptions().map((option) => buildStaticVerificationRow(option, returnUrl));
+    const catalog = await loadCatalogPlans();
+    const plansRows = listBillingOptions(catalog).map((option) => buildStaticVerificationRow(option, returnUrl));
     try {
       const stripe = createStripeClient(data.environment);
       for (const row of plansRows) {
@@ -872,7 +881,8 @@ export const validateCheckoutSessionConfig = createServerFn({ method: 'POST' })
   .handler(async ({ data, context }) => {
     setResponseHeader('Cache-Control', 'no-store, max-age=0');
     await assertAdmin(context);
-    const option = getBillingOption(data.planTier, data.interval);
+    const catalog = await loadCatalogPlans();
+    const option = getBillingOption(data.planTier, data.interval, catalog);
     const returnUrl = assertApprovedReturnUrl(data.returnUrl ?? 'https://boliviq.com/billing?checkout=success');
     const row = buildStaticVerificationRow(option, returnUrl);
     return {
