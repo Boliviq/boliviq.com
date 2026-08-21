@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
   Phone, Sparkles, Mail, Calendar, Workflow, Cable,
@@ -14,6 +16,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { listIntegrations, saveIntegration, disconnectIntegration } from "@/lib/integrations.functions";
+import { useCurrentUser } from "@/hooks/use-current-user";
 
 export const Route = createFileRoute("/_authenticated/integrations")({
   head: () => ({ meta: [
@@ -24,78 +28,99 @@ export const Route = createFileRoute("/_authenticated/integrations")({
 });
 
 type Provider = {
-  id: string;
+  id: "openai" | "twilio" | "vapi" | "retell" | "zapier" | "make" | "n8n";
   name: string;
   category: string;
   desc: string;
-  status: "connect" | "coming";
   needsKey?: boolean;
   helpUrl?: string;
   setupSteps?: string[];
+  keyHint?: string;
   icon: React.ComponentType<{ className?: string }>;
 };
 
 const PROVIDERS: Provider[] = [
-  { id: "twilio", name: "Twilio", category: "Telephony", desc: "SMS and voice calling API.", status: "connect", needsKey: true,
-    helpUrl: "https://www.twilio.com/console",
-    setupSteps: ["Create a Twilio account", "Buy or import a phone number", "Copy Account SID and Auth Token from the console"],
-    icon: Phone },
-  { id: "vapi", name: "Vapi", category: "AI Voice", desc: "AI voice agents that can handle calls.", status: "connect", needsKey: true,
-    helpUrl: "https://vapi.ai", setupSteps: ["Sign up at vapi.ai", "Create an assistant", "Generate an API key"],
-    icon: Sparkles },
-  { id: "retell", name: "Retell AI", category: "AI Voice", desc: "Realtime voice agents for outbound calls.", status: "connect", needsKey: true,
-    helpUrl: "https://retellai.com", setupSteps: ["Sign up at retellai.com", "Create an agent", "Copy your API key"],
-    icon: Sparkles },
-  { id: "openai", name: "OpenAI", category: "AI Models", desc: "Enhanced deal scoring & summaries.", status: "connect", needsKey: true,
+  { id: "openai", name: "OpenAI", category: "AI Models", desc: "Call summaries, scripts, and deal memos.", needsKey: true,
     helpUrl: "https://platform.openai.com/api-keys",
     setupSteps: ["Sign in at platform.openai.com", "Create an API key with model access"],
-    icon: Sparkles },
-  { id: "gcal", name: "Google Calendar", category: "Calendar", desc: "Sync tasks and property appointments.", status: "connect",
-    helpUrl: "https://calendar.google.com", setupSteps: ["Click Connect and authorize with Google"],
-    icon: Calendar },
-  { id: "gmail", name: "Gmail", category: "Email", desc: "Send offers, follow-ups, and reminders.", status: "connect",
-    setupSteps: ["Click Connect and authorize with Google"], icon: Mail },
-  { id: "outlook", name: "Outlook", category: "Email", desc: "Microsoft 365 mail and calendar.", status: "coming", icon: Mail },
-  { id: "zapier", name: "Zapier", category: "Automation", desc: "Trigger 6,000+ apps from Boliviq events.", status: "connect", needsKey: true,
-    helpUrl: "https://zapier.com/apps", setupSteps: ["Create a Zap starting with a webhook", "Copy the webhook URL"],
-    icon: Workflow },
-  { id: "make", name: "Make", category: "Automation", desc: "Visual workflow builder.", status: "connect", needsKey: true,
-    helpUrl: "https://www.make.com", setupSteps: ["Create a webhook scenario", "Copy the webhook URL"],
-    icon: Workflow },
-  { id: "n8n", name: "n8n", category: "Automation", desc: "Self-hosted workflow automation.", status: "connect", needsKey: true,
-    helpUrl: "https://n8n.io", setupSteps: ["Add a webhook node in n8n", "Copy the production URL"],
-    icon: Cable },
+    keyHint: "sk-...", icon: Sparkles },
+  { id: "twilio", name: "Twilio", category: "Telephony", desc: "SMS and voice API credentials (stored for outbound tools).", needsKey: true,
+    helpUrl: "https://www.twilio.com/console",
+    setupSteps: ["Copy Account SID and Auth Token", "Paste as AccountSID:AuthToken"],
+    keyHint: "ACxxx:auth_token", icon: Phone },
+  { id: "vapi", name: "Vapi", category: "AI Voice", desc: "AI voice agents. Key is verified against the Vapi API.", needsKey: true,
+    helpUrl: "https://vapi.ai", setupSteps: ["Create an assistant", "Generate an API key"], icon: Sparkles },
+  { id: "retell", name: "Retell AI", category: "AI Voice", desc: "Realtime voice agents. Key is verified against Retell.", needsKey: true,
+    helpUrl: "https://retellai.com", setupSteps: ["Create an agent", "Copy your API key"], icon: Sparkles },
+  { id: "zapier", name: "Zapier", category: "Automation", desc: "Sends a test POST to your Catch Hook URL.", needsKey: true,
+    helpUrl: "https://zapier.com/apps", setupSteps: ["Create a Zap starting with a webhook", "Paste the webhook URL"],
+    keyHint: "https://hooks.zapier.com/...", icon: Workflow },
+  { id: "make", name: "Make", category: "Automation", desc: "Sends a test POST to your scenario webhook.", needsKey: true,
+    helpUrl: "https://www.make.com", setupSteps: ["Create a webhook scenario", "Paste the webhook URL"],
+    keyHint: "https://hook.eu1.make.com/...", icon: Workflow },
+  { id: "n8n", name: "n8n", category: "Automation", desc: "Sends a test POST to your webhook node.", needsKey: true,
+    helpUrl: "https://n8n.io", setupSteps: ["Add a webhook node", "Paste the production URL"],
+    keyHint: "https://n8n.example.com/webhook/...", icon: Cable },
+];
+
+const OAUTH_SOON = [
+  { id: "gcal", name: "Google Calendar", category: "Calendar", desc: "Requires a Google Cloud OAuth client with Calendar scope on the server.", icon: Calendar },
+  { id: "gmail", name: "Gmail", category: "Email", desc: "Requires a Google Cloud OAuth client with Gmail send scope on the server.", icon: Mail },
 ];
 
 function IntegrationsPage() {
-  const [connected, setConnected] = useState<Record<string, boolean>>({});
+  const { userId } = useCurrentUser();
+  const qc = useQueryClient();
+  const listFn = useServerFn(listIntegrations);
+  const saveFn = useServerFn(saveIntegration);
+  const disconnectFn = useServerFn(disconnectIntegration);
   const [dialog, setDialog] = useState<Provider | null>(null);
   const [keyValue, setKeyValue] = useState("");
+
+  const { data: rows = [] } = useQuery({
+    queryKey: ["integrations", userId],
+    enabled: !!userId,
+    queryFn: () => listFn({ data: {} }),
+  });
+  const connected = new Set((rows as any[]).filter((r) => r.status === "connected").map((r) => r.provider));
+
+  const save = useMutation({
+    mutationFn: async () => {
+      if (!dialog) throw new Error("No provider");
+      return saveFn({ data: { provider: dialog.id, apiKey: keyValue } });
+    },
+    onSuccess: (res) => {
+      toast.success(`${dialog?.name} connected`, { description: res.detail });
+      setDialog(null);
+      setKeyValue("");
+      qc.invalidateQueries({ queryKey: ["integrations"] });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Could not connect"),
+  });
+
+  const disconnect = useMutation({
+    mutationFn: (provider: Provider["id"]) => disconnectFn({ data: { provider } }),
+    onSuccess: () => {
+      toast.success("Disconnected");
+      qc.invalidateQueries({ queryKey: ["integrations"] });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Could not disconnect"),
+  });
 
   const grouped = PROVIDERS.reduce<Record<string, Provider[]>>((acc, p) => {
     (acc[p.category] ||= []).push(p);
     return acc;
   }, {});
 
-  const connect = () => {
-    if (!dialog) return;
-    setConnected({ ...connected, [dialog.id]: true });
-    toast.success(`${dialog.name} connected`, {
-      description: dialog.needsKey ? "API key stored securely — never shown again." : "Authorization complete.",
-    });
-    setKeyValue("");
-    setDialog(null);
-  };
-
   return (
     <div className="flex flex-col">
-      <PageHeader title="Integrations" description="Connect calling, calendar, email, and automation tools." />
+      <PageHeader title="Integrations" description="API keys are stored on the server and never sent back to the browser." />
       <div className="space-y-8 p-4 sm:p-8">
         <Alert>
           <ShieldCheck className="h-4 w-4" />
           <AlertDescription className="text-sm">
-            API keys and OAuth tokens are stored securely and are never displayed again after saving.
-            Only listed connectors are live — items marked <em>Coming Soon</em> are not yet integrated.
+            Connect OpenAI to power call summaries, scripts, and deal memos. You can also set a platform-wide
+            <code className="mx-1">OPENAI_API_KEY</code> environment variable. Keys are tested against the provider before saving.
           </AlertDescription>
         </Alert>
 
@@ -114,10 +139,8 @@ function IntegrationsPage() {
                           <CardDescription className="text-xs">{p.category}</CardDescription>
                         </div>
                       </div>
-                      {connected[p.id] ? (
+                      {connected.has(p.id) ? (
                         <Badge className="gap-1"><CheckCircle2 className="h-3 w-3" />Connected</Badge>
-                      ) : p.status === "coming" ? (
-                        <Badge variant="outline">Coming Soon</Badge>
                       ) : (
                         <Badge variant="secondary">Not connected</Badge>
                       )}
@@ -125,15 +148,13 @@ function IntegrationsPage() {
                   </CardHeader>
                   <CardContent>
                     <p className="mb-3 text-sm text-muted-foreground">{p.desc}</p>
-                    {p.status === "coming" ? (
-                      <Button variant="outline" className="w-full" disabled>Notify me when ready</Button>
-                    ) : connected[p.id] ? (
+                    {connected.has(p.id) ? (
                       <div className="flex gap-2">
-                        <Button variant="outline" className="flex-1" onClick={() => { setConnected({ ...connected, [p.id]: false }); toast(`${p.name} disconnected`); }}>Disconnect</Button>
+                        <Button variant="outline" className="flex-1" onClick={() => disconnect.mutate(p.id)}>Disconnect</Button>
                         {p.helpUrl && <Button variant="outline" size="icon" asChild><a href={p.helpUrl} target="_blank" rel="noreferrer"><ExternalLink className="h-4 w-4" /></a></Button>}
                       </div>
                     ) : (
-                      <Button className="w-full" onClick={() => setDialog(p)}>{p.needsKey ? <><KeyRound className="mr-2 h-4 w-4" />Connect with API key</> : "Connect"}</Button>
+                      <Button className="w-full" onClick={() => setDialog(p)}><KeyRound className="mr-2 h-4 w-4" />Connect</Button>
                     )}
                   </CardContent>
                 </Card>
@@ -141,6 +162,28 @@ function IntegrationsPage() {
             </div>
           </div>
         ))}
+
+        <div>
+          <h2 className="mb-3 font-display text-lg font-bold">Google (platform OAuth)</h2>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {OAUTH_SOON.map((p) => (
+              <Card key={p.id}>
+                <CardHeader className="pb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="grid h-10 w-10 place-items-center rounded-lg bg-muted text-muted-foreground"><p.icon className="h-5 w-5" /></div>
+                    <div>
+                      <CardTitle className="text-base">{p.name}</CardTitle>
+                      <Badge variant="outline">Needs OAuth client</Badge>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">{p.desc}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
       </div>
 
       <Dialog open={!!dialog} onOpenChange={(o) => !o && setDialog(null)}>
@@ -150,22 +193,17 @@ function IntegrationsPage() {
             <DialogDescription>{dialog?.desc}</DialogDescription>
           </DialogHeader>
           {dialog?.setupSteps && (
-            <div className="rounded-lg border bg-muted/40 p-3">
-              <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Setup steps</div>
-              <ol className="ml-5 list-decimal space-y-1 text-sm">{dialog.setupSteps.map((s, i) => <li key={i}>{s}</li>)}</ol>
-              {dialog.helpUrl && <a href={dialog.helpUrl} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-xs text-primary hover:underline">Open provider <ExternalLink className="h-3 w-3" /></a>}
-            </div>
+            <ol className="ml-5 list-decimal space-y-1 text-sm">{dialog.setupSteps.map((s) => <li key={s}>{s}</li>)}</ol>
           )}
-          {dialog?.needsKey && (
-            <div className="space-y-2">
-              <Label className="text-xs">API key</Label>
-              <Input type="password" value={keyValue} onChange={(e) => setKeyValue(e.target.value)} placeholder="Paste your key…" />
-              <p className="text-xs text-muted-foreground">Stored securely and never shown again after saving.</p>
-            </div>
-          )}
+          <div className="space-y-2">
+            <Label className="text-xs">API key or webhook URL</Label>
+            <Input type="password" value={keyValue} onChange={(e) => setKeyValue(e.target.value)} placeholder={dialog?.keyHint ?? "Paste your key…"} />
+          </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialog(null)}>Cancel</Button>
-            <Button onClick={connect} disabled={dialog?.needsKey && !keyValue}>Save & connect</Button>
+            <Button onClick={() => save.mutate()} disabled={save.isPending || keyValue.trim().length < 8}>
+              {save.isPending ? "Testing…" : "Test & save"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

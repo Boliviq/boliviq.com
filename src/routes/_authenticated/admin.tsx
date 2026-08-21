@@ -12,6 +12,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { runBillingDiagnostics } from "@/lib/billing.functions";
+import { getAdminOverview } from "@/lib/admin-users.functions";
 import { getStripeEnvironment } from "@/lib/stripe";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -56,18 +57,14 @@ function AdminGate() {
   return <Admin />;
 }
 
-type DemoUser = { id: string; email: string; name: string; plan: string; status: "active" | "trial" | "canceled"; properties: number; joined: string };
-
-const demoUsers: DemoUser[] = [
-  { id: "u1", email: "alex@example.com", name: "Alex Ramirez", plan: "Professional", status: "active", properties: 218, joined: "2026-04-12" },
-  { id: "u2", email: "priya@example.com", name: "Priya Shah", plan: "Starter", status: "trial", properties: 34, joined: "2026-07-01" },
-  { id: "u3", email: "jordan@example.com", name: "Jordan Tan", plan: "Team", status: "active", properties: 1240, joined: "2025-11-03" },
-  { id: "u4", email: "sam@example.com", name: "Sam Wu", plan: "Free", status: "canceled", properties: 6, joined: "2026-05-19" },
-];
-
 function Admin() {
   const [q, setQ] = useState("");
-  const filtered = demoUsers.filter((u) => (u.email + u.name).toLowerCase().includes(q.toLowerCase()));
+  const overviewFn = useServerFn(getAdminOverview);
+  const { data: overview } = useQuery({
+    queryKey: ["admin-overview"],
+    queryFn: () => overviewFn({ data: {} }),
+  });
+  const filtered = (overview?.users ?? []).filter((u) => (u.email + u.name).toLowerCase().includes(q.toLowerCase()));
   const diagFn = useServerFn(runBillingDiagnostics);
   const [diag, setDiag] = useState<Awaited<ReturnType<typeof runBillingDiagnostics>> | null>(null);
   const [diagBusy, setDiagBusy] = useState(false);
@@ -88,7 +85,7 @@ function Admin() {
 
   return (
     <>
-      <PageHeader title="Admin dashboard" description="Operational overview. Placeholder metrics shown until real analytics are wired up." />
+      <PageHeader title="Admin dashboard" description="Live workspace metrics from Supabase." />
       <div className="space-y-6 p-4 sm:p-8">
         <div className="rounded-lg border border-primary/40 bg-primary/5 p-3 text-sm flex items-center justify-between gap-3 flex-wrap">
           <div>
@@ -102,8 +99,8 @@ function Admin() {
           </div>
           <Link to="/admin/checkout-verification" className="text-primary underline text-sm">Open Checkout Verification →</Link>
         </div>
-        <div className="rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm">
-          <strong>Preview data.</strong> The metrics and users below are placeholders. Real analytics wire-up is on the launch backlog.
+        <div className="rounded-lg border border-success/40 bg-success/10 p-3 text-sm">
+          Metrics below are live counts from this Supabase project.
         </div>
 
         <Card>
@@ -180,36 +177,27 @@ function Admin() {
 
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Stat icon={Users} label="Total users" value="1,284" delta="+42 this week" />
-          <Stat icon={DollarSign} label="MRR" value="$18,340" delta="+6.2% MoM" />
-          <Stat icon={TrendingUp} label="Active subscriptions" value="612" delta="+18 this week" />
-          <Stat icon={TrendingDown} label="Churn (30d)" value="2.1%" delta="—" tone="warning" />
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Stat icon={Users} label="Trial users" value="89" />
-          <Stat icon={Building2} label="Properties created" value="42,318" />
-          <Stat icon={Phone} label="Calls logged" value="6,102" />
-          <Stat icon={FileText} label="Reports generated" value="3,447" />
+          <Stat icon={Users} label="Total users" value={String(overview?.totalUsers ?? "—")} delta={`+${overview?.newUsers7d ?? 0} this week`} />
+          <Stat icon={TrendingUp} label="Active subscriptions" value={String(overview?.activeSubscriptions ?? "—")} />
+          <Stat icon={Building2} label="Properties created" value={String(overview?.properties ?? "—")} />
+          <Stat icon={Phone} label="Calls logged" value={String(overview?.calls ?? "—")} />
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
           <Card>
-            <CardHeader><CardTitle>Support requests</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Inbound submissions</CardTitle></CardHeader>
             <CardContent className="text-sm text-muted-foreground">
-              <div className="flex items-center justify-between"><span>Open</span><Badge>7</Badge></div>
-              <div className="mt-2 flex items-center justify-between"><span>Waiting on customer</span><Badge variant="secondary">3</Badge></div>
-              <div className="mt-2 flex items-center justify-between"><span>Resolved (7d)</span><Badge variant="outline">24</Badge></div>
+              <div className="flex items-center justify-between"><span>Recent contact / demo forms</span><Badge>{overview?.inboundOpen ?? 0}</Badge></div>
+              <p className="mt-2 text-xs">See Marketing → Submissions for the full list.</p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-warning" />
-              <CardTitle>System errors (24h)</CardTitle>
+              <CardTitle>System</CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground">
-              <div>0 critical · 3 warnings · 128 info</div>
-              <p className="mt-2 text-xs">Wire an error monitor (Sentry / LogRocket / Highlight) to populate this in production.</p>
+              <p>User management lives on <Link to="/admin/users" className="underline">Admin → Users</Link>.</p>
             </CardContent>
           </Card>
         </div>
@@ -251,10 +239,7 @@ function Admin() {
                       <td className="py-2 text-right tabular-nums">{u.properties.toLocaleString()}</td>
                       <td className="py-2 pl-4">{u.joined}</td>
                       <td className="py-2 text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button size="sm" variant="ghost" onClick={() => toast.info("Plan change UI — connect Stripe to enable.")}>Change plan</Button>
-                          <Button size="sm" variant="ghost" onClick={() => toast.warning(`${u.name} would be disabled.`)}>Disable</Button>
-                        </div>
+                        <Link to="/admin/users" className="text-xs underline">Manage</Link>
                       </td>
                     </tr>
                   ))}

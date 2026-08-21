@@ -17,6 +17,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { dispatchAutomationEvent } from "@/lib/automations.functions";
+import { useServerFn } from "@tanstack/react-start";
 
 export const Route = createFileRoute("/_authenticated/automations")({
   head: () => ({ meta: [
@@ -58,6 +60,7 @@ const RECIPES = [
 function AutomationsPage() {
   const { userId } = useCurrentUser();
   const qc = useQueryClient();
+  const dispatchAuto = useServerFn(dispatchAutomationEvent);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
 
@@ -101,6 +104,28 @@ function AutomationsPage() {
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["automations"] }),
+  });
+
+  const testRun = useMutation({
+    mutationFn: async (a: any) => {
+      const res = await dispatchAuto({
+        data: {
+          trigger: a.trigger_type,
+          automationId: a.id,
+          payload: {
+            score: a.condition?.threshold ?? 90,
+          },
+        },
+      });
+      return res;
+    },
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: ["automations"] });
+      qc.invalidateQueries({ queryKey: ["tasks"] });
+      const names = res?.ran?.length ? res.ran.join(", ") : "no matching actions";
+      toast.success("Test run complete", { description: names });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Test run failed"),
   });
 
   const useRecipe = (r: typeof RECIPES[number]) => {
@@ -176,7 +201,7 @@ function AutomationsPage() {
                     <div className="flex items-center gap-2">
                       <Switch checked={a.enabled} onCheckedChange={(v) => toggle.mutate({ id: a.id, enabled: v })} />
                       <Button variant="outline" size="sm" onClick={() => { setEditing(a); setOpen(true); }}>Edit</Button>
-                      <Button variant="outline" size="icon" onClick={() => toast("Test run queued", { description: "Test execution is coming soon." })}><Play className="h-4 w-4" /></Button>
+                      <Button variant="outline" size="icon" onClick={() => testRun.mutate(a)} disabled={testRun.isPending}><Play className="h-4 w-4" /></Button>
                       <Button variant="outline" size="icon" onClick={() => del.mutate(a.id)}><Trash2 className="h-4 w-4" /></Button>
                     </div>
                   </CardContent>

@@ -24,6 +24,10 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { useEntitlement } from "@/hooks/use-entitlement";
+import { useServerFn } from "@tanstack/react-start";
+import { analyzeDealAi } from "@/lib/ai.functions";
+import { dispatchAutomationEvent } from "@/lib/automations.functions";
 import {
   analyzeFlip, analyzeRental, analyzeBrrrr, analyzeWholesale,
   dealScore, scoreBand, mao, fmtMoney, fmtPct, num,
@@ -45,6 +49,11 @@ const emptyRehabRows = (): RehabRow[] =>
 
 function DealAnalyzer() {
   const { userId } = useCurrentUser();
+  const { data: entitlement } = useEntitlement();
+  const analyzeFn = useServerFn(analyzeDealAi);
+  const dispatchAuto = useServerFn(dispatchAutomationEvent);
+  const [aiMemo, setAiMemo] = useState<string | null>(null);
+  const [aiBusy, setAiBusy] = useState(false);
 
   const { data: properties } = useQuery({
     queryKey: ["analyzer-properties", userId],
@@ -229,10 +238,54 @@ function DealAnalyzer() {
     return { reasons, risks, missing };
   }, [flip, rental, purchasePrice, rehabTotal, arv, daysOnMarket, neighborhoodRisk, arvConfidence, monthlyRent]);
 
-  const saveAnalysis = () => {
-    toast.success("Analysis saved to this session.", {
-      description: "Persisting analyses to a property record is coming soon.",
-    });
+  const saveAnalysis = async () => {
+    if (!propertyId) {
+      toast.error("Select a property to save this analysis.");
+      return;
+    }
+    const { error } = await (supabase.from("properties") as any).update({
+      list_price: purchasePrice,
+      arv,
+      rehab_estimate: rehabTotal,
+      estimated_profit: flip.netProfit,
+      monthly_rent: monthlyRent || null,
+      monthly_cashflow: rental.cashFlow,
+      deal_score: score.overall,
+      analysis: {
+        savedAt: new Date().toISOString(),
+        purchasePrice, arv, rehab: rehabTotal,
+        flip, rental, score: score.overall,
+        memo: aiMemo,
+      },
+    }).eq("id", propertyId);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Analysis saved to the property record.");
+    try {
+      await dispatchAuto({ data: { trigger: "score_over", payload: { propertyId, score: score.overall } } });
+    } catch { /* non-blocking */ }
+  };
+
+  const runAiMemo = async () => {
+    if (entitlement?.ai === "none") {
+      toast.error("Upgrade to Professional or AI Max to generate an AI deal memo.");
+      return;
+    }
+    setAiBusy(true);
+    try {
+      const res = await analyzeFn({
+        data: {
+          address: properties?.find((p: any) => p.id === propertyId)?.address,
+          purchasePrice, arv, rehab: rehabTotal,
+          flipProfit: flip.netProfit, cashFlow: rental.cashFlow,
+          capRate: rental.capRate, score: score.overall,
+        },
+      });
+      setAiMemo(res.narrative);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "AI memo failed");
+    } finally {
+      setAiBusy(false);
+    }
   };
 
   const exportReport = () => {
@@ -248,6 +301,9 @@ function DealAnalyzer() {
         action={
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={saveAnalysis}><Save className="mr-2 h-4 w-4" />Save</Button>
+            <Button variant="outline" size="sm" onClick={runAiMemo} disabled={aiBusy}>
+              <Sparkles className="mr-2 h-4 w-4" />{aiBusy ? "Writing…" : "AI memo"}
+            </Button>
             <Button size="sm" onClick={exportReport}><FileDown className="mr-2 h-4 w-4" />Report</Button>
           </div>
         }
@@ -564,6 +620,13 @@ function DealAnalyzer() {
               <SubScore label="Seller motivation" value={score.sellerMotivationScore} />
             </CardContent>
           </Card>
+
+          {aiMemo && (
+            <Card>
+              <CardHeader className="pb-2"><CardTitle className="text-base">AI underwriting memo</CardTitle></CardHeader>
+              <CardContent className="whitespace-pre-wrap text-sm text-muted-foreground">{aiMemo}</CardContent>
+            </Card>
+          )}
 
           <Card>
             <CardHeader className="pb-2">

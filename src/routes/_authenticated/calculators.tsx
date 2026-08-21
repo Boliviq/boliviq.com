@@ -42,9 +42,17 @@ function Calculators() {
     },
   });
 
-  const saveTo = (label: string, result: string) => {
+  const saveTo = async (label: string, result: string) => {
     if (!attachPropertyId) return toast.error("Pick a property to attach the calculation to.");
-    toast.success(`Saved ${label}`, { description: `${result} — attached in-session. Persistent save coming soon.` });
+    const { data: row } = await supabase.from("properties").select("notes, analysis").eq("id", attachPropertyId).maybeSingle();
+    const stamp = `\n[${new Date().toISOString().slice(0, 16)}] ${label}: ${result}`;
+    const analysis = { ...(((row as any)?.analysis) ?? {}), [label]: { result, savedAt: new Date().toISOString() } };
+    const { error } = await (supabase.from("properties") as any).update({
+      notes: `${(row as any)?.notes ?? ""}${stamp}`,
+      analysis,
+    }).eq("id", attachPropertyId);
+    if (error) return toast.error(error.message);
+    toast.success(`Saved ${label}`, { description: result });
   };
 
   return (

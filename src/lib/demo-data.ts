@@ -125,12 +125,16 @@ export const CSV_FIELD_MAP: { key: string; label: string }[] = [
   { key: "notes", label: "Notes" },
 ];
 
-export const FILTER_PRESETS = [
-  { name: "Best flips", desc: "High ARV spread, low rehab" },
-  { name: "Cash-flow rentals", desc: "Positive monthly cash flow" },
-  { name: "Wholesale opportunities", desc: "Deep discount to ARV" },
-  { name: "Price reductions", desc: "Recent price drops" },
-  { name: "High-equity properties", desc: "Owner equity > 50%" },
-  { name: "Motivated sellers", desc: "Distress signals" },
-  { name: "Low-rehab properties", desc: "Rehab < $20k" },
+export const FILTER_PRESETS: Array<{
+  name: string;
+  desc: string;
+  filters: Record<string, string | number>;
+}> = [
+  { name: "Best flips", desc: "High ARV spread, low rehab", filters: { strategy: "Flip", profitMin: "30000", rehabMax: "50000", scoreMin: 70 } },
+  { name: "Cash-flow rentals", desc: "Positive monthly cash flow", filters: { strategy: "Rental", cashflowMin: "1" } },
+  { name: "Wholesale opportunities", desc: "Deep discount to ARV", filters: { strategy: "Wholesale" } },
+  { name: "Price reductions", desc: "Recent listings still moving", filters: { motivation: "High", domMax: "21" } },
+  { name: "High-equity properties", desc: "Owner equity / profit > $40k", filters: { profitMin: "40000" } },
+  { name: "Motivated sellers", desc: "Distress signals", filters: { motivation: "High" } },
+  { name: "Low-rehab properties", desc: "Rehab under $20k", filters: { rehabMax: "20000" } },
 ];

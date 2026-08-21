@@ -19,6 +19,8 @@ import { validateCoupon, type ValidatedCoupon } from "@/lib/coupons.functions";
 import { createBoliviqCheckout, createBoliviqPortalSession } from "@/lib/billing.functions";
 import { getStripeEnvironment, isPaymentsConfigured } from "@/lib/stripe";
 
+import { getWorkspaceUsage } from "@/lib/entitlements.functions";
+import { useEntitlement } from "@/hooks/use-entitlement";
 import { plans, AI_MAX_DISCLAIMER, type Plan } from "@/lib/plans";
 
 export const Route = createFileRoute("/_authenticated/billing")({
@@ -44,6 +46,13 @@ function Billing() {
   const [confirmTimedOut, setConfirmTimedOut] = useState(false);
   const { userId } = useCurrentUser();
   const qc = useQueryClient();
+  const { data: entitlement } = useEntitlement();
+  const usageFn = useServerFn(getWorkspaceUsage);
+  const { data: usage } = useQuery({
+    queryKey: ["workspace-usage", userId],
+    enabled: !!userId,
+    queryFn: () => usageFn({ data: {} }),
+  });
 
 
   useEffect(() => {
@@ -318,8 +327,14 @@ function Billing() {
 
         <Card>
           <CardHeader><CardTitle>Usage this period</CardTitle></CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">Usage tracking is being configured. Live per-account metering (properties, AI credits, reports) will appear here once the backend is enabled.</p>
+          <CardContent className="space-y-4">
+            <UsageBar label="Properties" value={usage?.properties ?? 0} max={entitlement?.maxProperties ?? 10} />
+            <UsageBar label="AI credits" value={entitlement?.creditsUsed ?? 0} max={entitlement?.creditsIncluded ?? 100} />
+            <UsageBar label="Leads" value={usage?.leads ?? 0} max={Math.max(100, (usage?.leads ?? 0) + 10)} />
+            <UsageBar label="Calls logged" value={usage?.calls ?? 0} max={Math.max(50, (usage?.calls ?? 0) + 10)} />
+            <p className="text-xs text-muted-foreground">
+              AI credits reset at the start of each calendar month. Professional unlocks summaries and scripts; AI Max uses GPT-4o.
+            </p>
           </CardContent>
         </Card>
 
