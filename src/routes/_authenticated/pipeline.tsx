@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { PIPELINE_STAGES } from "@/lib/demo-data";
+import { mapLeadStatusToPipelineStage } from "@/lib/canons";
 import { currency, dateShort } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/pipeline")({
@@ -84,7 +85,8 @@ function PipelinePage() {
     const map: Record<string, Lead[]> = {};
     PIPELINE_STAGES.forEach((s) => (map[s.key] = []));
     (leadsQuery.data ?? []).forEach((l) => {
-      if (map[l.status]) map[l.status].push(l);
+      const key = mapLeadStatusToPipelineStage(l.status);
+      if (map[key]) map[key].push(l);
     });
     return map;
   }, [leadsQuery.data]);
@@ -103,7 +105,7 @@ function PipelinePage() {
 
   return (
     <>
-      <PageHeader title="Pipeline" description="Drag deals through your acquisitions stages." />
+      <PageHeader title="Pipeline" description="Canon stages from new lead through close, including estimates, in-progress work, and long-term follow-up. Legacy statuses map into these columns." />
       <div className="p-4 sm:p-6">
         {leadsQuery.isLoading ? (
           <div className="flex gap-3 overflow-x-auto">

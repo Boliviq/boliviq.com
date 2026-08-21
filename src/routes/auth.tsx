@@ -10,6 +10,11 @@ import { toast } from "sonner";
 import { Loader2, CheckCircle2, HardHat, LineChart } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
 
+function goAuthed(meta: Record<string, unknown> | undefined, navigate: ReturnType<typeof useNavigate>) {
+  const ready = Boolean(meta?.onboarded || meta?.primary_role);
+  void navigate({ to: ready ? "/dashboard" : "/onboarding" });
+}
+
 const searchSchema = z.object({
   mode: z.enum(["signin", "signup"]).optional(),
 });
@@ -30,7 +35,7 @@ function AuthPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/dashboard" });
+      if (data.session) goAuthed(data.session.user.user_metadata as Record<string, unknown> | undefined, navigate);
     });
   }, [navigate]);
 
@@ -54,10 +59,10 @@ function AuthPage() {
           toast.success("Check your email to confirm your account, then sign in.");
         }
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         toast.success("Welcome back!");
-        navigate({ to: "/dashboard" });
+        goAuthed(data.user?.user_metadata as Record<string, unknown> | undefined, navigate);
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong");
@@ -71,7 +76,9 @@ function AuthPage() {
     const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
     if (result.error) { toast.error(result.error.message ?? "Google sign-in failed"); setLoading(false); return; }
     if (result.redirected) return;
-    navigate({ to: "/dashboard" });
+    const { data } = await supabase.auth.getUser();
+    goAuthed(data.user?.user_metadata, navigate);
+    setLoading(false);
   };
 
   return (
@@ -81,12 +88,12 @@ function AuthPage() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_35%,rgba(112,191,43,.16),transparent_30rem)]" />
         <Link to="/" className="relative"><BrandLogo inverse showTagline /></Link>
         <div className="relative max-w-lg">
-          <div className="brand-eyebrow">Professional investment operations</div>
-          <h2 className="mt-4 font-display text-5xl font-extrabold leading-tight">One platform for better deals and better builds.</h2>
+          <div className="brand-eyebrow">Real estate and construction community</div>
+          <h2 className="mt-4 font-display text-5xl font-extrabold leading-tight">One operating system for better deals and better builds.</h2>
           <div className="mt-8 grid gap-4 text-sm text-white/70">
-            <div className="flex items-center gap-3"><LineChart className="h-5 w-5 text-[#7ccc35]"/>Analyze opportunities with clearer numbers.</div>
-            <div className="flex items-center gap-3"><HardHat className="h-5 w-5 text-[#7ccc35]"/>Plan construction, materials, and labor.</div>
-            <div className="flex items-center gap-3"><CheckCircle2 className="h-5 w-5 text-[#7ccc35]"/>Manage every lead and project in one workspace.</div>
+            <div className="flex items-center gap-3"><LineChart className="h-5 w-5 text-[#7ccc35]"/>Marketplace, CRM, and deal analysis in one login.</div>
+            <div className="flex items-center gap-3"><HardHat className="h-5 w-5 text-[#7ccc35]"/>Repairs, estimates, and projects stay on the property record.</div>
+            <div className="flex items-center gap-3"><CheckCircle2 className="h-5 w-5 text-[#7ccc35]"/>Homeowners, contractors, realtors, investors, lenders, and trades.</div>
           </div>
         </div>
         <p className="relative text-xs text-white/45">© 2026 Boliviq</p>
@@ -98,7 +105,7 @@ function AuthPage() {
             {mode === "signup" ? "Create your account" : "Welcome to Boliviq"}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {mode === "signup" ? "AI That Builds Better Investors." : "AI That Builds Better Investors."}
+            {mode === "signup" ? "Join the marketplace, CRM, and professional network." : "Sign in to your connected workspace."}
           </p>
 
           <Button type="button" variant="outline" className="mt-6 w-full" onClick={handleGoogle} disabled={loading}>
