@@ -11,7 +11,7 @@ import {
   Shield, Megaphone, LifeBuoy, Ticket, Users2, Store, MessageSquare,
   FolderKanban, Files, Sparkles, BadgeCheck, HardHat,
 } from "lucide-react";
-import { navForRole, type NavItem } from "@/lib/canons";
+import { navForRole } from "@/lib/canons";
 import { useAccount } from "@/hooks/use-current-user";
 
 const ICONS: Record<string, ComponentType<{ className?: string }>> = {
