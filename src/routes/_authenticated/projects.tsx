@@ -8,8 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PROJECT_SEED, type SeedProject } from "@/lib/platform-seed";
-import { supabase } from "@/integrations/supabase/client";
-import { isMissingRelation } from "@/lib/supabase-safe";
+import { isMissingRelation, fromTable } from "@/lib/supabase-safe";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { currency } from "@/lib/format";
 
@@ -32,7 +31,7 @@ function ProjectsPage() {
     queryKey: ["projects", userId],
     enabled: !!userId,
     queryFn: async () => {
-      const { data, error } = await (supabase.from("projects") as any).select("*").order("updated_at", { ascending: false });
+      const { data, error } = await fromTable("projects").select("*").order("updated_at", { ascending: false });
       if (error) {
         if (isMissingRelation(error)) return [] as SeedProject[];
         throw error;

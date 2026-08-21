@@ -9,8 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { DOCUMENT_SEED, type SeedDocument } from "@/lib/platform-seed";
-import { supabase } from "@/integrations/supabase/client";
-import { isMissingRelation } from "@/lib/supabase-safe";
+import { isMissingRelation, fromTable } from "@/lib/supabase-safe";
 import { useCurrentUser } from "@/hooks/use-current-user";
 
 export const Route = createFileRoute("/_authenticated/documents")({
@@ -25,7 +24,7 @@ function DocumentsPage() {
     queryKey: ["documents", userId],
     enabled: !!userId,
     queryFn: async () => {
-      const { data, error } = await (supabase.from("documents") as any).select("*").order("updated_at", { ascending: false });
+      const { data, error } = await fromTable("documents").select("*").order("updated_at", { ascending: false });
       if (error) {
         if (isMissingRelation(error)) return [] as SeedDocument[];
         throw error;

@@ -1,6 +1,6 @@
 import { MARKETPLACE_SEED, type SeedListing } from "@/lib/marketplace-seed";
 import { PROFESSIONAL_SEED } from "@/lib/professional-seed";
-import type { MarketplaceCategoryId, ProfileRoleId, VerificationTierId } from "@/lib/canons";
+import { MARKETPLACE_CATEGORIES, type MarketplaceCategoryId, type ProfileRoleId, type VerificationTierId } from "@/lib/canons";
 
 export type MarketplaceListing = SeedListing & {
   priceLabel?: string;
@@ -40,9 +40,25 @@ export function subscribeWorkspace(cb: () => void) {
   };
 }
 
+export function mergeById<T extends { id: string }>(...groups: T[][]): T[] {
+  const seen = new Set<string>();
+  const out: T[] = [];
+  for (const group of groups) {
+    for (const row of group) {
+      if (seen.has(row.id)) continue;
+      seen.add(row.id);
+      out.push(row);
+    }
+  }
+  return out;
+}
+
+export function listOwnedListings(userId: string | null): MarketplaceListing[] {
+  return userId ? read<MarketplaceListing>(userId, "listings") : [];
+}
+
 export function listListings(userId: string | null): MarketplaceListing[] {
-  const mine = userId ? read<MarketplaceListing>(userId, "listings") : [];
-  return [...mine, ...MARKETPLACE_SEED];
+  return mergeById(listOwnedListings(userId), MARKETPLACE_SEED);
 }
 
 export function createListing(
@@ -99,7 +115,19 @@ export type Thread = {
   lastMessage: string;
   updatedAt: string;
   unread: number;
+  property?: string;
+  project?: string;
+  listing?: string;
+  listingId?: string;
   messages: { id: string; from: string; body: string; at: string; mine?: boolean }[];
+};
+
+export type ConversationExtras = {
+  property?: string;
+  project?: string;
+  listing?: string;
+  listingId?: string;
+  participants?: string[];
 };
 
 const THREAD_SEED: Thread[] = [
@@ -111,6 +139,8 @@ const THREAD_SEED: Thread[] = [
     lastMessage: "I can walk the property Thursday at 3pm.",
     updatedAt: new Date().toISOString(),
     unread: 1,
+    property: "412 Oak Street",
+    project: "Kitchen remodel",
     messages: [
       { id: "m1", from: "Maya Chen", body: "Can you bid cabinets, counters, and flooring together?", at: "2026-08-19T15:02:00Z" },
       { id: "m2", from: "Alex Ford", body: "Yes. I'll send a scope tonight and we can walk Thursday at 3pm.", at: "2026-08-19T16:40:00Z", mine: true },
@@ -124,6 +154,9 @@ const THREAD_SEED: Thread[] = [
     lastMessage: "Disclosure packet is in Documents.",
     updatedAt: "2026-08-20T11:00:00Z",
     unread: 0,
+    property: "412 Oak Street",
+    listing: "412 Oak Street — 3/2 fixer, Austin",
+    listingId: "lst-oak",
     messages: [
       { id: "m3", from: "Julie Chen", body: "Are you available Saturday 11–1 for a showing?", at: "2026-08-20T10:12:00Z" },
       { id: "m4", from: "You", body: "Saturday 11 works. Disclosure packet is in Documents.", at: "2026-08-20T11:00:00Z", mine: true },
@@ -178,17 +211,21 @@ export function sendMessage(userId: string, threadId: string, body: string) {
   write(userId, "threads", next);
 }
 
-export function startConversation(userId: string, title: string, context: string, firstMessage: string) {
+export function startConversation(userId: string, title: string, context: string, firstMessage: string, extra?: ConversationExtras) {
   const id = `th_${crypto.randomUUID()}`;
   const msg = { id: `m_${crypto.randomUUID()}`, from: "You", body: firstMessage, at: new Date().toISOString(), mine: true as const };
   const thread: Thread = {
     id,
     title,
     context,
-    participants: ["You"],
+    participants: extra?.participants ?? ["You"],
     lastMessage: firstMessage,
     updatedAt: msg.at,
     unread: 0,
+    property: extra?.property,
+    project: extra?.project,
+    listing: extra?.listing,
+    listingId: extra?.listingId,
     messages: [msg],
   };
   write(userId, "threads", [thread, ...read<Thread>(userId, "threads")]);
@@ -222,6 +259,18 @@ export function createProject(userId: string, input: Omit<ProjectRecord, "id">) 
   const row = { ...input, id: `prj_${crypto.randomUUID()}` };
   write(userId, "projects", [row, ...read<ProjectRecord>(userId, "projects")]);
   return row;
+}
+
+export function createProjectFromListing(userId: string, listing: MarketplaceListing) {
+  return createProject(userId, {
+    name: listing.title,
+    address: listing.location,
+    status: "new",
+    roleView: "Intake from marketplace",
+    budget: listing.budget ?? listing.price ?? 0,
+    spent: 0,
+    nextMilestone: "Collect estimates",
+  });
 }
 
 export type DocRecord = {
@@ -333,5 +382,25 @@ export function verificationFor(role: ProfileRoleId): VerificationTierId[] {
 }
 
 export function categoryLabel(key: MarketplaceCategoryId) {
-  return key;
+  return MARKETPLACE_CATEGORIES.find((c) => c.id === key)?.label ?? key;
+}
+
+export type AssistantTurn = { role: "user" | "assistant"; text: string };
+
+export function loadAssistantLog(userId: string | null): AssistantTurn[] {
+  return userId ? read<AssistantTurn>(userId, "assistant") : [];
+}
+
+export function saveAssistantLog(userId: string, log: AssistantTurn[]) {
+  write(userId, "assistant", log);
+}
+
+export function startVerification(userId: string, tier: VerificationTierId) {
+  const current = read<VerificationTierId>(userId, "verification");
+  if (current.includes(tier)) return;
+  write(userId, "verification", [...current, tier]);
+}
+
+export function startedVerifications(userId: string | null) {
+  return new Set(userId ? read<VerificationTierId>(userId, "verification") : []);
 }

@@ -20,8 +20,7 @@ import {
 } from "@/lib/canons";
 import { CREDIT_WALLET_SEED } from "@/lib/platform-seed";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { supabase } from "@/integrations/supabase/client";
-import { isMissingRelation } from "@/lib/supabase-safe";
+import { isMissingRelation, fromTable } from "@/lib/supabase-safe";
 
 export const Route = createFileRoute("/_authenticated/assistant")({
   component: AssistantPage,
@@ -42,7 +41,7 @@ function AssistantPage() {
     queryKey: ["credit-wallet", userId],
     enabled: !!userId,
     queryFn: async () => {
-      const { data, error } = await (supabase.from("credit_wallets") as any).select("*").limit(1).maybeSingle();
+      const { data, error } = await fromTable("credit_wallets").select("*").limit(1).maybeSingle();
       if (error) {
         if (isMissingRelation(error)) return CREDIT_WALLET_SEED;
         throw error;

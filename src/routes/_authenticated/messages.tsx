@@ -11,8 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { MESSAGE_SEED, type SeedThread } from "@/lib/platform-seed";
-import { supabase } from "@/integrations/supabase/client";
-import { isMissingRelation } from "@/lib/supabase-safe";
+import { isMissingRelation, fromTable } from "@/lib/supabase-safe";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { cn } from "@/lib/utils";
 
@@ -31,7 +30,7 @@ function MessagesPage() {
     queryKey: ["conversations", userId],
     enabled: !!userId,
     queryFn: async () => {
-      const { data, error } = await (supabase.from("conversations") as any).select("*").order("updated_at", { ascending: false });
+      const { data, error } = await fromTable("conversations").select("*").order("updated_at", { ascending: false });
       if (error) {
         if (isMissingRelation(error)) return [] as SeedThread[];
         throw error;

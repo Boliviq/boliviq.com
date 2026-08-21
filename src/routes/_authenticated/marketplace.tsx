@@ -15,8 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MARKETPLACE_CATEGORIES, type MarketplaceCategoryId } from "@/lib/canons";
 import { MARKETPLACE_SEED, type SeedListing } from "@/lib/marketplace-seed";
-import { supabase } from "@/integrations/supabase/client";
-import { isMissingRelation } from "@/lib/supabase-safe";
+import { isMissingRelation, fromTable } from "@/lib/supabase-safe";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { currency } from "@/lib/format";
 
@@ -38,7 +37,7 @@ function MarketplacePage() {
     queryKey: ["marketplace-listings", userId],
     enabled: !!userId,
     queryFn: async () => {
-      const { data, error } = await (supabase.from("marketplace_listings") as any)
+      const { data, error } = await fromTable("marketplace_listings")
         .select("*")
         .order("created_at", { ascending: false });
       if (error) {
@@ -100,7 +99,7 @@ function MarketplacePage() {
     toast.success("Listing posted", { description: "It can become a lead, project, or conversation from Messages." });
 
     if (!userId) return;
-    const { error } = await (supabase.from("marketplace_listings") as any).insert({
+    const { error } = await fromTable("marketplace_listings").insert({
       user_id: userId,
       title: local.title,
       description: local.description,

@@ -12,8 +12,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { VerificationBadgeRow } from "@/components/verification-badge";
 import { PROFILE_ROLES, TRADE_LABELS, VERIFICATION_DISCLAIMER, type ProfileRoleId } from "@/lib/canons";
 import { PROFESSIONAL_SEED, type SeedProfessional } from "@/lib/professional-seed";
-import { supabase } from "@/integrations/supabase/client";
-import { isMissingRelation } from "@/lib/supabase-safe";
+import { isMissingRelation, fromTable } from "@/lib/supabase-safe";
 import { useCurrentUser } from "@/hooks/use-current-user";
 
 export const Route = createFileRoute("/_authenticated/professionals")({
@@ -29,7 +28,7 @@ function ProfessionalsPage() {
     queryKey: ["professional-profiles", userId],
     enabled: !!userId,
     queryFn: async () => {
-      const { data, error } = await (supabase.from("professional_profiles") as any).select("*");
+      const { data, error } = await fromTable("professional_profiles").select("*");
       if (error) {
         if (isMissingRelation(error)) return [] as SeedProfessional[];
         throw error;
