@@ -8,9 +8,15 @@ export const Route = createFileRoute("/demo")({
   head: () => ({
     meta: [
       { title: "Demo — Boliviq" },
-      { name: "description", content: "See Boliviq in action. Sign up free and load sample properties." },
+      {
+        name: "description",
+        content: "See Boliviq in action. Sign up free and load sample properties.",
+      },
       { property: "og:title", content: "Demo — Boliviq" },
-      { property: "og:description", content: "Explore the workspace with sample properties, leads, and pipeline." },
+      {
+        property: "og:description",
+        content: "Explore the workspace with sample properties, leads, and pipeline.",
+      },
     ],
   }),
   component: Demo,
@@ -29,7 +35,8 @@ function Demo() {
       <section className="mx-auto max-w-4xl px-4 py-16">
         <h1 className="text-4xl font-bold sm:text-5xl">See Boliviq in action</h1>
         <p className="mt-4 text-muted-foreground">
-          Create a free account and click "Load sample data" on any page to explore a fully-populated workspace. Remove the demo data anytime from Settings.
+          Create a free account and click "Load sample data" on any page to explore a
+          fully-populated workspace. Remove the demo data anytime from Settings.
         </p>
         <Card className="mt-8">
           <CardContent className="p-6">
@@ -41,8 +48,14 @@ function Demo() {
               ))}
             </ul>
             <div className="mt-6 flex flex-wrap gap-3">
-              <Link to="/auth"><Button size="lg">Start free</Button></Link>
-              <Link to="/contact"><Button size="lg" variant="outline">Request a live walkthrough</Button></Link>
+              <Link to="/auth">
+                <Button size="lg">Start free</Button>
+              </Link>
+              <Link to="/contact">
+                <Button size="lg" variant="outline">
+                  Request a live walkthrough
+                </Button>
+              </Link>
             </div>
           </CardContent>
         </Card>

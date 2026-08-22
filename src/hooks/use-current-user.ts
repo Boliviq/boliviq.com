@@ -21,7 +21,9 @@ export function useCurrentUser() {
       setFullName((meta.full_name as string) ?? null);
       setLoading(false);
     });
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   return { userId, primaryRole, fullName, loading };

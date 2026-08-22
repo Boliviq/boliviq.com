@@ -5,7 +5,28 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Users, DollarSign, TrendingUp, TrendingDown, AlertTriangle, Search, FileText, Phone, Building2, ShieldAlert, CheckCircle2, XCircle, CreditCard, Store, BadgeCheck, Sparkles, Wallet, Flag, ScrollText, ToggleLeft } from "lucide-react";
+import {
+  Users,
+  DollarSign,
+  TrendingUp,
+  TrendingDown,
+  AlertTriangle,
+  Search,
+  FileText,
+  Phone,
+  Building2,
+  ShieldAlert,
+  CheckCircle2,
+  XCircle,
+  CreditCard,
+  Store,
+  BadgeCheck,
+  Sparkles,
+  Wallet,
+  Flag,
+  ScrollText,
+  ToggleLeft,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -56,18 +77,60 @@ function AdminGate() {
   return <Admin />;
 }
 
-type DemoUser = { id: string; email: string; name: string; plan: string; status: "active" | "trial" | "canceled"; properties: number; joined: string };
+type DemoUser = {
+  id: string;
+  email: string;
+  name: string;
+  plan: string;
+  status: "active" | "trial" | "canceled";
+  properties: number;
+  joined: string;
+};
 
 const demoUsers: DemoUser[] = [
-  { id: "u1", email: "alex@example.com", name: "Alex Ramirez", plan: "Professional", status: "active", properties: 218, joined: "2026-04-12" },
-  { id: "u2", email: "priya@example.com", name: "Priya Shah", plan: "Starter", status: "trial", properties: 34, joined: "2026-07-01" },
-  { id: "u3", email: "jordan@example.com", name: "Jordan Tan", plan: "Team", status: "active", properties: 1240, joined: "2025-11-03" },
-  { id: "u4", email: "sam@example.com", name: "Sam Wu", plan: "Free", status: "canceled", properties: 6, joined: "2026-05-19" },
+  {
+    id: "u1",
+    email: "alex@example.com",
+    name: "Alex Ramirez",
+    plan: "Professional",
+    status: "active",
+    properties: 218,
+    joined: "2026-04-12",
+  },
+  {
+    id: "u2",
+    email: "priya@example.com",
+    name: "Priya Shah",
+    plan: "Starter",
+    status: "trial",
+    properties: 34,
+    joined: "2026-07-01",
+  },
+  {
+    id: "u3",
+    email: "jordan@example.com",
+    name: "Jordan Tan",
+    plan: "Team",
+    status: "active",
+    properties: 1240,
+    joined: "2025-11-03",
+  },
+  {
+    id: "u4",
+    email: "sam@example.com",
+    name: "Sam Wu",
+    plan: "Free",
+    status: "canceled",
+    properties: 6,
+    joined: "2026-05-19",
+  },
 ];
 
 function Admin() {
   const [q, setQ] = useState("");
-  const filtered = demoUsers.filter((u) => (u.email + u.name).toLowerCase().includes(q.toLowerCase()));
+  const filtered = demoUsers.filter((u) =>
+    (u.email + u.name).toLowerCase().includes(q.toLowerCase()),
+  );
   const diagFn = useServerFn(runBillingDiagnostics);
   const [diag, setDiag] = useState<Awaited<ReturnType<typeof runBillingDiagnostics>> | null>(null);
   const [diagBusy, setDiagBusy] = useState(false);
@@ -84,26 +147,87 @@ function Admin() {
     }
   }
 
-
-
   return (
     <>
-      <PageHeader title="Intelligence Center" description="Administrative actions are recorded with administrator identity, time, affected record, previous and new values, reason, and support reference." />
+      <PageHeader
+        title="Intelligence Center"
+        description="Administrative actions are recorded with administrator identity, time, affected record, previous and new values, reason, and support reference."
+      />
       <div className="space-y-6 p-4 sm:p-8">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[
-            { title: "User management", desc: "Accounts, roles, suspension, and appeals.", href: "/admin/users", icon: Users },
-            { title: "Workspace management", desc: "Team workspaces, members, and isolation.", href: "/admin/users", icon: Building2 },
-            { title: "Verification review", desc: "Identity, license, and insurance queues.", href: "/verification", icon: BadgeCheck },
-            { title: "Marketplace moderation", desc: "Reported listings and content review.", href: "/marketplace", icon: Store },
-            { title: "AI controls & costs", desc: "Agent permissions and credit pricing.", href: "/assistant", icon: Sparkles },
-            { title: "Credit wallets", desc: "Balances, adjustments, and ledger history.", href: "/assistant", icon: Wallet },
-            { title: "Audit logs", desc: "Who changed what, when, and why.", href: "/admin", icon: ScrollText },
-            { title: "Feature flags", desc: "Gradual rollout of marketplace and AI surfaces.", href: "/admin", icon: ToggleLeft },
-            { title: "Subscriptions", desc: "Plans, coupons, and failed-payment recovery.", href: "/admin/checkout-verification", icon: CreditCard },
-            { title: "Support tickets", desc: "Templates, disputes, and deletion requests.", href: "/support", icon: Flag },
-            { title: "Launch verification", desc: "Owner checks before public launch.", href: "/admin/launch-verification", icon: CheckCircle2 },
-            { title: "Integrations health", desc: "Modular providers and fallback status.", href: "/integrations", icon: Phone },
+            {
+              title: "User management",
+              desc: "Accounts, roles, suspension, and appeals.",
+              href: "/admin/users",
+              icon: Users,
+            },
+            {
+              title: "Workspace management",
+              desc: "Team workspaces, members, and isolation.",
+              href: "/admin/users",
+              icon: Building2,
+            },
+            {
+              title: "Verification review",
+              desc: "Identity, license, and insurance queues.",
+              href: "/verification",
+              icon: BadgeCheck,
+            },
+            {
+              title: "Marketplace moderation",
+              desc: "Reported listings and content review.",
+              href: "/marketplace",
+              icon: Store,
+            },
+            {
+              title: "AI controls & costs",
+              desc: "Agent permissions and credit pricing.",
+              href: "/assistant",
+              icon: Sparkles,
+            },
+            {
+              title: "Credit wallets",
+              desc: "Balances, adjustments, and ledger history.",
+              href: "/assistant",
+              icon: Wallet,
+            },
+            {
+              title: "Audit logs",
+              desc: "Who changed what, when, and why.",
+              href: "/admin",
+              icon: ScrollText,
+            },
+            {
+              title: "Feature flags",
+              desc: "Gradual rollout of marketplace and AI surfaces.",
+              href: "/admin",
+              icon: ToggleLeft,
+            },
+            {
+              title: "Subscriptions",
+              desc: "Plans, coupons, and failed-payment recovery.",
+              href: "/admin/checkout-verification",
+              icon: CreditCard,
+            },
+            {
+              title: "Support tickets",
+              desc: "Templates, disputes, and deletion requests.",
+              href: "/support",
+              icon: Flag,
+            },
+            {
+              title: "Launch verification",
+              desc: "Owner checks before public launch.",
+              href: "/admin/launch-verification",
+              icon: CheckCircle2,
+            },
+            {
+              title: "Integrations health",
+              desc: "Modular providers and fallback status.",
+              href: "/integrations",
+              icon: Phone,
+            },
           ].map((c) => (
             <Link key={c.title} to={c.href as "/admin"}>
               <Card className="h-full transition hover:border-[#70bf2b]/50">
@@ -119,18 +243,25 @@ function Admin() {
 
         <div className="rounded-lg border border-primary/40 bg-primary/5 p-3 text-sm flex items-center justify-between gap-3 flex-wrap">
           <div>
-            <strong>Billing Launch Verification</strong> — guided owner checks that must pass before public launch.
+            <strong>Billing Launch Verification</strong> — guided owner checks that must pass before
+            public launch.
           </div>
-          <Link to="/admin/launch-verification" className="text-primary underline text-sm">Open Launch Verification →</Link>
+          <Link to="/admin/launch-verification" className="text-primary underline text-sm">
+            Open Launch Verification →
+          </Link>
         </div>
         <div className="rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm flex items-center justify-between gap-3 flex-wrap">
           <div>
-            <strong>Checkout Verification</strong> — confirms deployed checkout uses embedded_page and validates every plan before card entry.
+            <strong>Checkout Verification</strong> — confirms deployed checkout uses embedded_page
+            and validates every plan before card entry.
           </div>
-          <Link to="/admin/checkout-verification" className="text-primary underline text-sm">Open Checkout Verification →</Link>
+          <Link to="/admin/checkout-verification" className="text-primary underline text-sm">
+            Open Checkout Verification →
+          </Link>
         </div>
         <div className="rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm">
-          <strong>Preview data.</strong> The metrics and users below are placeholders. Real analytics wire-up is on the launch backlog.
+          <strong>Preview data.</strong> The metrics and users below are placeholders. Real
+          analytics wire-up is on the launch backlog.
         </div>
 
         <Card>
@@ -139,13 +270,22 @@ function Admin() {
             <CardTitle>Billing diagnostics ({getStripeEnvironment()})</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
-            <p className="text-muted-foreground">Verify that every Boliviq plan lookup key exists in Stripe for the current environment. Never displays secret keys.</p>
-            <Button size="sm" onClick={runDiag} disabled={diagBusy}>{diagBusy ? "Running…" : "Run diagnostics"}</Button>
+            <p className="text-muted-foreground">
+              Verify that every Boliviq plan lookup key exists in Stripe for the current
+              environment. Never displays secret keys.
+            </p>
+            <Button size="sm" onClick={runDiag} disabled={diagBusy}>
+              {diagBusy ? "Running…" : "Run diagnostics"}
+            </Button>
             {diag && (
               <div className="mt-3 rounded-md border">
                 <div className="border-b px-3 py-2 text-xs text-muted-foreground">
-                  Env: <strong>{diag.environment}</strong> · API key: {diag.apiKeyConfigured ? "configured" : "MISSING"} · Webhook: {diag.webhookConfigured ? "configured" : "MISSING"}
-                  {"fatal" in diag && diag.fatal && <div className="mt-1 text-destructive">{diag.fatal}</div>}
+                  Env: <strong>{diag.environment}</strong> · API key:{" "}
+                  {diag.apiKeyConfigured ? "configured" : "MISSING"} · Webhook:{" "}
+                  {diag.webhookConfigured ? "configured" : "MISSING"}
+                  {"fatal" in diag && diag.fatal && (
+                    <div className="mt-1 text-destructive">{diag.fatal}</div>
+                  )}
                 </div>
                 <table className="w-full text-xs">
                   <thead className="text-muted-foreground">
@@ -161,28 +301,35 @@ function Admin() {
                   <tbody>
                     {diag.prices.map((p) => {
                       const tone =
-                        p.status === "PASS" ? "text-success" :
-                        p.status === "WARNING" ? "text-warning" :
-                        "text-destructive";
+                        p.status === "PASS"
+                          ? "text-success"
+                          : p.status === "WARNING"
+                            ? "text-warning"
+                            : "text-destructive";
                       const Icon = p.status === "PASS" ? CheckCircle2 : XCircle;
                       return (
                         <tr key={p.lookupKey} className="border-t align-top">
                           <td className="p-2 font-mono">{p.lookupKey}</td>
                           <td className="p-2">
                             <span className={`inline-flex items-center gap-1 ${tone}`}>
-                              <Icon className="h-3.5 w-3.5" />{p.status}
+                              <Icon className="h-3.5 w-3.5" />
+                              {p.status}
                             </span>
                           </td>
                           <td className="p-2 text-right tabular-nums">
                             {p.amount != null ? `$${p.amount.toFixed(2)}` : "—"}
                             {p.amountMatches === false && (
-                              <div className="text-[10px] text-warning">exp ${p.expectedAmount}</div>
+                              <div className="text-[10px] text-warning">
+                                exp ${p.expectedAmount}
+                              </div>
                             )}
                           </td>
                           <td className="p-2">
                             {p.interval ?? "—"}
                             {p.intervalMatches === false && (
-                              <div className="text-[10px] text-warning">exp {p.expectedInterval}</div>
+                              <div className="text-[10px] text-warning">
+                                exp {p.expectedInterval}
+                              </div>
                             )}
                           </td>
                           <td className="p-2">
@@ -205,7 +352,6 @@ function Admin() {
           </CardContent>
         </Card>
 
-
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Stat icon={Users} label="Total users" value="1,284" delta="+42 this week" />
           <Stat icon={DollarSign} label="MRR" value="$18,340" delta="+6.2% MoM" />
@@ -222,11 +368,22 @@ function Admin() {
 
         <div className="grid gap-4 md:grid-cols-2">
           <Card>
-            <CardHeader><CardTitle>Support requests</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle>Support requests</CardTitle>
+            </CardHeader>
             <CardContent className="text-sm text-muted-foreground">
-              <div className="flex items-center justify-between"><span>Open</span><Badge>7</Badge></div>
-              <div className="mt-2 flex items-center justify-between"><span>Waiting on customer</span><Badge variant="secondary">3</Badge></div>
-              <div className="mt-2 flex items-center justify-between"><span>Resolved (7d)</span><Badge variant="outline">24</Badge></div>
+              <div className="flex items-center justify-between">
+                <span>Open</span>
+                <Badge>7</Badge>
+              </div>
+              <div className="mt-2 flex items-center justify-between">
+                <span>Waiting on customer</span>
+                <Badge variant="secondary">3</Badge>
+              </div>
+              <div className="mt-2 flex items-center justify-between">
+                <span>Resolved (7d)</span>
+                <Badge variant="outline">24</Badge>
+              </div>
             </CardContent>
           </Card>
           <Card>
@@ -236,7 +393,10 @@ function Admin() {
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground">
               <div>0 critical · 3 warnings · 128 info</div>
-              <p className="mt-2 text-xs">Wire an error monitor (Sentry / LogRocket / Highlight) to populate this in production.</p>
+              <p className="mt-2 text-xs">
+                Wire an error monitor (Sentry / LogRocket / Highlight) to populate this in
+                production.
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -247,7 +407,12 @@ function Admin() {
               <CardTitle>Users</CardTitle>
               <div className="relative w-full sm:w-64">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input placeholder="Search email or name…" value={q} onChange={(e) => setQ(e.target.value)} className="pl-9" />
+                <Input
+                  placeholder="Search email or name…"
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  className="pl-9"
+                />
               </div>
             </div>
           </CardHeader>
@@ -273,14 +438,38 @@ function Admin() {
                       </td>
                       <td className="py-2">{u.plan}</td>
                       <td className="py-2">
-                        <Badge variant={u.status === "active" ? "default" : u.status === "trial" ? "secondary" : "outline"}>{u.status}</Badge>
+                        <Badge
+                          variant={
+                            u.status === "active"
+                              ? "default"
+                              : u.status === "trial"
+                                ? "secondary"
+                                : "outline"
+                          }
+                        >
+                          {u.status}
+                        </Badge>
                       </td>
-                      <td className="py-2 text-right tabular-nums">{u.properties.toLocaleString()}</td>
+                      <td className="py-2 text-right tabular-nums">
+                        {u.properties.toLocaleString()}
+                      </td>
                       <td className="py-2 pl-4">{u.joined}</td>
                       <td className="py-2 text-right">
                         <div className="flex justify-end gap-1">
-                          <Button size="sm" variant="ghost" onClick={() => toast.info("Plan change UI — connect Stripe to enable.")}>Change plan</Button>
-                          <Button size="sm" variant="ghost" onClick={() => toast.warning(`${u.name} would be disabled.`)}>Disable</Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => toast.info("Plan change UI — connect Stripe to enable.")}
+                          >
+                            Change plan
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => toast.warning(`${u.name} would be disabled.`)}
+                          >
+                            Disable
+                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -295,7 +484,19 @@ function Admin() {
   );
 }
 
-function Stat({ icon: Icon, label, value, delta, tone }: { icon: React.ComponentType<{ className?: string }>; label: string; value: string; delta?: string; tone?: "warning" }) {
+function Stat({
+  icon: Icon,
+  label,
+  value,
+  delta,
+  tone,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+  delta?: string;
+  tone?: "warning";
+}) {
   return (
     <Card>
       <CardContent className="p-5">

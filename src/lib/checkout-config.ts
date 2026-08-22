@@ -1,15 +1,15 @@
-import { plans, type PlanTier } from '@/lib/plans';
+import { plans, type PlanTier } from "@/lib/plans";
 
-export type BillingInterval = 'month' | 'year';
+export type BillingInterval = "month" | "year";
 
-export const CHECKOUT_BUILD_ID = 'boliviq-checkout-embedded-page-20260715-0120Z';
-export const BILLING_IMPLEMENTATION_VERSION = 'embedded_page_v4';
-export const CHECKOUT_HANDLER_NAME = 'createBoliviqCheckoutSession';
-export const CHECKOUT_UI_MODE: string = 'embedded_page';
-export const CHECKOUT_RETURN_PATH = '/billing?checkout=success';
+export const CHECKOUT_BUILD_ID = "boliviq-checkout-embedded-page-20260715-0120Z";
+export const BILLING_IMPLEMENTATION_VERSION = "embedded_page_v4";
+export const CHECKOUT_HANDLER_NAME = "createBoliviqCheckoutSession";
+export const CHECKOUT_UI_MODE: string = "embedded_page";
+export const CHECKOUT_RETURN_PATH = "/billing?checkout=success";
 
 export type BillingOption = {
-  planTier: Exclude<PlanTier, 'free'>;
+  planTier: Exclude<PlanTier, "free">;
   planName: string;
   interval: BillingInterval;
   lookupKey: string;
@@ -19,12 +19,12 @@ export type BillingOption = {
 
 export function listBillingOptions(): BillingOption[] {
   return plans.flatMap((plan) => {
-    if (!plan.priceMonthly || !plan.priceYearly || plan.tier === 'free') return [];
+    if (!plan.priceMonthly || !plan.priceYearly || plan.tier === "free") return [];
     return [
       {
         planTier: plan.tier,
         planName: plan.name,
-        interval: 'month' as const,
+        interval: "month" as const,
         lookupKey: plan.priceMonthly,
         amount: plan.monthly,
         buttonLabel: `Choose ${plan.name}`,
@@ -32,7 +32,7 @@ export function listBillingOptions(): BillingOption[] {
       {
         planTier: plan.tier,
         planName: plan.name,
-        interval: 'year' as const,
+        interval: "year" as const,
         lookupKey: plan.priceYearly,
         amount: plan.annual,
         buttonLabel: `Choose ${plan.name}`,
@@ -42,20 +42,22 @@ export function listBillingOptions(): BillingOption[] {
 }
 
 export function getBillingOption(planTier: string, interval: string): BillingOption {
-  const option = listBillingOptions().find((item) => item.planTier === planTier && item.interval === interval);
-  if (!option) throw new Error('Invalid plan or billing interval.');
+  const option = listBillingOptions().find(
+    (item) => item.planTier === planTier && item.interval === interval,
+  );
+  if (!option) throw new Error("Invalid plan or billing interval.");
   return option;
 }
 
 export function getBillingOptionByLookupKey(lookupKey: string): BillingOption {
   const option = listBillingOptions().find((item) => item.lookupKey === lookupKey);
-  if (!option) throw new Error('Invalid checkout price lookup key.');
+  if (!option) throw new Error("Invalid checkout price lookup key.");
   return option;
 }
 
 export function buildCheckoutSessionParams(input: {
   stripePriceId: string;
-  mode: 'subscription' | 'payment';
+  mode: "subscription" | "payment";
   returnUrl: string;
   customerId: string;
   userId: string;
@@ -83,7 +85,7 @@ export function buildCheckoutSessionParams(input: {
       checkoutBuildId: CHECKOUT_BUILD_ID,
       ...(input.couponCode && { boliviq_coupon: input.couponCode }),
     },
-    ...(input.mode === 'subscription' && {
+    ...(input.mode === "subscription" && {
       subscription_data: {
         metadata: {
           userId: input.userId,
@@ -99,13 +101,18 @@ export function buildCheckoutSessionParams(input: {
   };
 }
 
-export function sanitizeCheckoutSessionParams(params: ReturnType<typeof buildCheckoutSessionParams>) {
+export function sanitizeCheckoutSessionParams(
+  params: ReturnType<typeof buildCheckoutSessionParams>,
+) {
   const lineItem = params.line_items[0];
-  const maskedPrice = lineItem.price.length > 8 ? `${lineItem.price.slice(0, 6)}…${lineItem.price.slice(-4)}` : 'configured';
+  const maskedPrice =
+    lineItem.price.length > 8
+      ? `${lineItem.price.slice(0, 6)}…${lineItem.price.slice(-4)}`
+      : "configured";
   return {
     ...params,
-    customer: 'cus_…masked',
+    customer: "cus_…masked",
     line_items: [{ ...lineItem, price: maskedPrice }],
-    discounts: 'discounts' in params ? '[promotion_code configured]' : undefined,
+    discounts: "discounts" in params ? "[promotion_code configured]" : undefined,
   };
 }

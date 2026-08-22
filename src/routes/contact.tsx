@@ -59,7 +59,9 @@ function Contact() {
             {sent ? (
               <div className="py-10 text-center">
                 <div className="text-lg font-semibold">Thanks — we got your message.</div>
-                <p className="mt-2 text-sm text-muted-foreground">A member of the team will follow up shortly.</p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  A member of the team will follow up shortly.
+                </p>
               </div>
             ) : (
               <form onSubmit={onSubmit} className="space-y-4">

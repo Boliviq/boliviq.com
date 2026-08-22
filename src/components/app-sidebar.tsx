@@ -2,14 +2,44 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import type { ComponentType } from "react";
 import { BrandLogo } from "@/components/brand-logo";
 import {
-  Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
-  SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarFooter,
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarFooter,
 } from "@/components/ui/sidebar";
 import {
-  LayoutDashboard, Building2, Calculator, Users, UserRound, Kanban, Phone,
-  CheckSquare, Sigma, BarChart3, Plug, CreditCard, Settings, Zap,
-  Shield, Megaphone, LifeBuoy, Ticket, Users2, Store, MessageSquare,
-  FolderKanban, Files, Sparkles, BadgeCheck, HardHat,
+  LayoutDashboard,
+  Building2,
+  Calculator,
+  Users,
+  UserRound,
+  Kanban,
+  Phone,
+  CheckSquare,
+  Sigma,
+  BarChart3,
+  Plug,
+  CreditCard,
+  Settings,
+  Zap,
+  Shield,
+  Megaphone,
+  LifeBuoy,
+  Ticket,
+  Users2,
+  Store,
+  MessageSquare,
+  FolderKanban,
+  Files,
+  Sparkles,
+  BadgeCheck,
+  HardHat,
 } from "lucide-react";
 import { navForRole, type NavItem } from "@/lib/canons";
 import { useAccount } from "@/hooks/use-current-user";
@@ -87,7 +117,11 @@ export function AppSidebar() {
                     const Icon = ICONS[item.url] ?? LayoutDashboard;
                     return (
                       <SidebarMenuItem key={item.url}>
-                        <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={item.title}>
+                        <SidebarMenuButton
+                          asChild
+                          isActive={isActive(item.url)}
+                          tooltip={item.title}
+                        >
                           <Link to={item.url}>
                             <Icon />
                             <span>{item.title}</span>
@@ -101,7 +135,7 @@ export function AppSidebar() {
             </SidebarGroup>
           );
         })}
-        {(role === "administrator") && (
+        {role === "administrator" && (
           <SidebarGroup>
             <SidebarGroupLabel>Admin</SidebarGroupLabel>
             <SidebarGroupContent>

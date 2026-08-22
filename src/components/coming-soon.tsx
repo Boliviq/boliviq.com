@@ -2,7 +2,15 @@ import type { ReactNode } from "react";
 import { PageHeader } from "@/components/page-header";
 import { Construction } from "lucide-react";
 
-export function ComingSoonPage({ title, description, children }: { title: string; description: string; children?: ReactNode }) {
+export function ComingSoonPage({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description: string;
+  children?: ReactNode;
+}) {
   return (
     <>
       <PageHeader title={title} description={description} />

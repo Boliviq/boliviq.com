@@ -1,6 +1,11 @@
 import { MARKETPLACE_SEED, type SeedListing } from "@/lib/marketplace-seed";
 import { PROFESSIONAL_SEED } from "@/lib/professional-seed";
-import { MARKETPLACE_CATEGORIES, type MarketplaceCategoryId, type ProfileRoleId, type VerificationTierId } from "@/lib/canons";
+import {
+  MARKETPLACE_CATEGORIES,
+  type MarketplaceCategoryId,
+  type ProfileRoleId,
+  type VerificationTierId,
+} from "@/lib/canons";
 
 export type MarketplaceListing = SeedListing & {
   priceLabel?: string;
@@ -63,7 +68,8 @@ export function listListings(userId: string | null): MarketplaceListing[] {
 
 export function createListing(
   userId: string,
-  input: Partial<MarketplaceListing> & Pick<MarketplaceListing, "title" | "description" | "category" | "location">,
+  input: Partial<MarketplaceListing> &
+    Pick<MarketplaceListing, "title" | "description" | "category" | "location">,
 ) {
   const row: MarketplaceListing = {
     id: `usr_${crypto.randomUUID()}`,
@@ -75,7 +81,9 @@ export function createListing(
     state: input.state ?? "",
     price: input.price,
     budget: input.budget,
-    photos: input.photos?.length ? input.photos : ["https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800"],
+    photos: input.photos?.length
+      ? input.photos
+      : ["https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800"],
     postedBy: input.postedBy ?? input.authorName ?? "You",
     role: input.role ?? input.authorRole ?? "homeowner",
     propertyLabel: input.propertyLabel,
@@ -104,7 +112,10 @@ export function savedListingIds(userId: string | null) {
 }
 
 export function reportListing(userId: string, listingId: string, reason: string) {
-  write(userId, "reports", [{ listingId, reason, at: new Date().toISOString() }, ...read(userId, "reports")]);
+  write(userId, "reports", [
+    { listingId, reason, at: new Date().toISOString() },
+    ...read(userId, "reports"),
+  ]);
 }
 
 export type Thread = {
@@ -142,8 +153,19 @@ const THREAD_SEED: Thread[] = [
     property: "412 Oak Street",
     project: "Kitchen remodel",
     messages: [
-      { id: "m1", from: "Maya Chen", body: "Can you bid cabinets, counters, and flooring together?", at: "2026-08-19T15:02:00Z" },
-      { id: "m2", from: "Alex Ford", body: "Yes. I'll send a scope tonight and we can walk Thursday at 3pm.", at: "2026-08-19T16:40:00Z", mine: true },
+      {
+        id: "m1",
+        from: "Maya Chen",
+        body: "Can you bid cabinets, counters, and flooring together?",
+        at: "2026-08-19T15:02:00Z",
+      },
+      {
+        id: "m2",
+        from: "Alex Ford",
+        body: "Yes. I'll send a scope tonight and we can walk Thursday at 3pm.",
+        at: "2026-08-19T16:40:00Z",
+        mine: true,
+      },
     ],
   },
   {
@@ -158,8 +180,19 @@ const THREAD_SEED: Thread[] = [
     listing: "412 Oak Street — 3/2 fixer, Austin",
     listingId: "lst-oak",
     messages: [
-      { id: "m3", from: "Julie Chen", body: "Are you available Saturday 11–1 for a showing?", at: "2026-08-20T10:12:00Z" },
-      { id: "m4", from: "You", body: "Saturday 11 works. Disclosure packet is in Documents.", at: "2026-08-20T11:00:00Z", mine: true },
+      {
+        id: "m3",
+        from: "Julie Chen",
+        body: "Are you available Saturday 11–1 for a showing?",
+        at: "2026-08-20T10:12:00Z",
+      },
+      {
+        id: "m4",
+        from: "You",
+        body: "Saturday 11 works. Disclosure packet is in Documents.",
+        at: "2026-08-20T11:00:00Z",
+        mine: true,
+      },
     ],
   },
   {
@@ -171,7 +204,12 @@ const THREAD_SEED: Thread[] = [
     updatedAt: "2026-08-18T09:30:00Z",
     unread: 0,
     messages: [
-      { id: "m5", from: "Dana Lewis", body: "Upload the entity docs when you can — this is not a credit decision.", at: "2026-08-18T09:30:00Z" },
+      {
+        id: "m5",
+        from: "Dana Lewis",
+        body: "Upload the entity docs when you can — this is not a credit decision.",
+        at: "2026-08-18T09:30:00Z",
+      },
     ],
   },
 ];
@@ -184,8 +222,16 @@ export function listThreads(userId: string | null): Thread[] {
 export function sendMessage(userId: string, threadId: string, body: string) {
   const mine = read<Thread>(userId, "threads");
   const fromSeed = THREAD_SEED.find((t) => t.id === threadId);
-  const existing = mine.find((t) => t.id === threadId) ?? (fromSeed ? { ...fromSeed, messages: [...fromSeed.messages] } : null);
-  const msg = { id: `m_${crypto.randomUUID()}`, from: "You", body, at: new Date().toISOString(), mine: true };
+  const existing =
+    mine.find((t) => t.id === threadId) ??
+    (fromSeed ? { ...fromSeed, messages: [...fromSeed.messages] } : null);
+  const msg = {
+    id: `m_${crypto.randomUUID()}`,
+    from: "You",
+    body,
+    at: new Date().toISOString(),
+    mine: true,
+  };
   let next: Thread[];
   if (existing) {
     const updated: Thread = {
@@ -197,23 +243,38 @@ export function sendMessage(userId: string, threadId: string, body: string) {
     };
     next = [updated, ...mine.filter((t) => t.id !== threadId)];
   } else {
-    next = [{
-      id: threadId,
-      title: "New conversation",
-      context: "Direct message",
-      participants: ["You"],
-      lastMessage: body,
-      updatedAt: msg.at,
-      unread: 0,
-      messages: [msg],
-    }, ...mine];
+    next = [
+      {
+        id: threadId,
+        title: "New conversation",
+        context: "Direct message",
+        participants: ["You"],
+        lastMessage: body,
+        updatedAt: msg.at,
+        unread: 0,
+        messages: [msg],
+      },
+      ...mine,
+    ];
   }
   write(userId, "threads", next);
 }
 
-export function startConversation(userId: string, title: string, context: string, firstMessage: string, extra?: ConversationExtras) {
+export function startConversation(
+  userId: string,
+  title: string,
+  context: string,
+  firstMessage: string,
+  extra?: ConversationExtras,
+) {
   const id = `th_${crypto.randomUUID()}`;
-  const msg = { id: `m_${crypto.randomUUID()}`, from: "You", body: firstMessage, at: new Date().toISOString(), mine: true as const };
+  const msg = {
+    id: `m_${crypto.randomUUID()}`,
+    from: "You",
+    body: firstMessage,
+    at: new Date().toISOString(),
+    mine: true as const,
+  };
   const thread: Thread = {
     id,
     title,
@@ -244,10 +305,46 @@ export type ProjectRecord = {
 };
 
 const PROJECT_SEED: ProjectRecord[] = [
-  { id: "prj_kitchen", name: "Kitchen remodel", address: "412 Oak Street, Austin TX", status: "estimating", roleView: "Bid comparison", budget: 32000, spent: 0, nextMilestone: "Walk-through Thu 3:00 PM" },
-  { id: "prj_riverside", name: "Riverside flip — Phase 1", address: "88 Riverside Dr, Houston TX", status: "in_progress", roleView: "Daily logs", budget: 62000, spent: 18400, nextMilestone: "Electrical rough-in" },
-  { id: "prj_turnover", name: "Unit 2B turnover", address: "Harbor Flats, Houston TX", status: "awaiting_approval", roleView: "Owner approval", budget: 4800, spent: 4100, nextMilestone: "Punch photos" },
-  { id: "prj_close", name: "Cedar Title — 1220 Maple", address: "1220 Maple Ave, Dallas TX", status: "in_progress", roleView: "Closing checklist", budget: 0, spent: 0, nextMilestone: "Clear title commitment" },
+  {
+    id: "prj_kitchen",
+    name: "Kitchen remodel",
+    address: "412 Oak Street, Austin TX",
+    status: "estimating",
+    roleView: "Bid comparison",
+    budget: 32000,
+    spent: 0,
+    nextMilestone: "Walk-through Thu 3:00 PM",
+  },
+  {
+    id: "prj_riverside",
+    name: "Riverside flip — Phase 1",
+    address: "88 Riverside Dr, Houston TX",
+    status: "in_progress",
+    roleView: "Daily logs",
+    budget: 62000,
+    spent: 18400,
+    nextMilestone: "Electrical rough-in",
+  },
+  {
+    id: "prj_turnover",
+    name: "Unit 2B turnover",
+    address: "Harbor Flats, Houston TX",
+    status: "awaiting_approval",
+    roleView: "Owner approval",
+    budget: 4800,
+    spent: 4100,
+    nextMilestone: "Punch photos",
+  },
+  {
+    id: "prj_close",
+    name: "Cedar Title — 1220 Maple",
+    address: "1220 Maple Ave, Dallas TX",
+    status: "in_progress",
+    roleView: "Closing checklist",
+    budget: 0,
+    spent: 0,
+    nextMilestone: "Clear title commitment",
+  },
 ];
 
 export function listProjects(userId: string | null): ProjectRecord[] {
@@ -283,11 +380,46 @@ export type DocRecord = {
 };
 
 const DOC_SEED: DocRecord[] = [
-  { id: "doc_insp", name: "Inspection report — 412 Oak St.pdf", kind: "Inspection", related: "412 Oak Street", restricted: false, updatedAt: "2026-08-12T18:00:00Z" },
-  { id: "doc_scope", name: "Kitchen scope of work.docx", kind: "Estimate", related: "Kitchen remodel", restricted: false, updatedAt: "2026-08-19T20:00:00Z" },
-  { id: "doc_disc", name: "Seller disclosures.pdf", kind: "Disclosure", related: "412 Oak Street", restricted: false, updatedAt: "2026-08-20T11:00:00Z" },
-  { id: "doc_wire", name: "Wiring instructions — DO NOT EMAIL.pdf", kind: "Closing", related: "1220 Maple Ave", restricted: true, updatedAt: "2026-08-18T09:00:00Z" },
-  { id: "doc_policy", name: "Builder's risk quote.pdf", kind: "Insurance", related: "Riverside flip", restricted: false, updatedAt: "2026-08-16T14:00:00Z" },
+  {
+    id: "doc_insp",
+    name: "Inspection report — 412 Oak St.pdf",
+    kind: "Inspection",
+    related: "412 Oak Street",
+    restricted: false,
+    updatedAt: "2026-08-12T18:00:00Z",
+  },
+  {
+    id: "doc_scope",
+    name: "Kitchen scope of work.docx",
+    kind: "Estimate",
+    related: "Kitchen remodel",
+    restricted: false,
+    updatedAt: "2026-08-19T20:00:00Z",
+  },
+  {
+    id: "doc_disc",
+    name: "Seller disclosures.pdf",
+    kind: "Disclosure",
+    related: "412 Oak Street",
+    restricted: false,
+    updatedAt: "2026-08-20T11:00:00Z",
+  },
+  {
+    id: "doc_wire",
+    name: "Wiring instructions — DO NOT EMAIL.pdf",
+    kind: "Closing",
+    related: "1220 Maple Ave",
+    restricted: true,
+    updatedAt: "2026-08-18T09:00:00Z",
+  },
+  {
+    id: "doc_policy",
+    name: "Builder's risk quote.pdf",
+    kind: "Insurance",
+    related: "Riverside flip",
+    restricted: false,
+    updatedAt: "2026-08-16T14:00:00Z",
+  },
 ];
 
 export function listDocuments(userId: string | null): DocRecord[] {
@@ -296,7 +428,11 @@ export function listDocuments(userId: string | null): DocRecord[] {
 }
 
 export function addDocument(userId: string, input: Omit<DocRecord, "id" | "updatedAt">) {
-  const row: DocRecord = { ...input, id: `doc_${crypto.randomUUID()}`, updatedAt: new Date().toISOString() };
+  const row: DocRecord = {
+    ...input,
+    id: `doc_${crypto.randomUUID()}`,
+    updatedAt: new Date().toISOString(),
+  };
   write(userId, "documents", [row, ...read<DocRecord>(userId, "documents")]);
   return row;
 }
@@ -310,16 +446,47 @@ export type CreditLedgerRow = {
 };
 
 const LEDGER_SEED: CreditLedgerRow[] = [
-  { id: "cr1", at: "2026-08-01T00:00:00Z", label: "Monthly subscription deposit", delta: 500, status: "posted" },
-  { id: "cr2", at: "2026-08-18T14:22:00Z", label: "Property analysis (reserved)", delta: -40, status: "reserved" },
-  { id: "cr3", at: "2026-08-18T14:23:12Z", label: "Property analysis (final)", delta: -28, status: "posted" },
-  { id: "cr4", at: "2026-08-18T14:23:12Z", label: "Unused reservation released", delta: 12, status: "released" },
-  { id: "cr5", at: "2026-08-19T09:01:00Z", label: "Failed estimate — refunded", delta: 15, status: "refunded" },
+  {
+    id: "cr1",
+    at: "2026-08-01T00:00:00Z",
+    label: "Monthly subscription deposit",
+    delta: 500,
+    status: "posted",
+  },
+  {
+    id: "cr2",
+    at: "2026-08-18T14:22:00Z",
+    label: "Property analysis (reserved)",
+    delta: -40,
+    status: "reserved",
+  },
+  {
+    id: "cr3",
+    at: "2026-08-18T14:23:12Z",
+    label: "Property analysis (final)",
+    delta: -28,
+    status: "posted",
+  },
+  {
+    id: "cr4",
+    at: "2026-08-18T14:23:12Z",
+    label: "Unused reservation released",
+    delta: 12,
+    status: "released",
+  },
+  {
+    id: "cr5",
+    at: "2026-08-19T09:01:00Z",
+    label: "Failed estimate — refunded",
+    delta: 15,
+    status: "refunded",
+  },
 ];
 
 export function creditBalance() {
-  return LEDGER_SEED.filter((r) => r.status === "posted" || r.status === "refunded" || r.status === "released")
-    .reduce((s, r) => s + r.delta, 0);
+  return LEDGER_SEED.filter(
+    (r) => r.status === "posted" || r.status === "refunded" || r.status === "released",
+  ).reduce((s, r) => s + r.delta, 0);
 }
 
 export function creditLedger() {

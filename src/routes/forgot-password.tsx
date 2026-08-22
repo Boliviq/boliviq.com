@@ -20,7 +20,10 @@ function ForgotPassword() {
       redirectTo: `${window.location.origin}/reset-password`,
     });
     setLoading(false);
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     setSent(true);
   };
 
@@ -37,12 +40,23 @@ function ForgotPassword() {
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+              <Input
+                id="email"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>Send reset link</Button>
+            <Button type="submit" className="w-full" disabled={loading}>
+              Send reset link
+            </Button>
           </form>
         )}
-        <Link to="/auth" className="mt-6 block text-center text-sm text-muted-foreground hover:underline">
+        <Link
+          to="/auth"
+          className="mt-6 block text-center text-sm text-muted-foreground hover:underline"
+        >
           Back to sign in
         </Link>
       </div>

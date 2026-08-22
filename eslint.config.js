@@ -34,6 +34,9 @@ export default tseslint.config(
       ],
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
       "@typescript-eslint/no-unused-vars": "off",
+      // Mid-migration: keep `any` visible as a warning rather than blocking CI. Tighten to
+      // "error" once the canon platform data layer is typed against Supabase (Phase 1+).
+      "@typescript-eslint/no-explicit-any": "warn",
     },
   },
   eslintPluginPrettier,

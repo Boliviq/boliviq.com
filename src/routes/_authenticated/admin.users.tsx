@@ -38,7 +38,8 @@ function AdminUsersGate() {
     },
   });
 
-  if (loading || isLoading) return <div className="p-8 text-sm text-muted-foreground">Checking access…</div>;
+  if (loading || isLoading)
+    return <div className="p-8 text-sm text-muted-foreground">Checking access…</div>;
   if (!isAdmin) {
     return (
       <div className="p-8">
@@ -74,12 +75,16 @@ function AdminUsers({ currentUserId }: { currentUserId: string }) {
     const s = q.toLowerCase().trim();
     if (!s) return users;
     return users.filter(
-      (u) => u.email.toLowerCase().includes(s) || u.full_name.toLowerCase().includes(s) || u.id.includes(s),
+      (u) =>
+        u.email.toLowerCase().includes(s) ||
+        u.full_name.toLowerCase().includes(s) ||
+        u.id.includes(s),
     );
   }, [data, q]);
 
   const mutation = useMutation({
-    mutationFn: (vars: { userId: string; role: AppRole; grant: boolean }) => setRoleFn({ data: vars }),
+    mutationFn: (vars: { userId: string; role: AppRole; grant: boolean }) =>
+      setRoleFn({ data: vars }),
     onSuccess: (_r, vars) => {
       toast.success(`${vars.grant ? "Granted" : "Revoked"} ${vars.role}`);
       qc.invalidateQueries({ queryKey: ["admin-users"] });
@@ -94,10 +99,22 @@ function AdminUsers({ currentUserId }: { currentUserId: string }) {
         <Card>
           <CardHeader>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <CardTitle>All users {data && <span className="ml-2 text-sm font-normal text-muted-foreground">({filtered.length})</span>}</CardTitle>
+              <CardTitle>
+                All users{" "}
+                {data && (
+                  <span className="ml-2 text-sm font-normal text-muted-foreground">
+                    ({filtered.length})
+                  </span>
+                )}
+              </CardTitle>
               <div className="relative w-full sm:w-72">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input placeholder="Search email, name, or ID…" value={q} onChange={(e) => setQ(e.target.value)} className="pl-9" />
+                <Input
+                  placeholder="Search email, name, or ID…"
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  className="pl-9"
+                />
               </div>
             </div>
           </CardHeader>
@@ -116,7 +133,9 @@ function AdminUsers({ currentUserId }: { currentUserId: string }) {
                       <th className="py-2 text-left">Joined</th>
                       <th className="py-2 text-left">Last sign-in</th>
                       {ALL_ROLES.map((r) => (
-                        <th key={r} className="py-2 pl-4 text-left capitalize">{r}</th>
+                        <th key={r} className="py-2 pl-4 text-left capitalize">
+                          {r}
+                        </th>
                       ))}
                     </tr>
                   </thead>
@@ -142,7 +161,9 @@ function AdminUsers({ currentUserId }: { currentUserId: string }) {
                             {new Date(u.created_at).toLocaleDateString()}
                           </td>
                           <td className="py-3 pr-4 text-xs text-muted-foreground">
-                            {u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString() : "—"}
+                            {u.last_sign_in_at
+                              ? new Date(u.last_sign_in_at).toLocaleDateString()
+                              : "—"}
                           </td>
                           {ALL_ROLES.map((role) => {
                             const has = u.roles.includes(role);
@@ -165,7 +186,10 @@ function AdminUsers({ currentUserId }: { currentUserId: string }) {
                     })}
                     {filtered.length === 0 && (
                       <tr>
-                        <td colSpan={4 + ALL_ROLES.length} className="py-8 text-center text-sm text-muted-foreground">
+                        <td
+                          colSpan={4 + ALL_ROLES.length}
+                          className="py-8 text-center text-sm text-muted-foreground"
+                        >
                           No users match your search.
                         </td>
                       </tr>
@@ -177,8 +201,22 @@ function AdminUsers({ currentUserId }: { currentUserId: string }) {
             <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
               <div>{isFetching && !isLoading ? "Refreshing…" : `Page ${page}`}</div>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" disabled={page === 1 || isFetching} onClick={() => setPage((p) => Math.max(1, p - 1))}>Previous</Button>
-                <Button variant="outline" size="sm" disabled={isFetching || (data?.users.length ?? 0) < 100} onClick={() => setPage((p) => p + 1)}>Next</Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page === 1 || isFetching}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                >
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={isFetching || (data?.users.length ?? 0) < 100}
+                  onClick={() => setPage((p) => p + 1)}
+                >
+                  Next
+                </Button>
               </div>
             </div>
           </CardContent>

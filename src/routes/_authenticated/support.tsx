@@ -33,28 +33,57 @@ function HelpCenter() {
 
   return (
     <>
-      <PageHeader title="Help & support" description="Guides, support, and how to get the most out of Boliviq." />
+      <PageHeader
+        title="Help & support"
+        description="Guides, support, and how to get the most out of Boliviq."
+      />
       <div className="p-4 sm:p-8">
         <Tabs defaultValue="checklist">
           <TabsList className="flex flex-wrap">
-            <TabsTrigger value="checklist"><CheckCircle2 className="mr-1 h-4 w-4" />Onboarding</TabsTrigger>
-            <TabsTrigger value="guides"><BookOpen className="mr-1 h-4 w-4" />Guides</TabsTrigger>
-            <TabsTrigger value="support"><LifeBuoy className="mr-1 h-4 w-4" />Contact support</TabsTrigger>
-            <TabsTrigger value="bug"><Bug className="mr-1 h-4 w-4" />Report a bug</TabsTrigger>
-            <TabsTrigger value="feature"><Lightbulb className="mr-1 h-4 w-4" />Feature request</TabsTrigger>
+            <TabsTrigger value="checklist">
+              <CheckCircle2 className="mr-1 h-4 w-4" />
+              Onboarding
+            </TabsTrigger>
+            <TabsTrigger value="guides">
+              <BookOpen className="mr-1 h-4 w-4" />
+              Guides
+            </TabsTrigger>
+            <TabsTrigger value="support">
+              <LifeBuoy className="mr-1 h-4 w-4" />
+              Contact support
+            </TabsTrigger>
+            <TabsTrigger value="bug">
+              <Bug className="mr-1 h-4 w-4" />
+              Report a bug
+            </TabsTrigger>
+            <TabsTrigger value="feature">
+              <Lightbulb className="mr-1 h-4 w-4" />
+              Feature request
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="checklist" className="mt-4">
             <Card>
               <CardHeader>
                 <CardTitle>Onboarding checklist</CardTitle>
-                <div className="text-sm text-muted-foreground">{progress} of {checklist.length} complete</div>
+                <div className="text-sm text-muted-foreground">
+                  {progress} of {checklist.length} complete
+                </div>
               </CardHeader>
               <CardContent className="space-y-3">
                 {checklist.map((item) => (
-                  <label key={item} className="flex items-start gap-3 rounded-md border p-3 hover:bg-muted/40 cursor-pointer">
-                    <Checkbox checked={!!done[item]} onCheckedChange={(c) => setDone((d) => ({ ...d, [item]: !!c }))} className="mt-0.5" />
-                    <span className={done[item] ? "line-through text-muted-foreground" : ""}>{item}</span>
+                  <label
+                    key={item}
+                    className="flex items-start gap-3 rounded-md border p-3 hover:bg-muted/40 cursor-pointer"
+                  >
+                    <Checkbox
+                      checked={!!done[item]}
+                      onCheckedChange={(c) => setDone((d) => ({ ...d, [item]: !!c }))}
+                      className="mt-0.5"
+                    />
+                    <span className={done[item] ? "line-through text-muted-foreground" : ""}>
+                      {item}
+                    </span>
                   </label>
                 ))}
               </CardContent>
@@ -63,9 +92,18 @@ function HelpCenter() {
 
           <TabsContent value="guides" className="mt-4">
             <div className="grid gap-4 md:grid-cols-2">
-              <Guide title="Getting started" desc="Set up your workspace, add your first property, and run your first analysis." />
-              <Guide title="Deal Analyzer walkthrough" desc="Every input, every formula, every score." />
-              <Guide title="Building your pipeline" desc="Stages, assignments, and how leads flow." />
+              <Guide
+                title="Getting started"
+                desc="Set up your workspace, add your first property, and run your first analysis."
+              />
+              <Guide
+                title="Deal Analyzer walkthrough"
+                desc="Every input, every formula, every score."
+              />
+              <Guide
+                title="Building your pipeline"
+                desc="Stages, assignments, and how leads flow."
+              />
               <Guide title="Call Assistant" desc="Scripts, prep notes, and post-call summaries." />
               <Guide title="Automations" desc="Rules for tasks, alerts, and follow-ups." />
               <Guide title="Reports" desc="Print-ready deal packages for partners and lenders." />
@@ -93,7 +131,14 @@ function Guide({ title, desc }: { title: string; desc: string }) {
       <CardContent className="p-6">
         <div className="font-semibold">{title}</div>
         <p className="mt-1 text-sm text-muted-foreground">{desc}</p>
-        <Button variant="ghost" size="sm" className="mt-3 px-0" onClick={() => toast.info("Full guide coming soon.")}>Read guide →</Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="mt-3 px-0"
+          onClick={() => toast.info("Full guide coming soon.")}
+        >
+          Read guide →
+        </Button>
       </CardContent>
     </Card>
   );
@@ -103,7 +148,9 @@ function SupportForm({ kind }: { kind: string }) {
   const [sent, setSent] = useState(false);
   return (
     <Card>
-      <CardHeader><CardTitle>{kind}</CardTitle></CardHeader>
+      <CardHeader>
+        <CardTitle>{kind}</CardTitle>
+      </CardHeader>
       <CardContent>
         {sent ? (
           <div className="py-6 text-center">
@@ -113,7 +160,11 @@ function SupportForm({ kind }: { kind: string }) {
           </div>
         ) : (
           <form
-            onSubmit={(e) => { e.preventDefault(); setSent(true); toast.success(`${kind} submitted`); }}
+            onSubmit={(e) => {
+              e.preventDefault();
+              setSent(true);
+              toast.success(`${kind} submitted`);
+            }}
             className="space-y-3"
           >
             <div>

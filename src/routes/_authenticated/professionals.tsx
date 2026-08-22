@@ -10,7 +10,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { VerificationBadgeRow } from "@/components/verification-badge";
-import { PROFILE_ROLES, TRADE_LABELS, VERIFICATION_DISCLAIMER, type ProfileRoleId } from "@/lib/canons";
+import {
+  PROFILE_ROLES,
+  TRADE_LABELS,
+  VERIFICATION_DISCLAIMER,
+  type ProfileRoleId,
+} from "@/lib/canons";
 import { PROFESSIONAL_SEED } from "@/lib/professional-seed";
 import { useAccount } from "@/hooks/use-current-user";
 import { useWorkspace } from "@/hooks/use-workspace";
@@ -30,12 +35,15 @@ function ProfessionalsPage() {
   const people = useMemo(() => {
     return PROFESSIONAL_SEED.filter((p) => {
       const okRole = role === "all" || p.role === role;
-      const hay = `${p.name} ${p.company} ${p.serviceArea} ${p.specialties.join(" ")}`.toLowerCase();
+      const hay =
+        `${p.name} ${p.company} ${p.serviceArea} ${p.specialties.join(" ")}`.toLowerCase();
       return okRole && (!q || hay.includes(q.toLowerCase()));
     });
   }, [role, q]);
 
-  const directoryRoles = PROFILE_ROLES.filter((r) => r.id !== "homeowner" && r.id !== "administrator");
+  const directoryRoles = PROFILE_ROLES.filter(
+    (r) => r.id !== "homeowner" && r.id !== "administrator",
+  );
 
   return (
     <>
@@ -50,13 +58,29 @@ function ProfessionalsPage() {
         <div className="flex flex-col gap-3 lg:flex-row">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, trade, or city…" className="pl-9" />
+            <Input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search name, trade, or city…"
+              className="pl-9"
+            />
           </div>
         </div>
         <div className="flex gap-2 overflow-x-auto pb-1">
-          <button type="button" onClick={() => setRole("all")} className={`shrink-0 rounded-full border px-3 py-1 text-xs ${role === "all" ? "border-[#70bf2b] bg-[#70bf2b]/10 font-semibold" : ""}`}>All roles</button>
+          <button
+            type="button"
+            onClick={() => setRole("all")}
+            className={`shrink-0 rounded-full border px-3 py-1 text-xs ${role === "all" ? "border-[#70bf2b] bg-[#70bf2b]/10 font-semibold" : ""}`}
+          >
+            All roles
+          </button>
           {directoryRoles.map((r) => (
-            <button key={r.id} type="button" onClick={() => setRole(r.id)} className={`shrink-0 rounded-full border px-3 py-1 text-xs ${role === r.id ? "border-[#70bf2b] bg-[#70bf2b]/10 font-semibold" : ""}`}>
+            <button
+              key={r.id}
+              type="button"
+              onClick={() => setRole(r.id)}
+              className={`shrink-0 rounded-full border px-3 py-1 text-xs ${role === r.id ? "border-[#70bf2b] bg-[#70bf2b]/10 font-semibold" : ""}`}
+            >
               {r.label}
             </button>
           ))}
@@ -71,7 +95,9 @@ function ProfessionalsPage() {
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <div className="font-display text-lg font-bold">{p.name}</div>
-                      <div className="text-sm text-muted-foreground">{p.company} · {roleLabel}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {p.company} · {roleLabel}
+                      </div>
                     </div>
                     <div className="flex items-center gap-1 text-sm font-semibold">
                       {p.rating || "—"}
@@ -81,13 +107,20 @@ function ProfessionalsPage() {
                   <VerificationBadgeRow tiers={p.tiers} />
                   <p className="text-sm text-muted-foreground">{p.bio}</p>
                   <div className="flex flex-wrap gap-1.5">
-                    {p.specialties.map((s) => <Badge key={s} variant="secondary">{s}</Badge>)}
+                    {p.specialties.map((s) => (
+                      <Badge key={s} variant="secondary">
+                        {s}
+                      </Badge>
+                    ))}
                     {p.trades?.map((t) => (
-                      <Badge key={t} variant="outline">{TRADE_LABELS[t as keyof typeof TRADE_LABELS] ?? t}</Badge>
+                      <Badge key={t} variant="outline">
+                        {TRADE_LABELS[t as keyof typeof TRADE_LABELS] ?? t}
+                      </Badge>
                     ))}
                   </div>
                   <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <MapPin className="h-3 w-3" /> {p.serviceArea} · {p.years} yrs · responds {p.responseTime}
+                    <MapPin className="h-3 w-3" /> {p.serviceArea} · {p.years} yrs · responds{" "}
+                    {p.responseTime}
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <Button
@@ -111,7 +144,13 @@ function ProfessionalsPage() {
                     >
                       <MessageSquare className="h-3.5 w-3.5" /> Message
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => void navigate({ to: "/verification" })}>Verification</Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => void navigate({ to: "/verification" })}
+                    >
+                      Verification
+                    </Button>
                     <Button
                       size="sm"
                       variant="outline"
@@ -134,7 +173,10 @@ function ProfessionalsPage() {
                           project.name,
                           `Project · ${p.name}`,
                           `Invited ${p.name} (${roleLabel}) onto a project.`,
-                          { project: project.name, participants: [account.full_name || "You", p.name] },
+                          {
+                            project: project.name,
+                            participants: [account.full_name || "You", p.name],
+                          },
                         );
                         toast.success("Professional invited to a project");
                         void navigate({ to: "/projects" });

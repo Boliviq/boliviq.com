@@ -9,13 +9,28 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -49,15 +64,20 @@ function LeadsPage() {
   const [openNew, setOpenNew] = useState(false);
 
   const leadsQuery = useQuery({
-    queryKey: ["leads-full", userId], enabled: !!userId,
+    queryKey: ["leads-full", userId],
+    enabled: !!userId,
     queryFn: async () => {
-      const { data, error } = await supabase.from("leads").select("*").order("created_at", { ascending: false });
+      const { data, error } = await supabase
+        .from("leads")
+        .select("*")
+        .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as Lead[];
     },
   });
   const propsQuery = useQuery({
-    queryKey: ["properties-min", userId], enabled: !!userId,
+    queryKey: ["properties-min", userId],
+    enabled: !!userId,
     queryFn: async () => {
       const { data, error } = await supabase.from("properties").select("id, address, city, state");
       if (error) throw error;
@@ -65,7 +85,8 @@ function LeadsPage() {
     },
   });
   const contactsQuery = useQuery({
-    queryKey: ["contacts-min", userId], enabled: !!userId,
+    queryKey: ["contacts-min", userId],
+    enabled: !!userId,
     queryFn: async () => {
       const { data, error } = await supabase.from("contacts").select("id, name, phone, email");
       if (error) throw error;
@@ -73,8 +94,14 @@ function LeadsPage() {
     },
   });
 
-  const propMap = useMemo(() => Object.fromEntries((propsQuery.data ?? []).map((p) => [p.id, p])), [propsQuery.data]);
-  const contactMap = useMemo(() => Object.fromEntries((contactsQuery.data ?? []).map((c) => [c.id, c])), [contactsQuery.data]);
+  const propMap = useMemo(
+    () => Object.fromEntries((propsQuery.data ?? []).map((p) => [p.id, p])),
+    [propsQuery.data],
+  );
+  const contactMap = useMemo(
+    () => Object.fromEntries((contactsQuery.data ?? []).map((c) => [c.id, c])),
+    [contactsQuery.data],
+  );
 
   const updateLead = useMutation({
     mutationFn: async ({ id, patch }: { id: string; patch: any }) => {
@@ -94,7 +121,8 @@ function LeadsPage() {
         const c = l.contact_id ? contactMap[l.contact_id] : null;
         const p = l.property_id ? propMap[l.property_id] : null;
         return [c?.name, c?.email, c?.phone, p?.address, l.source, l.assigned_to]
-          .filter(Boolean).some((v: string) => v.toLowerCase().includes(q));
+          .filter(Boolean)
+          .some((v: string) => v.toLowerCase().includes(q));
       });
     }
     return list;
@@ -105,30 +133,54 @@ function LeadsPage() {
       <PageHeader
         title="Leads"
         description="Every seller, agent, and property lead in one CRM view."
-        action={<Button onClick={() => setOpenNew(true)}><Plus className="h-4 w-4" /> New lead</Button>}
+        action={
+          <Button onClick={() => setOpenNew(true)}>
+            <Plus className="h-4 w-4" /> New lead
+          </Button>
+        }
       />
 
       <div className="space-y-4 p-4 sm:p-6">
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative">
             <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input value={search} onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search leads…" className="w-56 pl-8" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search leads…"
+              className="w-56 pl-8"
+            />
           </div>
-          <Select value={statusFilter || "__all"} onValueChange={(v) => setStatusFilter(v === "__all" ? "" : v)}>
-            <SelectTrigger className="w-44"><SelectValue placeholder="Status" /></SelectTrigger>
+          <Select
+            value={statusFilter || "__all"}
+            onValueChange={(v) => setStatusFilter(v === "__all" ? "" : v)}
+          >
+            <SelectTrigger className="w-44">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="__all">All statuses</SelectItem>
-              {LEAD_STATUSES.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+              {LEAD_STATUSES.map((s) => (
+                <SelectItem key={s.value} value={s.value}>
+                  {s.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
-          <Select value={priorityFilter || "__all"} onValueChange={(v) => setPriorityFilter(v === "__all" ? "" : v)}>
-            <SelectTrigger className="w-40"><SelectValue placeholder="Priority" /></SelectTrigger>
+          <Select
+            value={priorityFilter || "__all"}
+            onValueChange={(v) => setPriorityFilter(v === "__all" ? "" : v)}
+          >
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Priority" />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="__all">All priorities</SelectItem>
-              {["low", "medium", "high"].map((p) =>
-                <SelectItem key={p} value={p}>{p}</SelectItem>
-              )}
+              {["low", "medium", "high"].map((p) => (
+                <SelectItem key={p} value={p}>
+                  {p}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -171,38 +223,70 @@ function LeadsPage() {
                       <TableCell>
                         <div className="font-medium">{c?.name ?? "—"}</div>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          {c?.phone && <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{c.phone}</span>}
-                          {c?.email && <span className="flex items-center gap-1"><Mail className="h-3 w-3" />{c.email}</span>}
+                          {c?.phone && (
+                            <span className="flex items-center gap-1">
+                              <Phone className="h-3 w-3" />
+                              {c.phone}
+                            </span>
+                          )}
+                          {c?.email && (
+                            <span className="flex items-center gap-1">
+                              <Mail className="h-3 w-3" />
+                              {c.email}
+                            </span>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>
                         {p ? (
                           <div>
                             <div className="text-sm font-medium">{p.address}</div>
-                            <div className="text-xs text-muted-foreground">{[p.city, p.state].filter(Boolean).join(", ")}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {[p.city, p.state].filter(Boolean).join(", ")}
+                            </div>
                           </div>
-                        ) : "—"}
+                        ) : (
+                          "—"
+                        )}
                       </TableCell>
                       <TableCell className="text-sm">{l.source ?? "—"}</TableCell>
                       <TableCell>
-                        <Select value={l.status ?? "new"}
-                          onValueChange={(v) => updateLead.mutate({ id: l.id, patch: { status: v as LeadStatus } })}>
+                        <Select
+                          value={l.status ?? "new"}
+                          onValueChange={(v) =>
+                            updateLead.mutate({ id: l.id, patch: { status: v as LeadStatus } })
+                          }
+                        >
                           <SelectTrigger className="h-8 w-40">
                             <Badge variant="outline" className={statusTone(l.status)}>
                               {LEAD_STATUSES.find((s) => s.value === l.status)?.label ?? l.status}
                             </Badge>
                           </SelectTrigger>
                           <SelectContent>
-                            {LEAD_STATUSES.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+                            {LEAD_STATUSES.map((s) => (
+                              <SelectItem key={s.value} value={s.value}>
+                                {s.label}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </TableCell>
                       <TableCell>
-                        <Select value={l.priority ?? "medium"}
-                          onValueChange={(v) => updateLead.mutate({ id: l.id, patch: { priority: v } })}>
-                          <SelectTrigger className="h-8 w-24"><SelectValue /></SelectTrigger>
+                        <Select
+                          value={l.priority ?? "medium"}
+                          onValueChange={(v) =>
+                            updateLead.mutate({ id: l.id, patch: { priority: v } })
+                          }
+                        >
+                          <SelectTrigger className="h-8 w-24">
+                            <SelectValue />
+                          </SelectTrigger>
                           <SelectContent>
-                            {["low", "medium", "high"].map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                            {["low", "medium", "high"].map((p) => (
+                              <SelectItem key={p} value={p}>
+                                {p}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </TableCell>
@@ -219,16 +303,32 @@ function LeadsPage() {
         )}
       </div>
 
-      <NewLeadDialog open={openNew} onOpenChange={setOpenNew} userId={userId}
-        properties={propsQuery.data ?? []} contacts={contactsQuery.data ?? []}
-        onCreated={() => qc.invalidateQueries({ queryKey: ["leads-full"] })} />
+      <NewLeadDialog
+        open={openNew}
+        onOpenChange={setOpenNew}
+        userId={userId}
+        properties={propsQuery.data ?? []}
+        contacts={contactsQuery.data ?? []}
+        onCreated={() => qc.invalidateQueries({ queryKey: ["leads-full"] })}
+      />
     </>
   );
 }
 
-function NewLeadDialog({ open, onOpenChange, userId, properties, contacts, onCreated }: {
-  open: boolean; onOpenChange: (o: boolean) => void; userId: string | null;
-  properties: Property[]; contacts: Contact[]; onCreated: () => void;
+function NewLeadDialog({
+  open,
+  onOpenChange,
+  userId,
+  properties,
+  contacts,
+  onCreated,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  userId: string | null;
+  properties: Property[];
+  contacts: Contact[];
+  onCreated: () => void;
 }) {
   const [f, setF] = useState<Record<string, any>>({ status: "new", priority: "medium" });
   const set = (k: string, v: any) => setF((p) => ({ ...p, [k]: v }));
@@ -236,67 +336,130 @@ function NewLeadDialog({ open, onOpenChange, userId, properties, contacts, onCre
     if (!userId) return;
     const payload: any = {
       user_id: userId,
-      status: f.status, priority: f.priority,
-      source: f.source || null, assigned_to: f.assigned_to || null,
-      property_id: f.property_id || null, contact_id: f.contact_id || null,
+      status: f.status,
+      priority: f.priority,
+      source: f.source || null,
+      assigned_to: f.assigned_to || null,
+      property_id: f.property_id || null,
+      contact_id: f.contact_id || null,
       opportunity_value: f.opportunity_value ? Number(f.opportunity_value) : null,
       last_contact_at: f.last_contact_at || null,
       next_follow_up_at: f.next_follow_up_at || null,
     };
     const { error } = await (supabase.from("leads") as any).insert(payload);
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     toast.success("Lead created");
     setF({ status: "new", priority: "medium" });
-    onOpenChange(false); onCreated();
+    onOpenChange(false);
+    onCreated();
   };
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
-        <DialogHeader><DialogTitle>New lead</DialogTitle></DialogHeader>
+        <DialogHeader>
+          <DialogTitle>New lead</DialogTitle>
+        </DialogHeader>
         <div className="grid grid-cols-2 gap-3">
           <div className="col-span-2 space-y-1.5">
             <Label className="text-xs">Contact</Label>
             <Select value={f.contact_id ?? ""} onValueChange={(v) => set("contact_id", v)}>
-              <SelectTrigger><SelectValue placeholder="Select contact (optional)" /></SelectTrigger>
-              <SelectContent>{contacts.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+              <SelectTrigger>
+                <SelectValue placeholder="Select contact (optional)" />
+              </SelectTrigger>
+              <SelectContent>
+                {contacts.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           </div>
           <div className="col-span-2 space-y-1.5">
             <Label className="text-xs">Property</Label>
             <Select value={f.property_id ?? ""} onValueChange={(v) => set("property_id", v)}>
-              <SelectTrigger><SelectValue placeholder="Select property (optional)" /></SelectTrigger>
-              <SelectContent>{properties.map((p) => <SelectItem key={p.id} value={p.id}>{p.address}</SelectItem>)}</SelectContent>
+              <SelectTrigger>
+                <SelectValue placeholder="Select property (optional)" />
+              </SelectTrigger>
+              <SelectContent>
+                {properties.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.address}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs">Status</Label>
             <Select value={f.status} onValueChange={(v) => set("status", v)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{LEAD_STATUSES.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {LEAD_STATUSES.map((s) => (
+                  <SelectItem key={s.value} value={s.value}>
+                    {s.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs">Priority</Label>
             <Select value={f.priority} onValueChange={(v) => set("priority", v)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{["low", "medium", "high"].map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {["low", "medium", "high"].map((p) => (
+                  <SelectItem key={p} value={p}>
+                    {p}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           </div>
-          <div className="space-y-1.5"><Label className="text-xs">Source</Label>
-            <Input value={f.source ?? ""} onChange={(e) => set("source", e.target.value)} placeholder="MLS, Zillow, referral…" />
+          <div className="space-y-1.5">
+            <Label className="text-xs">Source</Label>
+            <Input
+              value={f.source ?? ""}
+              onChange={(e) => set("source", e.target.value)}
+              placeholder="MLS, Zillow, referral…"
+            />
           </div>
-          <div className="space-y-1.5"><Label className="text-xs">Assigned to</Label>
-            <Input value={f.assigned_to ?? ""} onChange={(e) => set("assigned_to", e.target.value)} placeholder="Team member" />
+          <div className="space-y-1.5">
+            <Label className="text-xs">Assigned to</Label>
+            <Input
+              value={f.assigned_to ?? ""}
+              onChange={(e) => set("assigned_to", e.target.value)}
+              placeholder="Team member"
+            />
           </div>
-          <div className="space-y-1.5"><Label className="text-xs">Opportunity value</Label>
-            <Input type="number" value={f.opportunity_value ?? ""} onChange={(e) => set("opportunity_value", e.target.value)} />
+          <div className="space-y-1.5">
+            <Label className="text-xs">Opportunity value</Label>
+            <Input
+              type="number"
+              value={f.opportunity_value ?? ""}
+              onChange={(e) => set("opportunity_value", e.target.value)}
+            />
           </div>
-          <div className="space-y-1.5"><Label className="text-xs">Next follow-up</Label>
-            <Input type="date" value={f.next_follow_up_at ?? ""} onChange={(e) => set("next_follow_up_at", e.target.value)} />
+          <div className="space-y-1.5">
+            <Label className="text-xs">Next follow-up</Label>
+            <Input
+              type="date"
+              value={f.next_follow_up_at ?? ""}
+              onChange={(e) => set("next_follow_up_at", e.target.value)}
+            />
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
           <Button onClick={save}>Create lead</Button>
         </DialogFooter>
       </DialogContent>

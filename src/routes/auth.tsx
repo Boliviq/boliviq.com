@@ -10,7 +10,10 @@ import { toast } from "sonner";
 import { Loader2, CheckCircle2, HardHat, LineChart } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
 
-function goAuthed(meta: Record<string, unknown> | undefined, navigate: ReturnType<typeof useNavigate>) {
+function goAuthed(
+  meta: Record<string, unknown> | undefined,
+  navigate: ReturnType<typeof useNavigate>,
+) {
   const ready = Boolean(meta?.onboarded || meta?.primary_role);
   void navigate({ to: ready ? "/dashboard" : "/onboarding" });
 }
@@ -35,7 +38,8 @@ function AuthPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) goAuthed(data.session.user.user_metadata as Record<string, unknown> | undefined, navigate);
+      if (data.session)
+        goAuthed(data.session.user.user_metadata as Record<string, unknown> | undefined, navigate);
     });
   }, [navigate]);
 
@@ -45,7 +49,8 @@ function AuthPage() {
     try {
       if (mode === "signup") {
         const { error } = await supabase.auth.signUp({
-          email, password,
+          email,
+          password,
           options: {
             emailRedirectTo: `${window.location.origin}/dashboard`,
             data: { full_name: fullName },
@@ -69,8 +74,14 @@ function AuthPage() {
 
   const handleGoogle = async () => {
     setLoading(true);
-    const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
-    if (result.error) { toast.error(result.error.message ?? "Google sign-in failed"); setLoading(false); return; }
+    const result = await lovable.auth.signInWithOAuth("google", {
+      redirect_uri: window.location.origin,
+    });
+    if (result.error) {
+      toast.error(result.error.message ?? "Google sign-in failed");
+      setLoading(false);
+      return;
+    }
     if (result.redirected) return;
     const { data } = await supabase.auth.getUser();
     goAuthed(data.user?.user_metadata, navigate);
@@ -82,14 +93,27 @@ function AuthPage() {
       <div className="relative hidden overflow-hidden bg-[#071729] p-12 text-white lg:flex lg:flex-col lg:justify-between">
         <div className="absolute inset-0 brand-grid opacity-60" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_35%,rgba(112,191,43,.16),transparent_30rem)]" />
-        <Link to="/" className="relative"><BrandLogo inverse showTagline /></Link>
+        <Link to="/" className="relative">
+          <BrandLogo inverse showTagline />
+        </Link>
         <div className="relative max-w-lg">
           <div className="brand-eyebrow">Real estate and construction community</div>
-          <h2 className="mt-4 font-display text-5xl font-extrabold leading-tight">One operating system for better deals and better builds.</h2>
+          <h2 className="mt-4 font-display text-5xl font-extrabold leading-tight">
+            One operating system for better deals and better builds.
+          </h2>
           <div className="mt-8 grid gap-4 text-sm text-white/70">
-            <div className="flex items-center gap-3"><LineChart className="h-5 w-5 text-[#7ccc35]"/>Marketplace, CRM, and deal analysis in one login.</div>
-            <div className="flex items-center gap-3"><HardHat className="h-5 w-5 text-[#7ccc35]"/>Repairs, estimates, and projects stay on the property record.</div>
-            <div className="flex items-center gap-3"><CheckCircle2 className="h-5 w-5 text-[#7ccc35]"/>Homeowners, contractors, realtors, investors, lenders, and trades.</div>
+            <div className="flex items-center gap-3">
+              <LineChart className="h-5 w-5 text-[#7ccc35]" />
+              Marketplace, CRM, and deal analysis in one login.
+            </div>
+            <div className="flex items-center gap-3">
+              <HardHat className="h-5 w-5 text-[#7ccc35]" />
+              Repairs, estimates, and projects stay on the property record.
+            </div>
+            <div className="flex items-center gap-3">
+              <CheckCircle2 className="h-5 w-5 text-[#7ccc35]" />
+              Homeowners, contractors, realtors, investors, lenders, and trades.
+            </div>
           </div>
         </div>
         <p className="relative text-xs text-white/45">© 2026 Boliviq</p>
@@ -101,11 +125,36 @@ function AuthPage() {
             {mode === "signup" ? "Create your account" : "Welcome to Boliviq"}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {mode === "signup" ? "Join the marketplace, CRM, and professional network." : "Sign in to your connected workspace."}
+            {mode === "signup"
+              ? "Join the marketplace, CRM, and professional network."
+              : "Sign in to your connected workspace."}
           </p>
 
-          <Button type="button" variant="outline" className="mt-6 w-full" onClick={handleGoogle} disabled={loading}>
-            <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09Z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.99.66-2.25 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23Z"/><path fill="#FBBC05" d="M5.84 14.1A6.61 6.61 0 0 1 5.5 12c0-.73.13-1.44.34-2.1V7.06H2.18A11 11 0 0 0 1 12c0 1.77.43 3.45 1.18 4.94l3.66-2.84Z"/><path fill="#EA4335" d="M12 4.75c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 1.19 14.97 0 12 0A11 11 0 0 0 2.18 7.06l3.66 2.84C6.71 6.68 9.14 4.75 12 4.75Z"/></svg>
+          <Button
+            type="button"
+            variant="outline"
+            className="mt-6 w-full"
+            onClick={handleGoogle}
+            disabled={loading}
+          >
+            <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
+              <path
+                fill="#4285F4"
+                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09Z"
+              />
+              <path
+                fill="#34A853"
+                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.99.66-2.25 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23Z"
+              />
+              <path
+                fill="#FBBC05"
+                d="M5.84 14.1A6.61 6.61 0 0 1 5.5 12c0-.73.13-1.44.34-2.1V7.06H2.18A11 11 0 0 0 1 12c0 1.77.43 3.45 1.18 4.94l3.66-2.84Z"
+              />
+              <path
+                fill="#EA4335"
+                d="M12 4.75c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 1.19 14.97 0 12 0A11 11 0 0 0 2.18 7.06l3.66 2.84C6.71 6.68 9.14 4.75 12 4.75Z"
+              />
+            </svg>
             Continue with Google
           </Button>
 
@@ -117,23 +166,50 @@ function AuthPage() {
             {mode === "signup" && (
               <div className="space-y-2">
                 <Label htmlFor="name">Full name</Label>
-                <Input id="name" required value={fullName} onChange={(e) => setFullName(e.target.value)} />
+                <Input
+                  id="name"
+                  required
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                />
               </div>
             )}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+              <Input
+                id="email"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Password</Label>
                 {mode === "signin" && (
-                  <Link to="/forgot-password" className="text-xs text-muted-foreground hover:underline">Forgot?</Link>
+                  <Link
+                    to="/forgot-password"
+                    className="text-xs text-muted-foreground hover:underline"
+                  >
+                    Forgot?
+                  </Link>
                 )}
               </div>
-              <Input id="password" type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} />
+              <Input
+                id="password"
+                type="password"
+                required
+                minLength={8}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
             </div>
-            <Button type="submit" className="w-full bg-[#70bf2b] font-bold hover:bg-[#80ce38]" disabled={loading}>
+            <Button
+              type="submit"
+              className="w-full bg-[#70bf2b] font-bold hover:bg-[#80ce38]"
+              disabled={loading}
+            >
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {mode === "signup" ? "Create account" : "Sign in"}
             </Button>
@@ -141,7 +217,11 @@ function AuthPage() {
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
             {mode === "signup" ? "Already have an account? " : "New to Boliviq? "}
-            <button type="button" onClick={() => setMode(mode === "signup" ? "signin" : "signup")} className="font-medium text-foreground hover:underline">
+            <button
+              type="button"
+              onClick={() => setMode(mode === "signup" ? "signin" : "signup")}
+              className="font-medium text-foreground hover:underline"
+            >
               {mode === "signup" ? "Sign in" : "Create an account"}
             </button>
           </p>

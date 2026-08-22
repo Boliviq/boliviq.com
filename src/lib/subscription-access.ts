@@ -47,11 +47,16 @@ export const BLOCKING_SUB_STATES: NormalizedStatus[] = [
   "paused",
 ];
 
-export function normalizeStatus(row: {
-  status?: string | null;
-  stripe_customer_id?: string | null;
-  current_period_end?: string | null;
-} | null | undefined): NormalizedStatus {
+export function normalizeStatus(
+  row:
+    | {
+        status?: string | null;
+        stripe_customer_id?: string | null;
+        current_period_end?: string | null;
+      }
+    | null
+    | undefined,
+): NormalizedStatus {
   if (!row || !row.status) return "none";
   if (row.stripe_customer_id?.startsWith("boliviq_grant_")) return "owner_grant";
   const s = row.status.toLowerCase();
@@ -98,9 +103,12 @@ export function statusLabel(s: NormalizedStatus): string {
 /** Boliviq's canonical plan catalog for diagnostics (source: src/lib/plans.ts). */
 import { listBillingOptions } from "@/lib/checkout-config";
 
-export const EXPECTED_PLANS: Array<{ lookupKey: string; amount: number; interval: "month" | "year" }> =
-  listBillingOptions().map((option) => ({
-    lookupKey: option.lookupKey,
-    amount: option.amount,
-    interval: option.interval,
-  }));
+export const EXPECTED_PLANS: Array<{
+  lookupKey: string;
+  amount: number;
+  interval: "month" | "year";
+}> = listBillingOptions().map((option) => ({
+  lookupKey: option.lookupKey,
+  amount: option.amount,
+  interval: option.interval,
+}));

@@ -11,7 +11,11 @@ export const Route = createFileRoute("/pricing")({
   head: () => ({
     meta: [
       { title: "Pricing — Boliviq" },
-      { name: "description", content: "Free, Beginner, Professional, Team, and AI Max plans. Save 20% with annual billing." },
+      {
+        name: "description",
+        content:
+          "Free, Beginner, Professional, Team, and AI Max plans. Save 20% with annual billing.",
+      },
       { property: "og:title", content: "Pricing — Boliviq" },
       { property: "og:description", content: "Plans, AI Max add-ons, and Boliviq Credits." },
     ],
@@ -33,8 +37,18 @@ function Pricing() {
             Start free. Upgrade when you're ready. Add AI Max for full AI access. Cancel anytime.
           </p>
           <div className="mt-6 inline-flex items-center gap-2 rounded-full border bg-card p-1">
-            <button onClick={() => setAnnual(false)} className={`rounded-full px-4 py-1.5 text-sm font-medium ${!annual ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>Monthly</button>
-            <button onClick={() => setAnnual(true)} className={`rounded-full px-4 py-1.5 text-sm font-medium ${annual ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>Annual · save 20%</button>
+            <button
+              onClick={() => setAnnual(false)}
+              className={`rounded-full px-4 py-1.5 text-sm font-medium ${!annual ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+            >
+              Monthly
+            </button>
+            <button
+              onClick={() => setAnnual(true)}
+              className={`rounded-full px-4 py-1.5 text-sm font-medium ${annual ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+            >
+              Annual · save 20%
+            </button>
           </div>
         </div>
 
@@ -42,15 +56,22 @@ function Pricing() {
           {core.map((p) => {
             const price = annual ? p.annual : p.monthly;
             return (
-              <Card key={p.tier} className={p.highlight ? "border-success ring-2 ring-success/30" : ""}>
+              <Card
+                key={p.tier}
+                className={p.highlight ? "border-success ring-2 ring-success/30" : ""}
+              >
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div className="text-sm font-semibold">{p.name}</div>
-                    {p.badge && <Badge className="bg-success text-success-foreground">{p.badge}</Badge>}
+                    {p.badge && (
+                      <Badge className="bg-success text-success-foreground">{p.badge}</Badge>
+                    )}
                   </div>
                   <div className="mt-3 font-display text-4xl font-bold">
                     ${price}
-                    <span className="text-base font-normal text-muted-foreground">{annual ? "/yr" : "/mo"}</span>
+                    <span className="text-base font-normal text-muted-foreground">
+                      {annual ? "/yr" : "/mo"}
+                    </span>
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">{p.tagline}</p>
                   {p.seatNote && <p className="mt-1 text-xs text-muted-foreground">{p.seatNote}</p>}
@@ -78,7 +99,8 @@ function Pricing() {
           </div>
           <h2 className="mt-4 text-3xl font-bold sm:text-4xl">AI Max</h2>
           <p className="mx-auto mt-3 max-w-2xl text-muted-foreground">
-            Unlock the highest level of AI capability across Boliviq — full AI access, priority processing, advanced automation, and premium future features.
+            Unlock the highest level of AI capability across Boliviq — full AI access, priority
+            processing, advanced automation, and premium future features.
           </p>
         </div>
 
@@ -94,7 +116,9 @@ function Pricing() {
                   </div>
                   <div className="mt-3 font-display text-4xl font-bold">
                     ${price}
-                    <span className="text-base font-normal text-muted-foreground">{annual ? "/yr" : "/mo"}</span>
+                    <span className="text-base font-normal text-muted-foreground">
+                      {annual ? "/yr" : "/mo"}
+                    </span>
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">{p.tagline}</p>
                   {p.seatNote && <p className="mt-1 text-xs text-muted-foreground">{p.seatNote}</p>}
@@ -119,14 +143,20 @@ function Pricing() {
           <CardContent className="flex flex-col items-start justify-between gap-4 p-6 md:flex-row md:items-center">
             <div>
               <div className="font-semibold">Enterprise</div>
-              <p className="text-sm text-muted-foreground">Custom seat counts, SSO, dedicated support, procurement paperwork, and volume pricing.</p>
+              <p className="text-sm text-muted-foreground">
+                Custom seat counts, SSO, dedicated support, procurement paperwork, and volume
+                pricing.
+              </p>
             </div>
-            <Link to="/contact"><Button variant="outline">Contact sales</Button></Link>
+            <Link to="/contact">
+              <Button variant="outline">Contact sales</Button>
+            </Link>
           </CardContent>
         </Card>
 
         <div className="mt-10 text-center text-xs text-muted-foreground">
-          Prices in USD. Taxes may apply. Estimates and calculations inside Boliviq are not financial advice.
+          Prices in USD. Taxes may apply. Estimates and calculations inside Boliviq are not
+          financial advice.
         </div>
       </section>
     </MarketingLayout>

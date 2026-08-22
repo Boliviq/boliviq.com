@@ -5,11 +5,23 @@ export const PROFILE_ROLES = [
     id: "homeowner",
     label: "Homeowner",
     group: "owner",
-    description: "List a home, request estimates, and invite professionals into a property workspace.",
+    description:
+      "List a home, request estimates, and invite professionals into a property workspace.",
     professional: false,
     connections: [
-      "contractor", "realtor", "investor", "wholesaler", "lender", "inspector",
-      "appraiser", "property_manager", "insurance", "title", "attorney", "designer", "supplier",
+      "contractor",
+      "realtor",
+      "investor",
+      "wholesaler",
+      "lender",
+      "inspector",
+      "appraiser",
+      "property_manager",
+      "insurance",
+      "title",
+      "attorney",
+      "designer",
+      "supplier",
     ],
     widgets: ["property_record", "repair_requests", "professionals", "messages", "documents"],
     shortcuts: [
@@ -25,8 +37,16 @@ export const PROFILE_ROLES = [
     description: "Bid work, estimate repairs, run projects, and collect reviews.",
     professional: true,
     connections: [
-      "homeowner", "investor", "realtor", "property_manager", "lender", "inspector",
-      "designer", "supplier", "trade", "insurance",
+      "homeowner",
+      "investor",
+      "realtor",
+      "property_manager",
+      "lender",
+      "inspector",
+      "designer",
+      "supplier",
+      "trade",
+      "insurance",
     ],
     widgets: ["lead_feed", "bids", "projects", "estimates", "verification"],
     shortcuts: [
@@ -42,8 +62,17 @@ export const PROFILE_ROLES = [
     description: "Buyer and seller pipelines, listings, CMA workspace, and transaction milestones.",
     professional: true,
     connections: [
-      "homeowner", "investor", "wholesaler", "lender", "contractor", "inspector",
-      "appraiser", "title", "attorney", "property_manager", "insurance",
+      "homeowner",
+      "investor",
+      "wholesaler",
+      "lender",
+      "contractor",
+      "inspector",
+      "appraiser",
+      "title",
+      "attorney",
+      "property_manager",
+      "insurance",
     ],
     widgets: ["listings", "buyer_seller_pipeline", "showings", "offers", "documents"],
     shortcuts: [
@@ -59,8 +88,17 @@ export const PROFILE_ROLES = [
     description: "Buy-box, deal analysis, contractor bidding, and disposition.",
     professional: true,
     connections: [
-      "homeowner", "wholesaler", "realtor", "lender", "contractor", "inspector",
-      "appraiser", "title", "attorney", "property_manager", "insurance",
+      "homeowner",
+      "wholesaler",
+      "realtor",
+      "lender",
+      "contractor",
+      "inspector",
+      "appraiser",
+      "title",
+      "attorney",
+      "property_manager",
+      "insurance",
     ],
     widgets: ["hot_deals", "pipeline", "analyzers", "projects", "leads"],
     shortcuts: [
@@ -75,7 +113,16 @@ export const PROFILE_ROLES = [
     group: "capital",
     description: "Seller intake, assignment posts, buyer matching, and compliance notices.",
     professional: true,
-    connections: ["homeowner", "investor", "realtor", "lender", "contractor", "inspector", "title", "attorney"],
+    connections: [
+      "homeowner",
+      "investor",
+      "realtor",
+      "lender",
+      "contractor",
+      "inspector",
+      "title",
+      "attorney",
+    ],
     widgets: ["seller_pipeline", "buyer_list", "assignments", "compliance", "documents"],
     shortcuts: [
       { label: "Leads", href: "/leads" },
@@ -89,7 +136,15 @@ export const PROFILE_ROLES = [
     group: "finance",
     description: "Loan programs, borrower intake, construction draws, and referral tracking.",
     professional: true,
-    connections: ["homeowner", "investor", "realtor", "contractor", "appraiser", "insurance", "title"],
+    connections: [
+      "homeowner",
+      "investor",
+      "realtor",
+      "contractor",
+      "appraiser",
+      "insurance",
+      "title",
+    ],
     widgets: ["loan_pipeline", "prequal", "documents", "conditions"],
     shortcuts: [
       { label: "Documents", href: "/documents" },
@@ -103,7 +158,15 @@ export const PROFILE_ROLES = [
     group: "operations",
     description: "Owner portfolios, work orders, vendor directory, and lease milestones.",
     professional: true,
-    connections: ["homeowner", "investor", "contractor", "realtor", "inspector", "insurance", "attorney"],
+    connections: [
+      "homeowner",
+      "investor",
+      "contractor",
+      "realtor",
+      "inspector",
+      "insurance",
+      "attorney",
+    ],
     widgets: ["work_orders", "vendors", "properties", "documents", "messages"],
     shortcuts: [
       { label: "Projects", href: "/projects" },
@@ -117,7 +180,15 @@ export const PROFILE_ROLES = [
     group: "transaction",
     description: "Inspection types, report upload, repair tagging, and appointment requests.",
     professional: true,
-    connections: ["homeowner", "realtor", "investor", "contractor", "lender", "property_manager", "insurance"],
+    connections: [
+      "homeowner",
+      "realtor",
+      "investor",
+      "contractor",
+      "lender",
+      "property_manager",
+      "insurance",
+    ],
     widgets: ["appointments", "reports", "repair_tags", "messages"],
     shortcuts: [
       { label: "Documents", href: "/documents" },
@@ -144,7 +215,15 @@ export const PROFILE_ROLES = [
     group: "transaction",
     description: "Order intake, transaction rooms, and anti-wire-fraud protections.",
     professional: true,
-    connections: ["homeowner", "realtor", "investor", "wholesaler", "lender", "attorney", "insurance"],
+    connections: [
+      "homeowner",
+      "realtor",
+      "investor",
+      "wholesaler",
+      "lender",
+      "attorney",
+      "insurance",
+    ],
     widgets: ["orders", "milestones", "documents", "messages"],
     shortcuts: [
       { label: "Documents", href: "/documents" },
@@ -170,7 +249,16 @@ export const PROFILE_ROLES = [
     group: "transaction",
     description: "Practice areas, secure client intake, and matter milestones.",
     professional: true,
-    connections: ["homeowner", "investor", "wholesaler", "realtor", "contractor", "lender", "title", "property_manager"],
+    connections: [
+      "homeowner",
+      "investor",
+      "wholesaler",
+      "realtor",
+      "contractor",
+      "lender",
+      "title",
+      "property_manager",
+    ],
     widgets: ["matters", "documents", "appointments"],
     shortcuts: [
       { label: "Documents", href: "/documents" },
@@ -235,7 +323,8 @@ export const PROFILE_ROLES = [
     id: "administrator",
     label: "Administrator",
     group: "admin",
-    description: "Intelligence Center for users, verification, moderation, billing, and audit logs.",
+    description:
+      "Intelligence Center for users, verification, moderation, billing, and audit logs.",
     professional: true,
     connections: [],
     widgets: ["users", "verification_review", "moderation", "credits", "audit"],
@@ -353,16 +442,57 @@ export const VERIFICATION_DISCLAIMER =
   "Verification badges describe documents Boliviq has reviewed. They never imply that Boliviq guarantees a person's services.";
 
 export const AI_AGENTS = [
-  { id: "lead_qualification", name: "Lead Qualification Agent", summary: "Score and qualify inbound leads against your criteria." },
-  { id: "property_analysis", name: "Property Analysis Agent", summary: "Analyze comps, ARV, and strategy options. Valuations are estimates, not appraisals." },
-  { id: "construction_estimating", name: "Construction Estimating Agent", summary: "Draft scopes of work and repair estimates from photos and notes." },
-  { id: "marketplace_matching", name: "Marketplace Matching Agent", summary: "Match listings, professionals, and opportunities to the right profiles." },
-  { id: "communication_followup", name: "Communication and Follow-Up Agent", summary: "Draft replies and reminders. Sends only with authorization or an approved automation." },
-  { id: "project_monitoring", name: "Project Monitoring Agent", summary: "Track milestones, photos, and missing project information." },
-  { id: "compliance_review", name: "Compliance Review Agent", summary: "Flag missing disclosures, licenses, and jurisdiction notices." },
-  { id: "customer_support", name: "Customer Support Agent", summary: "Answer product questions within the user's permissions." },
-  { id: "document_organization", name: "Document Organization Agent", summary: "Classify and file authorized documents by property, project, and lead." },
-  { id: "business_intelligence", name: "Business Intelligence Agent", summary: "Summarize pipeline, credits, and workspace performance." },
+  {
+    id: "lead_qualification",
+    name: "Lead Qualification Agent",
+    summary: "Score and qualify inbound leads against your criteria.",
+  },
+  {
+    id: "property_analysis",
+    name: "Property Analysis Agent",
+    summary: "Analyze comps, ARV, and strategy options. Valuations are estimates, not appraisals.",
+  },
+  {
+    id: "construction_estimating",
+    name: "Construction Estimating Agent",
+    summary: "Draft scopes of work and repair estimates from photos and notes.",
+  },
+  {
+    id: "marketplace_matching",
+    name: "Marketplace Matching Agent",
+    summary: "Match listings, professionals, and opportunities to the right profiles.",
+  },
+  {
+    id: "communication_followup",
+    name: "Communication and Follow-Up Agent",
+    summary:
+      "Draft replies and reminders. Sends only with authorization or an approved automation.",
+  },
+  {
+    id: "project_monitoring",
+    name: "Project Monitoring Agent",
+    summary: "Track milestones, photos, and missing project information.",
+  },
+  {
+    id: "compliance_review",
+    name: "Compliance Review Agent",
+    summary: "Flag missing disclosures, licenses, and jurisdiction notices.",
+  },
+  {
+    id: "customer_support",
+    name: "Customer Support Agent",
+    summary: "Answer product questions within the user's permissions.",
+  },
+  {
+    id: "document_organization",
+    name: "Document Organization Agent",
+    summary: "Classify and file authorized documents by property, project, and lead.",
+  },
+  {
+    id: "business_intelligence",
+    name: "Business Intelligence Agent",
+    summary: "Summarize pipeline, credits, and workspace performance.",
+  },
 ] as const;
 
 export const AI_FORBIDDEN_ACTIONS = [
@@ -377,22 +507,118 @@ export const AI_FORBIDDEN_ACTIONS = [
 ] as const;
 
 export const INTEGRATIONS = [
-  { id: "stripe", name: "Stripe", purpose: "Subscriptions, credit packs, receipts", profiles: "All paid users", status: "live" as const },
-  { id: "email", name: "Email provider", purpose: "Verification, alerts, follow-up", profiles: "All users", status: "live" as const },
-  { id: "sms", name: "SMS/voice provider", purpose: "Consented messages and calls", profiles: "Professionals", status: "live" as const },
-  { id: "maps", name: "Maps/geocoding", purpose: "Locations, service areas, property maps", profiles: "All users", status: "modular" as const },
-  { id: "calendar", name: "Calendar services", purpose: "Appointments and project events", profiles: "Professionals", status: "live" as const },
-  { id: "storage", name: "Cloud storage", purpose: "Private files and documents", profiles: "All users", status: "live" as const },
-  { id: "esign", name: "E-signature", purpose: "Contracts, estimates, approvals", profiles: "Professionals", status: "modular" as const },
-  { id: "mls", name: "MLS/IDX", purpose: "Authorized property listings", profiles: "Realtors", status: "modular" as const },
-  { id: "property_data", name: "Property-data providers", purpose: "Records, characteristics, comps", profiles: "Investors and realtors", status: "modular" as const },
-  { id: "accounting", name: "Accounting platforms", purpose: "Invoice and transaction export", profiles: "Businesses", status: "modular" as const },
-  { id: "video", name: "Video meetings", purpose: "Remote appointments", profiles: "Professionals", status: "modular" as const },
-  { id: "ai", name: "AI model providers", purpose: "Analysis, generation, assistants", profiles: "AI plans", status: "live" as const },
-  { id: "captcha", name: "CAPTCHA/security", purpose: "Abuse and bot protection", profiles: "All users", status: "modular" as const },
-  { id: "analytics", name: "Analytics", purpose: "Product and business performance", profiles: "Admin", status: "modular" as const },
-  { id: "error_monitoring", name: "Error monitoring", purpose: "Reliability and incident response", profiles: "Admin", status: "modular" as const },
-  { id: "translation", name: "Translation services", purpose: "Multilingual content assistance", profiles: "All users", status: "modular" as const },
+  {
+    id: "stripe",
+    name: "Stripe",
+    purpose: "Subscriptions, credit packs, receipts",
+    profiles: "All paid users",
+    status: "live" as const,
+  },
+  {
+    id: "email",
+    name: "Email provider",
+    purpose: "Verification, alerts, follow-up",
+    profiles: "All users",
+    status: "live" as const,
+  },
+  {
+    id: "sms",
+    name: "SMS/voice provider",
+    purpose: "Consented messages and calls",
+    profiles: "Professionals",
+    status: "live" as const,
+  },
+  {
+    id: "maps",
+    name: "Maps/geocoding",
+    purpose: "Locations, service areas, property maps",
+    profiles: "All users",
+    status: "modular" as const,
+  },
+  {
+    id: "calendar",
+    name: "Calendar services",
+    purpose: "Appointments and project events",
+    profiles: "Professionals",
+    status: "live" as const,
+  },
+  {
+    id: "storage",
+    name: "Cloud storage",
+    purpose: "Private files and documents",
+    profiles: "All users",
+    status: "live" as const,
+  },
+  {
+    id: "esign",
+    name: "E-signature",
+    purpose: "Contracts, estimates, approvals",
+    profiles: "Professionals",
+    status: "modular" as const,
+  },
+  {
+    id: "mls",
+    name: "MLS/IDX",
+    purpose: "Authorized property listings",
+    profiles: "Realtors",
+    status: "modular" as const,
+  },
+  {
+    id: "property_data",
+    name: "Property-data providers",
+    purpose: "Records, characteristics, comps",
+    profiles: "Investors and realtors",
+    status: "modular" as const,
+  },
+  {
+    id: "accounting",
+    name: "Accounting platforms",
+    purpose: "Invoice and transaction export",
+    profiles: "Businesses",
+    status: "modular" as const,
+  },
+  {
+    id: "video",
+    name: "Video meetings",
+    purpose: "Remote appointments",
+    profiles: "Professionals",
+    status: "modular" as const,
+  },
+  {
+    id: "ai",
+    name: "AI model providers",
+    purpose: "Analysis, generation, assistants",
+    profiles: "AI plans",
+    status: "live" as const,
+  },
+  {
+    id: "captcha",
+    name: "CAPTCHA/security",
+    purpose: "Abuse and bot protection",
+    profiles: "All users",
+    status: "modular" as const,
+  },
+  {
+    id: "analytics",
+    name: "Analytics",
+    purpose: "Product and business performance",
+    profiles: "Admin",
+    status: "modular" as const,
+  },
+  {
+    id: "error_monitoring",
+    name: "Error monitoring",
+    purpose: "Reliability and incident response",
+    profiles: "Admin",
+    status: "modular" as const,
+  },
+  {
+    id: "translation",
+    name: "Translation services",
+    purpose: "Multilingual content assistance",
+    profiles: "All users",
+    status: "modular" as const,
+  },
 ] as const;
 
 export const TRADES = [
@@ -472,12 +698,36 @@ export const SUBSCRIPTION_GROUPS = [
 ] as const;
 
 export const LIFECYCLE_STEPS = [
-  { id: "find", label: "Find", detail: "Discover listings, off-market opportunities, and repair requests." },
-  { id: "connect", label: "Connect", detail: "Message professionals, homeowners, and teams in context." },
-  { id: "analyze", label: "Analyze", detail: "Score properties, estimates, and deals with transparent math." },
-  { id: "finance", label: "Finance", detail: "Prequalify, collect documents, and close with title and legal support." },
-  { id: "repair", label: "Repair / construct", detail: "Bid, estimate, schedule, and deliver the work." },
-  { id: "manage", label: "Sell, rent, or manage", detail: "List, lease, or operate the finished property — then find the next one." },
+  {
+    id: "find",
+    label: "Find",
+    detail: "Discover listings, off-market opportunities, and repair requests.",
+  },
+  {
+    id: "connect",
+    label: "Connect",
+    detail: "Message professionals, homeowners, and teams in context.",
+  },
+  {
+    id: "analyze",
+    label: "Analyze",
+    detail: "Score properties, estimates, and deals with transparent math.",
+  },
+  {
+    id: "finance",
+    label: "Finance",
+    detail: "Prequalify, collect documents, and close with title and legal support.",
+  },
+  {
+    id: "repair",
+    label: "Repair / construct",
+    detail: "Bid, estimate, schedule, and deliver the work.",
+  },
+  {
+    id: "manage",
+    label: "Sell, rent, or manage",
+    detail: "List, lease, or operate the finished property — then find the next one.",
+  },
 ] as const;
 
 export const CONNECTED_LIFECYCLE_PRINCIPLE =
@@ -530,54 +780,66 @@ export function getNavGroups(): { id: NavGroupId; label: string }[] {
   ];
 }
 
-export function roleDashboardHeadline(id: string | null | undefined): { title: string; description: string } {
+export function roleDashboardHeadline(id: string | null | undefined): {
+  title: string;
+  description: string;
+} {
   const role = getProfileRole(id);
   switch (role.id) {
     case "homeowner":
       return {
         title: "Your property workspace",
-        description: "Post repairs, compare proposals, and keep every document and conversation on the same record.",
+        description:
+          "Post repairs, compare proposals, and keep every document and conversation on the same record.",
       };
     case "contractor":
     case "trade":
       return {
         title: "Jobs, estimates, and projects",
-        description: "A homeowner repair post becomes a lead. An accepted estimate becomes a project.",
+        description:
+          "A homeowner repair post becomes a lead. An accepted estimate becomes a project.",
       };
     case "realtor":
       return {
         title: "Listings and client pipeline",
-        description: "Coordinate buyers, sellers, contractors, and lenders without leaving the listing.",
+        description:
+          "Coordinate buyers, sellers, contractors, and lenders without leaving the listing.",
       };
     case "investor":
       return {
         title: "Deals, analysis, and disposition",
-        description: "Find, underwrite, finance, renovate, and exit — then loop back to the next opportunity.",
+        description:
+          "Find, underwrite, finance, renovate, and exit — then loop back to the next opportunity.",
       };
     case "wholesaler":
       return {
         title: "Intake, matching, and assignments",
-        description: "Seller leads, buyer criteria, and deal packages stay connected to the property record.",
+        description:
+          "Seller leads, buyer criteria, and deal packages stay connected to the property record.",
       };
     case "lender":
       return {
         title: "Loan opportunities",
-        description: "Borrower intake, property details, and construction draws live with the same deal file.",
+        description:
+          "Borrower intake, property details, and construction draws live with the same deal file.",
       };
     case "property_manager":
       return {
         title: "Portfolios and work orders",
-        description: "Maintenance requests become contractor projects without losing owner context.",
+        description:
+          "Maintenance requests become contractor projects without losing owner context.",
       };
     case "administrator":
       return {
         title: "Intelligence Center",
-        description: "Users, verification, marketplace moderation, credits, and audit history in one place.",
+        description:
+          "Users, verification, marketplace moderation, credits, and audit history in one place.",
       };
     default:
       return {
         title: `Welcome, ${role.label}`,
-        description: "Boliviq connects people, properties, projects, and documents across the full real-estate lifecycle.",
+        description:
+          "Boliviq connects people, properties, projects, and documents across the full real-estate lifecycle.",
       };
   }
 }
@@ -721,7 +983,10 @@ export type DashboardConfig = {
 export function dashboardForRole(role: ProfileRoleId): DashboardConfig {
   const headline = roleDashboardHeadline(role);
   const profile = getProfileRole(role);
-  const primary = profile.shortcuts[0] ?? { label: "Open marketplace", href: "/marketplace" as const };
+  const primary = profile.shortcuts[0] ?? {
+    label: "Open marketplace",
+    href: "/marketplace" as const,
+  };
   const statsByRole: Partial<Record<ProfileRoleId, DashboardConfig["stats"]>> = {
     homeowner: [
       { label: "Repair posts", value: "1", hint: "3 contractor replies on Oak Street" },
@@ -779,7 +1044,11 @@ export function dashboardForRole(role: ProfileRoleId): DashboardConfig {
     stats: statsByRole[role] ?? [
       { label: "Open items", value: "8", hint: "Across marketplace, CRM, and projects" },
       { label: "Messages", value: "3", hint: "Unread" },
-      { label: "Verification", value: profile.professional ? "Action needed" : "Homeowner", hint: "Badges never guarantee services" },
+      {
+        label: "Verification",
+        value: profile.professional ? "Action needed" : "Homeowner",
+        hint: "Badges never guarantee services",
+      },
       { label: "Credits", value: "499", hint: "Shared workspace wallet" },
     ],
     quickLinks: profile.shortcuts.map((s) => ({
@@ -789,4 +1058,3 @@ export function dashboardForRole(role: ProfileRoleId): DashboardConfig {
     })),
   };
 }
-
