@@ -6,8 +6,13 @@ import {
   createDocumentFn,
   listProjectsFn,
   createProjectFn,
+  listListingsFn,
+  createListingFn,
+  listSavedListingIdsFn,
+  toggleSavedListingFn,
+  reportListingFn,
 } from "@/lib/workspace.functions";
-import type { DocRecord, ProjectRecord } from "@/lib/workspace-store";
+import type { DocRecord, ProjectRecord, MarketplaceListing } from "@/lib/workspace-store";
 
 /**
  * React Query hooks over the Supabase-backed workspace server functions.
@@ -61,5 +66,68 @@ export function useCreateProject() {
       nextMilestone?: string;
     }) => create({ data: input }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["projects", userId] }),
+  });
+}
+
+export function useListings() {
+  const { userId } = useCurrentUser();
+  const list = useServerFn(listListingsFn);
+  return useQuery<MarketplaceListing[]>({
+    queryKey: ["marketplace-listings", userId],
+    queryFn: () => list(),
+    enabled: !!userId,
+  });
+}
+
+export function useCreateListing() {
+  const { userId } = useCurrentUser();
+  const create = useServerFn(createListingFn);
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: {
+      title: string;
+      description?: string;
+      category: string;
+      location?: string;
+      price?: number;
+      budget?: number;
+      photos?: string[];
+      role?: string;
+      authorName?: string;
+      postedBy?: string;
+      propertyLabel?: string;
+      projectLabel?: string;
+      visibility?: "public" | "limited";
+    }) => create({ data: input }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["marketplace-listings", userId] }),
+  });
+}
+
+export function useSavedListingIds() {
+  const { userId } = useCurrentUser();
+  const list = useServerFn(listSavedListingIdsFn);
+  return useQuery<string[]>({
+    queryKey: ["saved-listings", userId],
+    queryFn: () => list(),
+    enabled: !!userId,
+  });
+}
+
+export function useToggleSavedListing() {
+  const { userId } = useCurrentUser();
+  const toggle = useServerFn(toggleSavedListingFn);
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (listingId: string) => toggle({ data: { listingId } }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["saved-listings", userId] }),
+  });
+}
+
+export function useReportListing() {
+  const report = useServerFn(reportListingFn);
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { listingId: string; reason?: string }) => report({ data: input }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["marketplace-listings"] }),
   });
 }

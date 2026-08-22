@@ -109,3 +109,73 @@ describe.runIf(enabled)("Phase 1 — canon workspace data layer (Supabase + RLS)
     expect(bobProjects ?? []).toHaveLength(0);
   });
 });
+
+describe.runIf(enabled)("Phase 1 — marketplace listings, saved, reports (Supabase + RLS)", () => {
+  let alice: { client: SupabaseClient; userId: string };
+  let bob: { client: SupabaseClient; userId: string };
+  let listingId: string;
+
+  beforeAll(async () => {
+    alice = await makeUser();
+    bob = await makeUser();
+    const { data, error } = await alice.client
+      .from("marketplace_listings")
+      .insert({
+        user_id: alice.userId,
+        title: "Off-market duplex",
+        description: "East side",
+        category: "off_market",
+        location: "Dallas, TX",
+        price: 285000,
+        visibility: "public",
+      })
+      .select("id")
+      .single();
+    if (error) throw error;
+    listingId = data.id;
+  });
+
+  test("public listings are readable across users", async () => {
+    const { data } = await bob.client
+      .from("marketplace_listings")
+      .select("title")
+      .eq("id", listingId);
+    expect((data ?? []).some((l) => l.title === "Off-market duplex")).toBe(true);
+  });
+
+  test("saved listings are per-user isolated", async () => {
+    await alice.client.from("saved_listings").insert({
+      user_id: alice.userId,
+      listing_id: listingId,
+    });
+    const { data: aliceSaved } = await alice.client.from("saved_listings").select("listing_id");
+    expect((aliceSaved ?? []).some((s) => s.listing_id === listingId)).toBe(true);
+
+    const { data: bobSaved } = await bob.client.from("saved_listings").select("listing_id");
+    expect(bobSaved ?? []).toHaveLength(0);
+  });
+
+  test("RLS rejects saving under another user's id", async () => {
+    const { error } = await bob.client.from("saved_listings").insert({
+      user_id: alice.userId,
+      listing_id: listingId,
+    });
+    expect(error).not.toBeNull();
+  });
+
+  test("a user can file a report and cannot read others' reports", async () => {
+    const { error } = await bob.client.from("listing_reports").insert({
+      user_id: bob.userId,
+      listing_id: listingId,
+      reason: "spam",
+    });
+    expect(error).toBeNull();
+
+    // Alice must not see Bob's report (read own only).
+    const { data: aliceSees } = await alice.client
+      .from("listing_reports")
+      .select("id")
+      .eq("listing_id", listingId);
+    expect(aliceSees ?? []).toHaveLength(0);
+  });
+});

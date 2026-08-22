@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
 import {
   Flag,
   FolderKanban,
@@ -36,30 +35,24 @@ import {
 } from "@/components/ui/select";
 import { MARKETPLACE_CATEGORIES, type MarketplaceCategoryId } from "@/lib/canons";
 import type { SeedListing } from "@/lib/marketplace-seed";
-import { fromTable, isMissingRelation } from "@/lib/supabase-safe";
 import { useAccount } from "@/hooks/use-current-user";
-import { useWorkspace } from "@/hooks/use-workspace";
 import { currency } from "@/lib/format";
+import { categoryLabel, startConversation, type MarketplaceListing } from "@/lib/workspace-store";
 import {
-  categoryLabel,
-  createListing,
-  createProjectFromListing,
-  listListings,
-  mergeById,
-  reportListing,
-  savedListingIds,
-  startConversation,
-  toggleSavedListing,
-  type MarketplaceListing,
-} from "@/lib/workspace-store";
+  useListings,
+  useCreateListing,
+  useSavedListingIds,
+  useToggleSavedListing,
+  useReportListing,
+  useCreateProject,
+} from "@/hooks/use-workspace-data";
 
 export const Route = createFileRoute("/_authenticated/marketplace")({
   component: MarketplacePage,
 });
 
 function MarketplacePage() {
-  const { userId, tick } = useWorkspace();
-  const { account } = useAccount();
+  const { account, userId } = useAccount();
   const navigate = useNavigate();
   const [q, setQ] = useState("");
   const [category, setCategory] = useState<MarketplaceCategoryId | "all">("all");
@@ -72,52 +65,25 @@ function MarketplacePage() {
     location: "",
     price: "",
   });
-  void tick;
 
-  const remote = useQuery({
-    queryKey: ["marketplace-listings", userId],
-    enabled: !!userId,
-    queryFn: async () => {
-      const { data, error } = await fromTable("marketplace_listings")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (error) {
-        if (isMissingRelation(error)) return [] as MarketplaceListing[];
-        throw error;
-      }
-      return ((data ?? []) as Record<string, unknown>[]).map(
-        (row): MarketplaceListing => ({
-          id: String(row.id),
-          title: String(row.title ?? "Listing"),
-          description: String(row.description ?? ""),
-          category: (row.category as MarketplaceCategoryId) || "homes_for_sale",
-          location: String(row.location ?? [row.city, row.state].filter(Boolean).join(", ")),
-          city: String(row.city ?? ""),
-          state: String(row.state ?? ""),
-          price: row.price != null ? Number(row.price) : undefined,
-          budget: row.budget != null ? Number(row.budget) : undefined,
-          photos: Array.isArray(row.photos) ? (row.photos as string[]) : [],
-          postedBy: "You",
-          role: account.primary_role,
-          createdAt: String(row.created_at ?? "").slice(0, 10),
-          ownerId: userId ?? undefined,
-        }),
-      );
-    },
-  });
+  const { data: allListings = [], isLoading } = useListings();
+  const { data: savedIds = [] } = useSavedListingIds();
+  const createListing = useCreateListing();
+  const toggleSaved = useToggleSavedListing();
+  const reportListing = useReportListing();
+  const createProject = useCreateProject();
+  const saved = new Set(savedIds);
 
-  const saved = savedListingIds(userId);
   const listings = useMemo(() => {
-    const merged = mergeById(listListings(userId), remote.data ?? []);
-    return merged.filter((l) => {
+    return allListings.filter((l) => {
       const hay = `${l.title} ${l.description} ${l.location}`.toLowerCase();
       const okQ = !q || hay.includes(q.toLowerCase());
       const okC = category === "all" || l.category === category;
       return okQ && okC;
     });
-  }, [userId, remote.data, q, category, tick]);
+  }, [allListings, q, category]);
 
-  const publish = async () => {
+  const publish = () => {
     if (!draft.title.trim()) {
       toast.error("Add a title");
       return;
@@ -126,34 +92,29 @@ function MarketplacePage() {
       toast.error("Sign in to use your workspace");
       return;
     }
-    const row = createListing(userId, {
-      title: draft.title,
-      description: draft.description,
-      category: draft.category,
-      location: draft.location || "Unspecified",
-      price: draft.price ? Number(draft.price) : undefined,
-      role: account.primary_role,
-      authorRole: account.primary_role,
-      authorName: account.full_name || "You",
-      postedBy: account.full_name || "You",
-    });
-    setCompose(false);
-    setDraft({ title: "", description: "", category: "repairs", location: "", price: "" });
-    toast.success("Listing posted", {
-      description: "Message a professional or convert it into a project from this card.",
-    });
-
-    const { error } = await fromTable("marketplace_listings").insert({
-      user_id: userId,
-      title: row.title,
-      description: row.description,
-      category: row.category,
-      location: row.location,
-      price: row.price ?? null,
-      visibility: "public",
-      status: "active",
-    });
-    if (error && !isMissingRelation(error)) toast.error(error.message);
+    createListing.mutate(
+      {
+        title: draft.title,
+        description: draft.description,
+        category: draft.category,
+        location: draft.location || "Unspecified",
+        price: draft.price ? Number(draft.price) : undefined,
+        role: account.primary_role,
+        authorName: account.full_name || "You",
+        postedBy: account.full_name || "You",
+        visibility: "public",
+      },
+      {
+        onSuccess: () => {
+          setCompose(false);
+          setDraft({ title: "", description: "", category: "repairs", location: "", price: "" });
+          toast.success("Listing posted", {
+            description: "Message a professional or convert it into a project from this card.",
+          });
+        },
+        onError: (e) => toast.error(e instanceof Error ? e.message : "Could not post the listing"),
+      },
+    );
   };
 
   const messageAbout = (listing: MarketplaceListing) => {
@@ -182,23 +143,38 @@ function MarketplacePage() {
       toast.error("Sign in to use your workspace");
       return;
     }
-    const project = createProjectFromListing(userId, listing);
-    startConversation(
-      userId,
-      project.name,
-      `Project · ${project.address}`,
-      `Opened a project from marketplace listing "${listing.title}".`,
+    createProject.mutate(
       {
-        project: project.name,
-        property: project.address,
-        listing: listing.title,
-        listingId: listing.id,
+        name: listing.title,
+        address: listing.location || "Unspecified",
+        status: "new",
+        budget: listing.budget ?? listing.price ?? 0,
+        spent: 0,
+        nextMilestone: "Collect estimates",
+      },
+      {
+        onSuccess: (project) => {
+          startConversation(
+            userId,
+            project.name,
+            `Project · ${project.address}`,
+            `Opened a project from marketplace listing "${listing.title}".`,
+            {
+              project: project.name,
+              property: project.address,
+              listing: listing.title,
+              listingId: listing.id,
+            },
+          );
+          toast.success("Project created", {
+            description: "The listing, conversation, and project now share a record.",
+          });
+          void navigate({ to: "/projects" });
+        },
+        onError: (e) =>
+          toast.error(e instanceof Error ? e.message : "Could not create the project"),
       },
     );
-    toast.success("Project created", {
-      description: "The listing, conversation, and project now share a record.",
-    });
-    void navigate({ to: "/projects" });
   };
 
   return (
@@ -264,7 +240,11 @@ function MarketplacePage() {
           ))}
         </div>
 
-        {listings.length === 0 ? (
+        {isLoading ? (
+          <div className="rounded-2xl border-2 border-dashed p-10 text-center text-sm text-muted-foreground">
+            Loading listings…
+          </div>
+        ) : listings.length === 0 ? (
           <div className="rounded-2xl border-2 border-dashed p-10 text-center">
             <Store className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
             <div className="font-display font-semibold">No listings match</div>
@@ -284,8 +264,9 @@ function MarketplacePage() {
                     toast.error("Sign in to use your workspace");
                     return;
                   }
-                  toggleSavedListing(userId, l.id);
-                  toast.success(saved.has(l.id) ? "Removed from saved" : "Saved");
+                  const wasSaved = saved.has(l.id);
+                  toggleSaved.mutate(l.id);
+                  toast.success(wasSaved ? "Removed from saved" : "Saved");
                 }}
                 onMessage={() => messageAbout(l)}
                 onProject={() => convert(l)}
@@ -294,7 +275,10 @@ function MarketplacePage() {
                     toast.error("Sign in to use your workspace");
                     return;
                   }
-                  reportListing(userId, l.id, "User reported from marketplace");
+                  reportListing.mutate({
+                    listingId: l.id,
+                    reason: "User reported from marketplace",
+                  });
                   toast.message("Report received", {
                     description: "Moderation queue will review this listing.",
                   });
