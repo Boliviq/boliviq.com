@@ -10,6 +10,7 @@ export const PROFILE_ROLES = [
     connections: [
       "contractor", "realtor", "investor", "wholesaler", "lender", "inspector",
       "appraiser", "property_manager", "insurance", "title", "attorney", "designer", "supplier",
+      "trade", "other",
     ],
     widgets: ["property_record", "repair_requests", "professionals", "messages", "documents"],
     shortcuts: [
@@ -26,7 +27,7 @@ export const PROFILE_ROLES = [
     professional: true,
     connections: [
       "homeowner", "investor", "realtor", "property_manager", "lender", "inspector",
-      "designer", "supplier", "trade", "insurance",
+      "designer", "supplier", "trade", "insurance", "wholesaler", "attorney", "other",
     ],
     widgets: ["lead_feed", "bids", "projects", "estimates", "verification"],
     shortcuts: [
@@ -43,7 +44,7 @@ export const PROFILE_ROLES = [
     professional: true,
     connections: [
       "homeowner", "investor", "wholesaler", "lender", "contractor", "inspector",
-      "appraiser", "title", "attorney", "property_manager", "insurance",
+      "appraiser", "title", "attorney", "property_manager", "insurance", "other",
     ],
     widgets: ["listings", "buyer_seller_pipeline", "showings", "offers", "documents"],
     shortcuts: [
@@ -61,6 +62,7 @@ export const PROFILE_ROLES = [
     connections: [
       "homeowner", "wholesaler", "realtor", "lender", "contractor", "inspector",
       "appraiser", "title", "attorney", "property_manager", "insurance",
+      "designer", "supplier", "trade", "other",
     ],
     widgets: ["hot_deals", "pipeline", "analyzers", "projects", "leads"],
     shortcuts: [
@@ -89,7 +91,10 @@ export const PROFILE_ROLES = [
     group: "finance",
     description: "Loan programs, borrower intake, construction draws, and referral tracking.",
     professional: true,
-    connections: ["homeowner", "investor", "realtor", "contractor", "appraiser", "insurance", "title"],
+    connections: [
+      "homeowner", "investor", "realtor", "contractor", "appraiser", "insurance", "title",
+      "wholesaler", "inspector", "attorney", "designer",
+    ],
     widgets: ["loan_pipeline", "prequal", "documents", "conditions"],
     shortcuts: [
       { label: "Documents", href: "/documents" },
@@ -103,7 +108,10 @@ export const PROFILE_ROLES = [
     group: "operations",
     description: "Owner portfolios, work orders, vendor directory, and lease milestones.",
     professional: true,
-    connections: ["homeowner", "investor", "contractor", "realtor", "inspector", "insurance", "attorney"],
+    connections: [
+      "homeowner", "investor", "contractor", "realtor", "inspector", "insurance", "attorney",
+      "appraiser", "supplier", "trade",
+    ],
     widgets: ["work_orders", "vendors", "properties", "documents", "messages"],
     shortcuts: [
       { label: "Projects", href: "/projects" },
@@ -117,7 +125,10 @@ export const PROFILE_ROLES = [
     group: "transaction",
     description: "Inspection types, report upload, repair tagging, and appointment requests.",
     professional: true,
-    connections: ["homeowner", "realtor", "investor", "contractor", "lender", "property_manager", "insurance"],
+    connections: [
+      "homeowner", "realtor", "investor", "contractor", "lender", "property_manager", "insurance",
+      "wholesaler", "designer",
+    ],
     widgets: ["appointments", "reports", "repair_tags", "messages"],
     shortcuts: [
       { label: "Documents", href: "/documents" },
@@ -157,7 +168,10 @@ export const PROFILE_ROLES = [
     group: "transaction",
     description: "Coverage quotes, policy milestones, and claim-related contractor referrals.",
     professional: true,
-    connections: ["homeowner", "investor", "lender", "contractor", "property_manager", "inspector"],
+    connections: [
+      "homeowner", "investor", "lender", "contractor", "property_manager", "inspector",
+      "realtor", "title",
+    ],
     widgets: ["quotes", "policies", "referrals", "messages"],
     shortcuts: [
       { label: "Professionals", href: "/professionals" },
@@ -170,7 +184,10 @@ export const PROFILE_ROLES = [
     group: "transaction",
     description: "Practice areas, secure client intake, and matter milestones.",
     professional: true,
-    connections: ["homeowner", "investor", "wholesaler", "realtor", "contractor", "lender", "title", "property_manager"],
+    connections: [
+      "homeowner", "investor", "wholesaler", "realtor", "contractor", "lender", "title",
+      "property_manager", "appraiser",
+    ],
     widgets: ["matters", "documents", "appointments"],
     shortcuts: [
       { label: "Documents", href: "/documents" },
@@ -321,29 +338,29 @@ export function mapLeadStatusToPipelineStage(status: string | null | undefined):
 
 export const VERIFICATION_TIERS = [
   {
+    id: "unverified",
+    label: "Unverified",
+    description: "Starting state — shown only when no stackable verification badge has been granted.",
+  },
+  {
     id: "identity",
     label: "Identity verified",
-    description: "Government ID and contact details have been confirmed.",
+    description: "Government ID and contact details have been confirmed. Stackable with other badges.",
   },
   {
     id: "license",
     label: "License verified",
-    description: "Professional license number and issuing jurisdiction have been reviewed.",
+    description: "Professional license number and issuing jurisdiction have been reviewed. Stackable with other badges.",
   },
   {
     id: "insurance",
     label: "Insurance verified",
-    description: "Active liability or workers-compensation coverage has been documented.",
+    description: "Active liability or workers-compensation coverage has been documented. Stackable with other badges.",
   },
   {
     id: "boliviq_certified",
     label: "Boliviq certified",
-    description: "Completed Boliviq projects, reviews, and platform standards have been met.",
-  },
-  {
-    id: "unverified",
-    label: "Unverified",
-    description: "No verification documents have been submitted yet.",
+    description: "Completed Boliviq projects, reviews, and platform standards have been met. Stackable with other badges.",
   },
 ] as const;
 
@@ -517,6 +534,29 @@ export function getConnectionsForRole(id: string | null | undefined): ProfileRol
   return role.connections
     .map((cid) => PROFILE_ROLES.find((r) => r.id === cid))
     .filter((r): r is ProfileRole => !!r);
+}
+
+/** Returns connection pairs where A lists B but B does not list A. Empty when the graph is symmetric. */
+export function findConnectionAsymmetries(): { from: ProfileRoleId; to: ProfileRoleId }[] {
+  const byId = Object.fromEntries(PROFILE_ROLES.map((r) => [r.id, r])) as Record<
+    ProfileRoleId,
+    ProfileRole
+  >;
+  const issues: { from: ProfileRoleId; to: ProfileRoleId }[] = [];
+  for (const role of PROFILE_ROLES) {
+    if (role.id === "administrator") continue;
+    for (const targetId of role.connections) {
+      const target = byId[targetId];
+      if (!target) {
+        issues.push({ from: role.id, to: targetId });
+        continue;
+      }
+      if (!(target.connections as readonly string[]).includes(role.id)) {
+        issues.push({ from: role.id, to: targetId });
+      }
+    }
+  }
+  return issues;
 }
 
 export type NavGroupId = "discover" | "work" | "crm" | "account";

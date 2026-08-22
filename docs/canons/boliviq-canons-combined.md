@@ -160,13 +160,15 @@ Professional accounts should receive: leads, contacts, companies, properties, op
 
 Professional profiles should display: identity verification, email and phone verification, license verification, insurance verification, background-screening status where permitted, completed Boliviq projects, customer reviews, response time, service areas, portfolio, and complaint status.
 
-**Boliviq must distinguish between these verification tiers:**
+**Boliviq must distinguish between these verification statuses:**
 
-- Identity verified
-- License verified
-- Insurance verified
-- Boliviq certified
-- Unverified
+- **Unverified** — starting state; no verification documents submitted (mutually exclusive with the badges below until the first badge is earned)
+- **Identity verified** — stackable badge
+- **License verified** — stackable badge
+- **Insurance verified** — stackable badge
+- **Boliviq certified** — stackable badge earned after platform standards are met
+
+A professional may hold multiple stackable badges at once (for example identity + license + insurance). Display systems should show Unverified only when no stackable badge has been granted.
 
 **Rule:** No badge should imply that Boliviq guarantees a person's services.
 
@@ -184,7 +186,7 @@ It should help users: search Boliviq, create listings, draft messages, summarize
 
 Recommended agents: Lead Qualification Agent, Property Analysis Agent, Construction Estimating Agent, Marketplace Matching Agent, Communication and Follow-Up Agent, Project Monitoring Agent, Compliance Review Agent, Customer Support Agent, Document Organization Agent, Business Intelligence Agent.
 
-**Rule:** Agents must operate within explicit permissions and should not autonomously: send messages without authorization or an approved automation; sign agreements; move money; make lending decisions; provide licensed legal or appraisal conclusions; publish listings without confirmation; purchase services; delete critical records.
+**Rule:** Agents must operate within explicit permissions. Forbidden autonomous actions are listed in the platform catalog (`AI_FORBIDDEN_ACTIONS`) and include: send messages without authorization or an approved automation; sign agreements; move money; make lending decisions (see Canon 16); provide licensed legal or appraisal conclusions (see Canon 18); publish listings without confirmation; purchase services; delete critical records.
 
 ## AI credit system
 
@@ -265,7 +267,7 @@ List a home for sale without an agent; post an off-market property; request a ca
 
 ## Connections
 
-A homeowner can connect with: contractors (repairs/construction), realtors (pricing, listing, purchasing), investors and wholesalers (direct-sale offers), lenders (refinance/purchase options), inspectors (inspections), appraisers (valuations), property managers (rental management), insurance professionals (coverage), title companies and attorneys (closing), architects and engineers (plans), suppliers (material purchases).
+A homeowner can connect with: contractors and trade professionals (repairs/construction), realtors (pricing, listing, purchasing), investors and wholesalers (direct-sale offers), lenders (refinance/purchase options), inspectors (inspections), appraisers (valuations), property managers (rental management), insurance professionals (coverage), title companies and attorneys (closing), architects and engineers (plans), suppliers (material purchases), and other real-estate service providers.
 
 ## Workflow
 
@@ -285,19 +287,25 @@ Professional business page; license and insurance display; service categories; s
 
 ### Connections
 
-Homeowners requesting work, investors renovating properties, realtors preparing listings, property managers requiring maintenance, lenders funding construction, inspectors identifying repairs, architects and engineers supplying plans, suppliers providing materials, subcontractors providing labor, insurance professionals handling restoration work.
+Homeowners requesting work, investors renovating properties, realtors preparing listings, property managers requiring maintenance, lenders funding construction, inspectors identifying repairs, architects and engineers supplying plans, suppliers providing materials, subcontractors providing labor, insurance professionals handling restoration work, wholesalers preparing properties for assignment, attorneys reviewing contracts, and other real-estate service providers.
 
 ### Integrations
 
-Calendar synchronization, mapping and service-radius tools, email and SMS notifications, electronic signatures, payment processing, accounting export, cloud document storage, material pricing sources when authorized, permit information sources when available, AI estimating and scope creation.
+Calendar synchronization, mapping and service-radius tools, email and SMS notifications, electronic signatures, payment processing, accounting export, cloud document storage, material pricing sources when authorized, permit information sources when available, AI estimating and scope creation. Integration catalog details live in Canon 9.
 
 ## Trade professional and subcontractor profile
+
+Trade profiles are the labor-specialty subset of construction capabilities. General contracting, change orders, warranty tracking, and subcontractor management remain on the contractor profile.
 
 **Supported trades:** electrical, plumbing, HVAC, roofing, framing, concrete, masonry, drywall, painting, flooring, cabinets and countertops, excavation, septic, landscaping, cleaning, demolition, insulation, windows and doors, siding and gutters, handyman services.
 
 ### Features
 
 Trade profile; certifications; service radius; availability; portfolio; job feed; bid invitations; estimates; scheduling; progress updates; document sharing; invoice tracking; reviews.
+
+### Connections
+
+Contractors assigning work, homeowners with specialty repair needs, investors renovating properties, property managers needing trade labor, and suppliers providing materials.
 
 ---
 
@@ -309,7 +317,7 @@ Agent and brokerage profile; license verification; listing portfolio; buyer and 
 
 ## Connections
 
-Homeowners considering selling, buyers searching for properties, investors and wholesalers, lenders providing preapproval, contractors preparing properties, inspectors and appraisers, title companies and attorneys, property managers, insurance professionals.
+Homeowners considering selling, buyers searching for properties, investors and wholesalers, lenders providing preapproval, contractors preparing properties, inspectors and appraisers, title companies and attorneys, property managers, insurance professionals, and other real-estate service providers.
 
 ## Listing integrations
 
@@ -321,7 +329,7 @@ Where legally and contractually permitted: MLS or IDX feeds, brokerage-approved 
 
 # 15. Canon: Investor & Wholesaler Profiles
 
-Deal-analysis and disposition side of the platform.
+Deal-analysis and disposition side of the platform. Investors own buy-box criteria, underwriting calculators, and portfolio tracking. Wholesalers own seller intake, assignment posts, buyer matching, and disposition campaigns. Shared tools (document storage, contractor bidding, title/legal coordination) stay linked to the same property record.
 
 ## Investor profile
 
@@ -331,13 +339,13 @@ Investment criteria; buy-box configuration; opportunity feed; property analysis;
 
 ### Connections
 
-Homeowners and motivated sellers, wholesalers, realtors, private and institutional lenders, equity partners, contractors, inspectors, appraisers, title companies and attorneys, property managers, insurance providers.
+Homeowners and motivated sellers, wholesalers, realtors, private and institutional lenders, equity partners, contractors and trade professionals, inspectors, appraisers, title companies and attorneys, property managers, insurance providers, architects and designers, suppliers, and other real-estate service providers.
 
 ### Data and service integrations
 
-Subject to licensing and authorization: property data, public records, comparable sales, mapping, rental estimates, market statistics, construction estimating, financing calculators, electronic signatures, document storage, accounting exports.
+Subject to licensing and authorization: property data, public records, comparable sales, mapping, rental estimates, market statistics, construction estimating, financing calculators, electronic signatures, document storage, accounting exports. Provider catalog: Canon 9.
 
-**Rule:** All automated valuations must be labeled as estimates rather than licensed appraisals.
+**Rule:** Automated valuations follow Canon 18 (Appraiser) and Canon 7 (AI Features) — label them as estimates, never as licensed appraisals.
 
 ## Wholesaler profile
 
@@ -361,13 +369,13 @@ Professional lending profile; loan-program directory; borrower intake; prequalif
 
 ## Connections
 
-Homebuyers, investors, realtors, contractors, appraisers, insurance professionals, title and closing professionals.
+Homebuyers, investors, realtors, contractors, appraisers, insurance professionals, title and closing professionals, wholesalers, inspectors, attorneys, and architects or designers on construction draws.
 
 ## Integrations
 
-Secure application links, identity-verification services, credit or underwriting providers only with authorization, loan-origination systems, document verification, e-signatures, calendar and email, payment calculators.
+Secure application links, identity-verification services, credit or underwriting providers only with authorization, loan-origination systems, document verification, e-signatures, calendar and email, payment calculators. Provider catalog: Canon 9.
 
-**Rule:** Boliviq should not make lending decisions unless separately licensed and designed to meet applicable lending regulations.
+**Rule (platform policy):** Boliviq should not make lending decisions unless separately licensed and designed to meet applicable lending regulations. AI agents inherit this restriction via Canon 7.
 
 ---
 
@@ -379,7 +387,7 @@ Owner and property portfolios; unit records; tenant contact records; maintenance
 
 ## Connections
 
-Property owners, tenants, contractors, realtors, investors, inspectors, insurance professionals, attorneys.
+Property owners, tenants (via compliant third-party workflows — tenants are not a Boliviq profile role), contractors and trade professionals, realtors, investors, inspectors, appraisers, insurance professionals, attorneys, and suppliers.
 
 **Rule:** Tenant screening, rent collection, and lease execution should only be activated through compliant third-party services and applicable permissions.
 
@@ -393,7 +401,7 @@ Covers Inspector, Appraiser, Title/Closing, Insurance, and Attorney profiles —
 
 **Features:** credentials and service areas; inspection types; availability calendar; appointment requests; report upload; photo and defect documentation; repair-category tagging; contractor referral options; invoice tracking; review collection.
 
-**Connections:** homeowners, buyers, realtors, investors, contractors, lenders, property managers, insurance professionals.
+**Connections:** homeowners, buyers, realtors, investors, contractors, lenders, property managers, insurance professionals, wholesalers, and architects or designers when plans are in scope.
 
 **Rule:** Inspection findings may create repair requests, but AI must not alter the inspector's signed report.
 
@@ -403,7 +411,7 @@ Covers Inspector, Appraiser, Title/Closing, Insurance, and Attorney profiles —
 
 **Connections:** lenders, homeowners, realtors, investors, attorneys, property managers.
 
-**Rule:** Boliviq estimates must remain clearly separated from licensed appraisal reports.
+**Rule (source of truth for valuations):** Boliviq estimates must remain clearly separated from licensed appraisal reports. Automated valuations elsewhere on the platform must be labeled as estimates.
 
 ## Title and closing profile
 
@@ -417,15 +425,15 @@ Covers Inspector, Appraiser, Title/Closing, Insurance, and Attorney profiles —
 
 **Features:** agent and carrier information; coverage specialties; quote-request intake; property details; secure document requests; policy milestone tracking; renewal reminders; claim-related contractor referrals; communication history.
 
-**Connections:** homeowners, buyers, investors, lenders, contractors, property managers, inspectors.
+**Connections:** homeowners, buyers, investors, lenders, contractors, property managers, inspectors, realtors, and title professionals.
 
 ## Attorney profile
 
 **Features:** practice areas; jurisdiction and license information; consultation requests; secure client intake; conflict-check status; document exchange; appointment management; matter milestones; referral tracking.
 
-**Connections:** property owners, buyers and sellers, investors and wholesalers, realtors, contractors, lenders, title professionals, property managers.
+**Connections:** property owners, buyers and sellers, investors and wholesalers, realtors, contractors, lenders, title professionals, property managers, and appraisers.
 
-**Rule:** Boliviq AI must not represent itself as an attorney or replace jurisdiction-specific legal advice.
+**Rule (source of truth for legal advice):** Boliviq AI must not represent itself as an attorney or replace jurisdiction-specific legal advice. AI agents inherit this restriction via Canon 7.
 
 ---
 
