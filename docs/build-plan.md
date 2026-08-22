@@ -58,12 +58,23 @@ Package manager is `bun` (native to this Lovable repo). See `AGENTS.md` for run 
 
 ## Phase 1 — Data foundation: canon features off `localStorage` onto Supabase
 
-- [ ] Replace `workspace-store.ts` with Supabase-backed serverFns for `marketplace_listings`, `conversations`/`messages`, `projects`, `documents`, `professional_profiles`, `verification_records`, `credit_wallets`/`credit_ledger`, `workspaces`/`workspace_members`
-- [ ] Enforce workspace isolation via RLS on every canon table
+_In progress. Foundation + first modules landed; remaining modules follow the same pattern._
+
+- [x] Regenerate `types.ts` from the canon schema so canon tables are typed
+- [x] Establish the reusable pattern: RLS-scoped serverFns (`src/lib/workspace.functions.ts`) + react-query hooks (`src/hooks/use-workspace-data.ts`)
+- [x] `documents` — Supabase-backed (list/create), route + dashboard count migrated
+- [x] `projects` — Supabase-backed (list/create), route + dashboard count migrated
+- [x] Integration tests: CRUD + cross-user RLS isolation + spoofed-owner rejection (gated for CI)
+- [ ] `marketplace_listings` (needs saved-listings + report handling; `details` JSONB mapping)
+- [ ] `conversations`/`messages` (assemble threads; later Supabase Realtime in Phase 4)
+- [ ] `professional_profiles`, `verification_records`
+- [ ] `credit_wallets`/`credit_ledger`; `workspaces`/`workspace_members`
+- [ ] Account/onboarding draft → `profiles`; assistant log (needs a table)
 - [ ] Convert seeds (`marketplace-seed`, `professional-seed`, `platform-seed`) to admin-only demo seeding
+- [ ] Remove `workspace-store.ts` once all modules are migrated
 
 **Test gate:** integration tests per module (CRUD + cross-workspace isolation), migration/RLS tests, Phase 0 regression.
-**Break 2:** canon features persist across sessions/devices; workspace isolation enforced by RLS.
+**Break 2:** canon features persist across sessions/devices; workspace isolation enforced by RLS. _Status: proven for documents + projects (UI reload + DB rows + RLS tests); remaining modules pending._
 
 ## Phase 2 — Identity, onboarding & access control (Canons 1, 2)
 
