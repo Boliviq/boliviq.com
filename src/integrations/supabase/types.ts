@@ -703,6 +703,38 @@ export type Database = {
           },
         ];
       };
+      listing_reports: {
+        Row: {
+          created_at: string;
+          id: string;
+          listing_id: string;
+          reason: string | null;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          listing_id: string;
+          reason?: string | null;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          listing_id?: string;
+          reason?: string | null;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "listing_reports_listing_id_fkey";
+            columns: ["listing_id"];
+            isOneToOne: false;
+            referencedRelation: "marketplace_listings";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       marketplace_listings: {
         Row: {
           category: string;
@@ -1209,6 +1241,35 @@ export type Database = {
           zip?: string | null;
         };
         Relationships: [];
+      };
+      saved_listings: {
+        Row: {
+          created_at: string;
+          id: string;
+          listing_id: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          listing_id: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          listing_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "saved_listings_listing_id_fkey";
+            columns: ["listing_id"];
+            isOneToOne: false;
+            referencedRelation: "marketplace_listings";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       subscriptions: {
         Row: {
