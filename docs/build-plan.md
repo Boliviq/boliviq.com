@@ -41,15 +41,20 @@ Package manager is `bun` (native to this Lovable repo). See `AGENTS.md` for run 
 
 ## Phase 0 — Trunk consolidation & environment baseline
 
-- [ ] Merge open branches into one trunk — lockfile fix (PR #1), `cursor/fix-stripe-supabase-integration-*`, `cursor/canon-platform-foundation-06fa`, `cursor/fix-canon-conflicts-c593` — resolving canon conflicts
-- [ ] Stand up local Supabase, apply all migrations from empty DB, seed
-- [ ] Wire secrets (Supabase URL/keys, Stripe test keys/webhook)
-- [ ] Add CI: typecheck + lint + `vitest` on every PR
-- [ ] Establish Prettier auto-format (pre-commit + `lint:fix`) so formatting stops dominating lint
-- [ ] Triage the 133 real lint findings; fix `react-hooks/rules-of-hooks` (potential runtime bug)
+- [ ] Merge open branches into one trunk — lockfile fix (PR #1), `cursor/fix-stripe-supabase-integration-*`, `cursor/canon-platform-foundation-06fa`, `cursor/fix-canon-conflicts-c593` — resolving canon conflicts _(pending explicit go-ahead)_
+- [x] Stand up local Supabase, apply all migrations from empty DB
+- [x] Add CI: typecheck + lint + `vitest` + build on every PR (`.github/workflows/ci.yml`)
+- [x] Establish Prettier auto-format (pre-commit via husky + lint-staged, `lint:fix`) so formatting stops dominating lint
+- [x] Triage lint findings; fix blocking errors (`rules-of-hooks` false positive, stray `no-img-element`, empty `catch`); demote `no-explicit-any` to warn
+- [x] Fix `canon_platform` migration bugs found by the empty-DB apply (see below)
+- [ ] Wire production secrets (Supabase URL/keys, Stripe test keys/webhook) — user action
 
-**Test gate:** typecheck, lint (real findings only), and unit tests green; all migrations apply cleanly from empty DB; dev server boots; auth + dashboard smoke.
-**Break 1:** single trunk builds, migrations apply clean, CI green.
+**Migration bugs fixed during Phase 0 (surfaced by `supabase start` on an empty DB):**
+1. `documents` was re-`CREATE TABLE`d though the initial CRM migration already creates it → changed to `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`.
+2. `admin_audit_logs` RLS called `has_role('admin', auth.uid())` (wrong arg order) → fixed to `has_role(auth.uid(), 'admin')` matching the function signature.
+
+**Test gate:** typecheck, lint (0 errors), and unit tests green; all migrations apply cleanly from empty DB; dev server boots; auth + RLS smoke.
+**Break 1:** single trunk builds, migrations apply clean, CI green. _Status: lint/typecheck/test/build green; migrations verified from empty DB; branch merge + CI-on-remote remain._
 
 ## Phase 1 — Data foundation: canon features off `localStorage` onto Supabase
 
