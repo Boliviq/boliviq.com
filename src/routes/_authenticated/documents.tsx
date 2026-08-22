@@ -23,8 +23,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useWorkspace } from "@/hooks/use-workspace";
-import { addDocument, listDocuments } from "@/lib/workspace-store";
+import { useCurrentUser } from "@/hooks/use-current-user";
+import { useDocuments, useCreateDocument } from "@/hooks/use-workspace-data";
 
 export const Route = createFileRoute("/_authenticated/documents")({
   component: DocumentsPage,
@@ -42,8 +42,10 @@ const KINDS = [
 ];
 
 function DocumentsPage() {
-  const { userId, tick } = useWorkspace();
+  const { userId } = useCurrentUser();
   const navigate = useNavigate();
+  const { data: allDocs = [], isLoading } = useDocuments();
+  const createDoc = useCreateDocument();
   const [q, setQ] = useState("");
   const [compose, setCompose] = useState(false);
   const [draft, setDraft] = useState({
@@ -54,11 +56,10 @@ function DocumentsPage() {
   });
 
   const docs = useMemo(() => {
-    const merged = listDocuments(userId);
-    if (!q) return merged;
+    if (!q) return allDocs;
     const needle = q.toLowerCase();
-    return merged.filter((d) => `${d.name} ${d.kind} ${d.related}`.toLowerCase().includes(needle));
-  }, [userId, q, tick]);
+    return allDocs.filter((d) => `${d.name} ${d.kind} ${d.related}`.toLowerCase().includes(needle));
+  }, [allDocs, q]);
 
   const add = () => {
     if (!draft.name.trim()) {
@@ -69,15 +70,23 @@ function DocumentsPage() {
       toast.error("Sign in to attach documents");
       return;
     }
-    addDocument(userId, {
-      name: draft.name,
-      kind: draft.kind,
-      related: draft.related || "Workspace file",
-      restricted: draft.restricted,
-    });
-    setCompose(false);
-    setDraft({ name: "", kind: "Estimate", related: "", restricted: false });
-    toast.success("Document attached to the workspace record");
+    createDoc.mutate(
+      {
+        name: draft.name,
+        kind: draft.kind,
+        related: draft.related || "Workspace file",
+        restricted: draft.restricted,
+      },
+      {
+        onSuccess: () => {
+          setCompose(false);
+          setDraft({ name: "", kind: "Estimate", related: "", restricted: false });
+          toast.success("Document attached to the workspace record");
+        },
+        onError: (e) =>
+          toast.error(e instanceof Error ? e.message : "Could not attach the document"),
+      },
+    );
   };
 
   return (
@@ -105,6 +114,14 @@ function DocumentsPage() {
           />
         </div>
         <div className="grid gap-3">
+          {isLoading && <div className="text-sm text-muted-foreground">Loading documents…</div>}
+          {!isLoading && docs.length === 0 && (
+            <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
+              {q
+                ? "No documents match your search."
+                : "No documents yet. Attach a contract, estimate, inspection, or plan to get started."}
+            </div>
+          )}
           {docs.map((d) => (
             <Card key={d.id}>
               <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">

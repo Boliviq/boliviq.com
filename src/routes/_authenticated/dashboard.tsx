@@ -7,7 +7,8 @@ import { ArrowUpRight, Sparkles } from "lucide-react";
 import { dashboardForRole, LIFECYCLE } from "@/lib/canons";
 import { useAccount } from "@/hooks/use-current-user";
 import { useWorkspace } from "@/hooks/use-workspace";
-import { listDocuments, listListings, listProjects, listThreads } from "@/lib/workspace-store";
+import { useDocuments, useProjects } from "@/hooks/use-workspace-data";
+import { listListings, listThreads } from "@/lib/workspace-store";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
@@ -16,12 +17,14 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 function Dashboard() {
   const { account } = useAccount();
   const { userId, tick } = useWorkspace();
+  const { data: projects = [] } = useProjects();
+  const { data: documents = [] } = useDocuments();
   const dash = dashboardForRole(account.primary_role);
   const live = {
     listings: listListings(userId).length,
     messages: listThreads(userId).length,
-    projects: listProjects(userId).length,
-    documents: listDocuments(userId).length,
+    projects: projects.length,
+    documents: documents.length,
   };
   void tick;
 
