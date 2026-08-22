@@ -193,21 +193,20 @@ ALTER TABLE public.projects ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "own projects" ON public.projects FOR ALL USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
 CREATE TRIGGER trg_projects_updated BEFORE UPDATE ON public.projects FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
-CREATE TABLE public.documents (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  name TEXT NOT NULL,
-  kind TEXT,
-  related TEXT,
-  restricted BOOLEAN NOT NULL DEFAULT false,
-  storage_path TEXT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
+-- public.documents already exists from the initial CRM migration (20260712021149).
+-- Extend it with the canon columns instead of recreating it (which fails on a fresh DB).
+ALTER TABLE public.documents
+  ADD COLUMN IF NOT EXISTS related TEXT,
+  ADD COLUMN IF NOT EXISTS restricted BOOLEAN NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS storage_path TEXT,
+  ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.documents TO authenticated;
 GRANT ALL ON public.documents TO service_role;
 ALTER TABLE public.documents ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "own documents" ON public.documents;
 CREATE POLICY "own documents" ON public.documents FOR ALL USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
+DROP TRIGGER IF EXISTS trg_documents_updated ON public.documents;
+CREATE TRIGGER trg_documents_updated BEFORE UPDATE ON public.documents FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 CREATE TABLE public.credit_wallets (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -253,5 +252,5 @@ GRANT SELECT ON public.admin_audit_logs TO authenticated;
 GRANT ALL ON public.admin_audit_logs TO service_role;
 ALTER TABLE public.admin_audit_logs ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "admins read audit" ON public.admin_audit_logs FOR SELECT USING (
-  public.has_role('admin', auth.uid())
+  public.has_role(auth.uid(), 'admin')
 );
