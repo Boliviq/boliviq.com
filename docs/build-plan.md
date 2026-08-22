@@ -69,8 +69,8 @@ _In progress. Foundation + first modules landed; remaining modules follow the sa
 - [x] Establish the reusable pattern: RLS-scoped serverFns (`src/lib/workspace.functions.ts`) + react-query hooks (`src/hooks/use-workspace-data.ts`)
 - [x] `documents` — Supabase-backed (list/create), route + dashboard count migrated
 - [x] `projects` — Supabase-backed (list/create), route + dashboard count migrated
-- [x] Integration tests: CRUD + cross-user RLS isolation + spoofed-owner rejection (gated for CI)
-- [ ] `marketplace_listings` (needs saved-listings + report handling; `details` JSONB mapping)
+- [x] `marketplace_listings` — Supabase-backed (list/create/save/report); added `saved_listings` + `listing_reports` tables (RLS); extra fields in `details` JSONB; convert-to-project uses the Supabase project mutation
+- [x] Integration tests: CRUD + cross-user RLS isolation + spoofed-owner rejection + public-read + saved isolation + report visibility (gated for CI)
 - [ ] `conversations`/`messages` (assemble threads; later Supabase Realtime in Phase 4)
 - [ ] `professional_profiles`, `verification_records`
 - [ ] `credit_wallets`/`credit_ledger`; `workspaces`/`workspace_members`
