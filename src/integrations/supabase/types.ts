@@ -1,13 +1,72 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.5";
+  graphql_public: {
+    Tables: {
+      [_ in never]: never;
+    };
+    Views: {
+      [_ in never]: never;
+    };
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json;
+          operationName?: string;
+          query?: string;
+          variables?: Json;
+        };
+        Returns: Json;
+      };
+    };
+    Enums: {
+      [_ in never]: never;
+    };
+    CompositeTypes: {
+      [_ in never]: never;
+    };
   };
   public: {
     Tables: {
+      admin_audit_logs: {
+        Row: {
+          action: string;
+          admin_id: string;
+          created_at: string;
+          id: string;
+          new_value: Json | null;
+          previous_value: Json | null;
+          reason: string | null;
+          record_id: string | null;
+          record_type: string | null;
+          reference: string | null;
+        };
+        Insert: {
+          action: string;
+          admin_id: string;
+          created_at?: string;
+          id?: string;
+          new_value?: Json | null;
+          previous_value?: Json | null;
+          reason?: string | null;
+          record_id?: string | null;
+          record_type?: string | null;
+          reference?: string | null;
+        };
+        Update: {
+          action?: string;
+          admin_id?: string;
+          created_at?: string;
+          id?: string;
+          new_value?: Json | null;
+          previous_value?: Json | null;
+          reason?: string | null;
+          record_id?: string | null;
+          record_type?: string | null;
+          reference?: string | null;
+        };
+        Relationships: [];
+      };
       automations: {
         Row: {
           action_config: Json | null;
@@ -225,6 +284,80 @@ export type Database = {
         };
         Relationships: [];
       };
+      conversation_participants: {
+        Row: {
+          conversation_id: string;
+          last_read_at: string | null;
+          user_id: string;
+        };
+        Insert: {
+          conversation_id: string;
+          last_read_at?: string | null;
+          user_id: string;
+        };
+        Update: {
+          conversation_id?: string;
+          last_read_at?: string | null;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "conversation_participants_conversation_id_fkey";
+            columns: ["conversation_id"];
+            isOneToOne: false;
+            referencedRelation: "conversations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      conversations: {
+        Row: {
+          context: string | null;
+          created_at: string;
+          created_by: string;
+          id: string;
+          listing_id: string | null;
+          property_id: string | null;
+          title: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          context?: string | null;
+          created_at?: string;
+          created_by: string;
+          id?: string;
+          listing_id?: string | null;
+          property_id?: string | null;
+          title?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          context?: string | null;
+          created_at?: string;
+          created_by?: string;
+          id?: string;
+          listing_id?: string | null;
+          property_id?: string | null;
+          title?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "conversations_listing_id_fkey";
+            columns: ["listing_id"];
+            isOneToOne: false;
+            referencedRelation: "marketplace_listings";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "conversations_property_id_fkey";
+            columns: ["property_id"];
+            isOneToOne: false;
+            referencedRelation: "properties";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       coupon_redemptions: {
         Row: {
           coupon_code: string;
@@ -341,6 +474,76 @@ export type Database = {
         };
         Relationships: [];
       };
+      credit_ledger: {
+        Row: {
+          created_at: string;
+          delta: number;
+          id: string;
+          idempotency_key: string | null;
+          label: string;
+          status: Database["public"]["Enums"]["credit_entry_status"];
+          wallet_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          delta: number;
+          id?: string;
+          idempotency_key?: string | null;
+          label: string;
+          status?: Database["public"]["Enums"]["credit_entry_status"];
+          wallet_id: string;
+        };
+        Update: {
+          created_at?: string;
+          delta?: number;
+          id?: string;
+          idempotency_key?: string | null;
+          label?: string;
+          status?: Database["public"]["Enums"]["credit_entry_status"];
+          wallet_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "credit_ledger_wallet_id_fkey";
+            columns: ["wallet_id"];
+            isOneToOne: false;
+            referencedRelation: "credit_wallets";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      credit_wallets: {
+        Row: {
+          balance: number;
+          id: string;
+          updated_at: string;
+          user_id: string | null;
+          workspace_id: string | null;
+        };
+        Insert: {
+          balance?: number;
+          id?: string;
+          updated_at?: string;
+          user_id?: string | null;
+          workspace_id?: string | null;
+        };
+        Update: {
+          balance?: number;
+          id?: string;
+          updated_at?: string;
+          user_id?: string | null;
+          workspace_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "credit_wallets_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       documents: {
         Row: {
           created_at: string;
@@ -348,6 +551,10 @@ export type Database = {
           kind: string | null;
           name: string;
           property_id: string | null;
+          related: string | null;
+          restricted: boolean;
+          storage_path: string | null;
+          updated_at: string;
           url: string | null;
           user_id: string;
         };
@@ -357,6 +564,10 @@ export type Database = {
           kind?: string | null;
           name: string;
           property_id?: string | null;
+          related?: string | null;
+          restricted?: boolean;
+          storage_path?: string | null;
+          updated_at?: string;
           url?: string | null;
           user_id: string;
         };
@@ -366,6 +577,10 @@ export type Database = {
           kind?: string | null;
           name?: string;
           property_id?: string | null;
+          related?: string | null;
+          restricted?: boolean;
+          storage_path?: string | null;
+          updated_at?: string;
           url?: string | null;
           user_id?: string;
         };
@@ -488,6 +703,100 @@ export type Database = {
           },
         ];
       };
+      marketplace_listings: {
+        Row: {
+          category: string;
+          created_at: string;
+          description: string | null;
+          details: Json;
+          expires_at: string | null;
+          id: string;
+          location: string | null;
+          price: number | null;
+          price_label: string | null;
+          reported: boolean;
+          title: string;
+          updated_at: string;
+          user_id: string;
+          visibility: Database["public"]["Enums"]["listing_visibility"];
+          workspace_id: string | null;
+        };
+        Insert: {
+          category: string;
+          created_at?: string;
+          description?: string | null;
+          details?: Json;
+          expires_at?: string | null;
+          id?: string;
+          location?: string | null;
+          price?: number | null;
+          price_label?: string | null;
+          reported?: boolean;
+          title: string;
+          updated_at?: string;
+          user_id: string;
+          visibility?: Database["public"]["Enums"]["listing_visibility"];
+          workspace_id?: string | null;
+        };
+        Update: {
+          category?: string;
+          created_at?: string;
+          description?: string | null;
+          details?: Json;
+          expires_at?: string | null;
+          id?: string;
+          location?: string | null;
+          price?: number | null;
+          price_label?: string | null;
+          reported?: boolean;
+          title?: string;
+          updated_at?: string;
+          user_id?: string;
+          visibility?: Database["public"]["Enums"]["listing_visibility"];
+          workspace_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_listings_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      messages: {
+        Row: {
+          body: string;
+          conversation_id: string;
+          created_at: string;
+          id: string;
+          sender_id: string;
+        };
+        Insert: {
+          body: string;
+          conversation_id: string;
+          created_at?: string;
+          id?: string;
+          sender_id: string;
+        };
+        Update: {
+          body?: string;
+          conversation_id?: string;
+          created_at?: string;
+          id?: string;
+          sender_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey";
+            columns: ["conversation_id"];
+            isOneToOne: false;
+            referencedRelation: "conversations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       notes: {
         Row: {
           body: string;
@@ -601,35 +910,101 @@ export type Database = {
         };
         Relationships: [];
       };
+      professional_profiles: {
+        Row: {
+          bio: string | null;
+          company_name: string | null;
+          created_at: string;
+          id: string;
+          insurance_policy: string | null;
+          license_number: string | null;
+          role: Database["public"]["Enums"]["profile_role"];
+          service_area: string | null;
+          specialties: string[];
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          bio?: string | null;
+          company_name?: string | null;
+          created_at?: string;
+          id?: string;
+          insurance_policy?: string | null;
+          license_number?: string | null;
+          role: Database["public"]["Enums"]["profile_role"];
+          service_area?: string | null;
+          specialties?: string[];
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          bio?: string | null;
+          company_name?: string | null;
+          created_at?: string;
+          id?: string;
+          insurance_policy?: string | null;
+          license_number?: string | null;
+          role?: Database["public"]["Enums"]["profile_role"];
+          service_area?: string | null;
+          specialties?: string[];
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       profiles: {
         Row: {
+          account_kind: Database["public"]["Enums"]["account_kind"];
           avatar_url: string | null;
+          comms_consent: boolean;
           company_id: string | null;
           created_at: string;
           full_name: string | null;
           id: string;
+          language: string;
           onboarded: boolean;
+          onboarding_step: number;
           phone: string | null;
+          primary_role: Database["public"]["Enums"]["profile_role"];
+          secondary_roles: Database["public"]["Enums"]["profile_role"][];
+          service_area: string | null;
+          terms_accepted_at: string | null;
           updated_at: string;
         };
         Insert: {
+          account_kind?: Database["public"]["Enums"]["account_kind"];
           avatar_url?: string | null;
+          comms_consent?: boolean;
           company_id?: string | null;
           created_at?: string;
           full_name?: string | null;
           id: string;
+          language?: string;
           onboarded?: boolean;
+          onboarding_step?: number;
           phone?: string | null;
+          primary_role?: Database["public"]["Enums"]["profile_role"];
+          secondary_roles?: Database["public"]["Enums"]["profile_role"][];
+          service_area?: string | null;
+          terms_accepted_at?: string | null;
           updated_at?: string;
         };
         Update: {
+          account_kind?: Database["public"]["Enums"]["account_kind"];
           avatar_url?: string | null;
+          comms_consent?: boolean;
           company_id?: string | null;
           created_at?: string;
           full_name?: string | null;
           id?: string;
+          language?: string;
           onboarded?: boolean;
+          onboarding_step?: number;
           phone?: string | null;
+          primary_role?: Database["public"]["Enums"]["profile_role"];
+          secondary_roles?: Database["public"]["Enums"]["profile_role"][];
+          service_area?: string | null;
+          terms_accepted_at?: string | null;
           updated_at?: string;
         };
         Relationships: [
@@ -638,6 +1013,76 @@ export type Database = {
             columns: ["company_id"];
             isOneToOne: false;
             referencedRelation: "companies";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      projects: {
+        Row: {
+          address: string | null;
+          budget: number | null;
+          created_at: string;
+          id: string;
+          listing_id: string | null;
+          name: string;
+          next_milestone: string | null;
+          property_id: string | null;
+          spent: number | null;
+          status: string;
+          updated_at: string;
+          user_id: string;
+          workspace_id: string | null;
+        };
+        Insert: {
+          address?: string | null;
+          budget?: number | null;
+          created_at?: string;
+          id?: string;
+          listing_id?: string | null;
+          name: string;
+          next_milestone?: string | null;
+          property_id?: string | null;
+          spent?: number | null;
+          status?: string;
+          updated_at?: string;
+          user_id: string;
+          workspace_id?: string | null;
+        };
+        Update: {
+          address?: string | null;
+          budget?: number | null;
+          created_at?: string;
+          id?: string;
+          listing_id?: string | null;
+          name?: string;
+          next_milestone?: string | null;
+          property_id?: string | null;
+          spent?: number | null;
+          status?: string;
+          updated_at?: string;
+          user_id?: string;
+          workspace_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "projects_listing_id_fkey";
+            columns: ["listing_id"];
+            isOneToOne: false;
+            referencedRelation: "marketplace_listings";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "projects_property_id_fkey";
+            columns: ["property_id"];
+            isOneToOne: false;
+            referencedRelation: "properties";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "projects_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
             referencedColumns: ["id"];
           },
         ];
@@ -961,6 +1406,39 @@ export type Database = {
         };
         Relationships: [];
       };
+      verification_records: {
+        Row: {
+          created_at: string;
+          id: string;
+          notes: string | null;
+          reviewed_by: string | null;
+          status: string;
+          tier: Database["public"]["Enums"]["verification_tier"];
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          notes?: string | null;
+          reviewed_by?: string | null;
+          status?: string;
+          tier: Database["public"]["Enums"]["verification_tier"];
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          notes?: string | null;
+          reviewed_by?: string | null;
+          status?: string;
+          tier?: Database["public"]["Enums"]["verification_tier"];
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       webhook_events: {
         Row: {
           created_at: string;
@@ -991,6 +1469,73 @@ export type Database = {
         };
         Relationships: [];
       };
+      workspace_members: {
+        Row: {
+          created_at: string;
+          id: string;
+          role: string;
+          user_id: string;
+          workspace_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          role?: string;
+          user_id: string;
+          workspace_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          role?: string;
+          user_id?: string;
+          workspace_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "workspace_members_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      workspaces: {
+        Row: {
+          company_id: string | null;
+          created_at: string;
+          id: string;
+          name: string;
+          owner_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          company_id?: string | null;
+          created_at?: string;
+          id?: string;
+          name: string;
+          owner_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          company_id?: string | null;
+          created_at?: string;
+          id?: string;
+          name?: string;
+          owner_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "workspaces_company_id_fkey";
+            columns: ["company_id"];
+            isOneToOne: false;
+            referencedRelation: "companies";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -1009,8 +1554,10 @@ export type Database = {
       };
     };
     Enums: {
+      account_kind: "individual" | "company";
       app_role: "admin" | "moderator" | "user";
       call_outcome: "no_answer" | "left_voicemail" | "spoke" | "follow_up" | "not_interested";
+      credit_entry_status: "posted" | "reserved" | "released" | "refunded" | "adjustment";
       discount_type: "percentage" | "fixed";
       investment_strategy:
         | "fix_and_flip"
@@ -1034,8 +1581,31 @@ export type Database = {
         | "offer_preparation"
         | "offer_submitted"
         | "follow_up_later"
-        | "lost";
+        | "lost"
+        | "appointment_scheduled"
+        | "proposal_created"
+        | "in_progress";
+      listing_visibility: "public" | "limited";
+      profile_role:
+        | "homeowner"
+        | "contractor"
+        | "trade"
+        | "realtor"
+        | "investor"
+        | "wholesaler"
+        | "lender"
+        | "property_manager"
+        | "inspector"
+        | "appraiser"
+        | "title"
+        | "insurance"
+        | "attorney"
+        | "designer"
+        | "supplier"
+        | "other"
+        | "administrator";
       task_status: "pending" | "in_progress" | "done" | "cancelled";
+      verification_tier: "unverified" | "identity" | "license" | "insurance" | "boliviq_certified";
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -1159,10 +1729,15 @@ export type CompositeTypes<
     : never;
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
+      account_kind: ["individual", "company"],
       app_role: ["admin", "moderator", "user"],
       call_outcome: ["no_answer", "left_voicemail", "spoke", "follow_up", "not_interested"],
+      credit_entry_status: ["posted", "reserved", "released", "refunded", "adjustment"],
       discount_type: ["percentage", "fixed"],
       investment_strategy: [
         "fix_and_flip",
@@ -1188,8 +1763,32 @@ export const Constants = {
         "offer_submitted",
         "follow_up_later",
         "lost",
+        "appointment_scheduled",
+        "proposal_created",
+        "in_progress",
+      ],
+      listing_visibility: ["public", "limited"],
+      profile_role: [
+        "homeowner",
+        "contractor",
+        "trade",
+        "realtor",
+        "investor",
+        "wholesaler",
+        "lender",
+        "property_manager",
+        "inspector",
+        "appraiser",
+        "title",
+        "insurance",
+        "attorney",
+        "designer",
+        "supplier",
+        "other",
+        "administrator",
       ],
       task_status: ["pending", "in_progress", "done", "cancelled"],
+      verification_tier: ["unverified", "identity", "license", "insurance", "boliviq_certified"],
     },
   },
 } as const;
