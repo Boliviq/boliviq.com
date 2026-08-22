@@ -13,6 +13,7 @@ import {
   VERIFICATION_DISCLAIMER,
   VERIFICATION_TIERS,
   dashboardForRole,
+  findConnectionAsymmetries,
   mapLeadStatusToPipelineStage,
   navForRole,
 } from "../src/lib/canons";
@@ -27,6 +28,10 @@ describe("Boliviq canons catalog", () => {
     expect(PROFILE_ROLES.map((r) => r.id)).toContain("homeowner");
     expect(PROFILE_ROLES.map((r) => r.id)).toContain("administrator");
     expect(PROFILE_ROLES.find((r) => r.id === "homeowner")?.professional).toBe(false);
+  });
+
+  test("role connections are bidirectional (excluding administrator)", () => {
+    expect(findConnectionAsymmetries()).toEqual([]);
   });
 
   test("marketplace has the 20 primary categories", () => {
@@ -62,6 +67,8 @@ describe("Boliviq canons catalog", () => {
 
   test("verification tiers never imply a service guarantee", () => {
     expect(VERIFICATION_TIERS).toHaveLength(5);
+    expect(VERIFICATION_TIERS[0].id).toBe("unverified");
+    expect(VERIFICATION_TIERS.find((t) => t.id === "identity")?.description.toLowerCase()).toMatch(/stackable/);
     expect(VERIFICATION_DISCLAIMER.toLowerCase()).toMatch(/never imply.*guarantees a person's services/);
   });
 
