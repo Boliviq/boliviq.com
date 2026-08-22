@@ -41,13 +41,18 @@ Package manager is `bun` (native to this Lovable repo). See `AGENTS.md` for run 
 
 ## Phase 0 — Trunk consolidation & environment baseline
 
-- [ ] Merge open branches into one trunk — lockfile fix (PR #1), `cursor/fix-stripe-supabase-integration-*`, `cursor/canon-platform-foundation-06fa`, `cursor/fix-canon-conflicts-c593` — resolving canon conflicts _(pending explicit go-ahead)_
+- [x] Consolidate branches into the trunk (see note below)
 - [x] Stand up local Supabase, apply all migrations from empty DB
 - [x] Add CI: typecheck + lint + `vitest` + build on every PR (`.github/workflows/ci.yml`)
 - [x] Establish Prettier auto-format (pre-commit via husky + lint-staged, `lint:fix`) so formatting stops dominating lint
 - [x] Triage lint findings; fix blocking errors (`rules-of-hooks` false positive, stray `no-img-element`, empty `catch`); demote `no-explicit-any` to warn
 - [x] Fix `canon_platform` migration bugs found by the empty-DB apply (see below)
 - [ ] Wire production secrets (Supabase URL/keys, Stripe test keys/webhook) — user action
+
+**Branch consolidation outcome:**
+- Merged `cursor/fix-canon-conflicts-c593` (canon connection fixes + a test) into the trunk. The lockfile fix (PR #1) is already included.
+- Skipped `cursor/canon-platform-foundation-06fa`: its canon content is already in `main` (PR #2); its remaining commits only extend the `localStorage` `workspace-store`, which Phase 1 is replacing.
+- Did **not** merge the four `cursor/fix-stripe-supabase-integration*` branches (`1dca`, `58bf`, `6790`, `39d2`): they are **mutually-exclusive parallel attempts** at the same work — each ships a different migration stamped `20260816140000` (`fix_has_role_and_subscription_rls` vs `lock_subscription_writes` vs `fix_entitlements_and_admin_rpc`) and each rewrites the same `billing.functions.ts`/`stripe.server.ts`/`webhook.ts`. Merging more than one collides. Choosing the canonical Stripe line is a product decision (e.g. `1dca`'s admin-editable pricing vs `6790`'s entitlements + workspace-data wiring) and is tracked for a dedicated integration pass, not a blind merge.
 
 **Migration bugs fixed during Phase 0 (surfaced by `supabase start` on an empty DB):**
 1. `documents` was re-`CREATE TABLE`d though the initial CRM migration already creates it → changed to `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`.
