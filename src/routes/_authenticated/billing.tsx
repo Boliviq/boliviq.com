@@ -25,16 +25,34 @@ export const Route = createFileRoute("/_authenticated/billing")({
   component: Billing,
 });
 
-type Receipt = { plan: string; amount: number; discount: number; total: number; couponCode: string | null; source: "stripe" | "grant" };
+type Receipt = {
+  plan: string;
+  amount: number;
+  discount: number;
+  total: number;
+  couponCode: string | null;
+  source: "stripe" | "grant";
+};
 
 function Billing() {
   const [annual, setAnnual] = useState(false);
   const [couponInput, setCouponInput] = useState("");
-  const [applied, setApplied] = useState<{ coupon: ValidatedCoupon; discount: number; total: number; plan: string; amount: number } | null>(null);
+  const [applied, setApplied] = useState<{
+    coupon: ValidatedCoupon;
+    discount: number;
+    total: number;
+    plan: string;
+    amount: number;
+  } | null>(null);
   const [validating, setValidating] = useState(false);
   const [checkingOut, setCheckingOut] = useState<string | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
-  const [checkoutError, setCheckoutError] = useState<{ title: string; message: string; detail?: string; retryPlan?: Plan } | null>(null);
+  const [checkoutError, setCheckoutError] = useState<{
+    title: string;
+    message: string;
+    detail?: string;
+    retryPlan?: Plan;
+  } | null>(null);
   const [receipt, setReceipt] = useState<Receipt | null>(null);
   const validateFn = useServerFn(validateCoupon);
   const checkoutFn = useServerFn(createBoliviqCheckout);
@@ -45,16 +63,26 @@ function Billing() {
   const { userId } = useCurrentUser();
   const qc = useQueryClient();
 
-
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("checkout") === "success") {
       const raw = sessionStorage.getItem("boliviq:last-receipt");
       if (raw) {
-        try { setReceipt({ ...JSON.parse(raw), source: "stripe" }); } catch {}
+        try {
+          setReceipt({ ...JSON.parse(raw), source: "stripe" });
+        } catch {
+          // Ignore a malformed cached receipt; fall through to removing it.
+        }
         sessionStorage.removeItem("boliviq:last-receipt");
       } else {
-        setReceipt({ plan: "your plan", amount: 0, discount: 0, total: 0, couponCode: null, source: "stripe" });
+        setReceipt({
+          plan: "your plan",
+          amount: 0,
+          discount: 0,
+          total: 0,
+          couponCode: null,
+          source: "stripe",
+        });
       }
       const url = new URL(window.location.href);
       url.searchParams.delete("checkout");
@@ -67,7 +95,11 @@ function Billing() {
       const iv = setInterval(async () => {
         attempts += 1;
         await qc.invalidateQueries({ queryKey: ["subscription", userId] });
-        if (attempts >= 12) { clearInterval(iv); setConfirming(false); setConfirmTimedOut(true); }
+        if (attempts >= 12) {
+          clearInterval(iv);
+          setConfirming(false);
+          setConfirmTimedOut(true);
+        }
       }, 2000);
       return () => clearInterval(iv);
     }
@@ -82,8 +114,16 @@ function Billing() {
   async function openPortal() {
     setOpeningPortal(true);
     try {
-      const res = await portalFn({ data: { returnUrl: `${window.location.origin}/billing`, environment: getStripeEnvironment() } });
-      if ("error" in res) { toast.error(res.error); return; }
+      const res = await portalFn({
+        data: {
+          returnUrl: `${window.location.origin}/billing`,
+          environment: getStripeEnvironment(),
+        },
+      });
+      if ("error" in res) {
+        toast.error(res.error);
+        return;
+      }
       window.open(res.url, "_blank", "noopener,noreferrer");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not open billing portal.");
@@ -91,7 +131,6 @@ function Billing() {
       setOpeningPortal(false);
     }
   }
-
 
   const { data: subscription } = useQuery({
     queryKey: ["subscription", userId],
@@ -112,13 +151,28 @@ function Billing() {
   const currentStatus = (subscription as any)?.status ?? "trial";
 
   async function applyCoupon(planName: string, amount: number) {
-    if (!couponInput.trim()) { toast.error("Enter a coupon code."); return; }
-    if (applied) { toast.error("Remove the current coupon first."); return; }
+    if (!couponInput.trim()) {
+      toast.error("Enter a coupon code.");
+      return;
+    }
+    if (applied) {
+      toast.error("Remove the current coupon first.");
+      return;
+    }
     setValidating(true);
     try {
       const res = await validateFn({ data: { code: couponInput.trim(), plan: planName, amount } });
-      if (!res.ok) { toast.error(res.error); return; }
-      setApplied({ coupon: res.coupon, discount: res.discount, total: res.total, plan: planName, amount });
+      if (!res.ok) {
+        toast.error(res.error);
+        return;
+      }
+      setApplied({
+        coupon: res.coupon,
+        discount: res.discount,
+        total: res.total,
+        plan: planName,
+        amount,
+      });
       toast.success(`Coupon "${res.coupon.code}" applied — $${res.discount.toFixed(2)} off.`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not validate coupon.");
@@ -202,7 +256,11 @@ function Billing() {
         setApplied(null);
         setCouponInput("");
         qc.invalidateQueries({ queryKey: ["subscription", userId] });
-        setReceipt({ ...receiptData, couponCode: res.couponCode ?? receiptData.couponCode, source: "grant" });
+        setReceipt({
+          ...receiptData,
+          couponCode: res.couponCode ?? receiptData.couponCode,
+          source: "grant",
+        });
         return;
       }
 
@@ -221,15 +279,20 @@ function Billing() {
 
   return (
     <>
-      <PageHeader title="Billing & subscription" description="Manage your Boliviq plan, payment method, and invoices." />
+      <PageHeader
+        title="Billing & subscription"
+        description="Manage your Boliviq plan, payment method, and invoices."
+      />
       <PaymentTestModeBanner />
       <div className="space-y-6 p-4 sm:p-8">
-
         <div className="rounded-lg border border-success/40 bg-success/10 p-4 text-sm flex gap-2">
           <Info className="h-5 w-5 shrink-0 text-success" />
           <div>
             <div className="font-medium text-foreground">Powered by Stripe</div>
-            <div className="text-muted-foreground">Coupons applied here are validated in Boliviq, then redeemed automatically at Stripe checkout.</div>
+            <div className="text-muted-foreground">
+              Coupons applied here are validated in Boliviq, then redeemed automatically at Stripe
+              checkout.
+            </div>
           </div>
         </div>
 
@@ -238,21 +301,34 @@ function Billing() {
             <div className="font-medium text-foreground">{checkoutError.title}</div>
             <div className="mt-1 text-muted-foreground">{checkoutError.message}</div>
             {checkoutError.detail && (
-              <div className="mt-2 font-mono text-xs text-muted-foreground">{checkoutError.detail}</div>
+              <div className="mt-2 font-mono text-xs text-muted-foreground">
+                {checkoutError.detail}
+              </div>
             )}
             <div className="mt-3 flex flex-wrap gap-2">
               {checkoutError.retryPlan && (
-                <Button size="sm" onClick={() => checkoutError.retryPlan && checkout(checkoutError.retryPlan)}>
+                <Button
+                  size="sm"
+                  onClick={() => checkoutError.retryPlan && checkout(checkoutError.retryPlan)}
+                >
                   Try again
                 </Button>
               )}
-              {(subscription as any)?.stripe_customer_id && !String((subscription as any).stripe_customer_id).startsWith("boliviq_grant_") && (
-                <Button size="sm" variant="outline" onClick={openPortal} disabled={openingPortal}>
-                  {openingPortal ? "Opening…" : "Manage Billing"}
-                </Button>
-              )}
-              <Button size="sm" variant="ghost" onClick={() => setCheckoutError(null)}>Dismiss</Button>
-              <a href="/support" className="inline-flex items-center rounded-md border px-3 py-1.5 text-xs font-medium">Contact support</a>
+              {(subscription as any)?.stripe_customer_id &&
+                !String((subscription as any).stripe_customer_id).startsWith("boliviq_grant_") && (
+                  <Button size="sm" variant="outline" onClick={openPortal} disabled={openingPortal}>
+                    {openingPortal ? "Opening…" : "Manage Billing"}
+                  </Button>
+                )}
+              <Button size="sm" variant="ghost" onClick={() => setCheckoutError(null)}>
+                Dismiss
+              </Button>
+              <a
+                href="/support"
+                className="inline-flex items-center rounded-md border px-3 py-1.5 text-xs font-medium"
+              >
+                Contact support
+              </a>
             </div>
           </div>
         )}
@@ -265,21 +341,40 @@ function Billing() {
 
         {confirmTimedOut && (
           <div className="rounded-lg border border-warning/40 bg-warning/10 p-4 text-sm">
-            <div className="font-medium text-foreground">Payment confirmation is taking longer than expected.</div>
-            <div className="text-muted-foreground">Your payment likely succeeded — Stripe just hasn't confirmed to Boliviq yet. Refresh in a moment, or open Manage Billing to verify.</div>
+            <div className="font-medium text-foreground">
+              Payment confirmation is taking longer than expected.
+            </div>
+            <div className="text-muted-foreground">
+              Your payment likely succeeded — Stripe just hasn't confirmed to Boliviq yet. Refresh
+              in a moment, or open Manage Billing to verify.
+            </div>
             <div className="mt-2 flex gap-2">
-              <Button size="sm" variant="outline" onClick={() => { setConfirmTimedOut(false); qc.invalidateQueries({ queryKey: ["subscription", userId] }); }}>Refresh</Button>
-              <Button size="sm" onClick={openPortal} disabled={openingPortal}>{openingPortal ? "Opening…" : "Manage Billing"}</Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setConfirmTimedOut(false);
+                  qc.invalidateQueries({ queryKey: ["subscription", userId] });
+                }}
+              >
+                Refresh
+              </Button>
+              <Button size="sm" onClick={openPortal} disabled={openingPortal}>
+                {openingPortal ? "Opening…" : "Manage Billing"}
+              </Button>
             </div>
           </div>
         )}
 
-
         {currentStatus === "past_due" && (
           <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm">
             <div className="font-medium text-foreground">Payment failed</div>
-            <div className="text-muted-foreground">Your last payment didn't go through. Update your payment method to keep your access.</div>
-            <Button size="sm" className="mt-2" onClick={openPortal} disabled={openingPortal}>{openingPortal ? "Opening…" : "Manage Billing"}</Button>
+            <div className="text-muted-foreground">
+              Your last payment didn't go through. Update your payment method to keep your access.
+            </div>
+            <Button size="sm" className="mt-2" onClick={openPortal} disabled={openingPortal}>
+              {openingPortal ? "Opening…" : "Manage Billing"}
+            </Button>
           </div>
         )}
 
@@ -295,60 +390,109 @@ function Billing() {
             </div>
             <div>
               <div className="text-xs uppercase text-muted-foreground">Renewal</div>
-              <div className="mt-1 text-lg font-semibold">{(subscription as any)?.current_period_end ? new Date((subscription as any).current_period_end).toLocaleDateString() : "—"}</div>
+              <div className="mt-1 text-lg font-semibold">
+                {(subscription as any)?.current_period_end
+                  ? new Date((subscription as any).current_period_end).toLocaleDateString()
+                  : "—"}
+              </div>
             </div>
             <div>
               <div className="text-xs uppercase text-muted-foreground">Coupon</div>
-              <div className="mt-1 text-lg font-semibold">{(subscription as any)?.coupon_code ?? "—"}</div>
+              <div className="mt-1 text-lg font-semibold">
+                {(subscription as any)?.coupon_code ?? "—"}
+              </div>
             </div>
           </CardContent>
-          {(subscription as any)?.stripe_customer_id && !String((subscription as any).stripe_customer_id).startsWith("boliviq_grant_") && (
-            <div className="px-6 pb-6">
-              <Button variant="outline" onClick={openPortal} disabled={openingPortal}>
-                {openingPortal ? "Opening…" : "Manage Billing"}
-              </Button>
-              <p className="mt-2 text-xs text-muted-foreground">Opens Stripe's secure portal to update payment method, view invoices, or cancel.</p>
-            </div>
-          )}
+          {(subscription as any)?.stripe_customer_id &&
+            !String((subscription as any).stripe_customer_id).startsWith("boliviq_grant_") && (
+              <div className="px-6 pb-6">
+                <Button variant="outline" onClick={openPortal} disabled={openingPortal}>
+                  {openingPortal ? "Opening…" : "Manage Billing"}
+                </Button>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Opens Stripe's secure portal to update payment method, view invoices, or cancel.
+                </p>
+              </div>
+            )}
         </Card>
-
 
         <Card>
-          <CardHeader><CardTitle>Usage this period</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>Usage this period</CardTitle>
+          </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground">Usage tracking is being configured. Live per-account metering (properties, AI credits, reports) will appear here once the backend is enabled.</p>
+            <p className="text-sm text-muted-foreground">
+              Usage tracking is being configured. Live per-account metering (properties, AI credits,
+              reports) will appear here once the backend is enabled.
+            </p>
           </CardContent>
         </Card>
-
 
         <div>
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl font-semibold">Change your plan</h2>
-              <p className="text-sm text-muted-foreground">Upgrade or downgrade any time. Changes prorate automatically.</p>
+              <p className="text-sm text-muted-foreground">
+                Upgrade or downgrade any time. Changes prorate automatically.
+              </p>
             </div>
             <div className="inline-flex items-center gap-2 rounded-full border bg-card p-1">
-              <button onClick={() => setAnnual(false)} className={`rounded-full px-3 py-1 text-xs font-medium ${!annual ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>Monthly</button>
-              <button onClick={() => setAnnual(true)} className={`rounded-full px-3 py-1 text-xs font-medium ${annual ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>Annual · save ~20%</button>
+              <button
+                onClick={() => setAnnual(false)}
+                className={`rounded-full px-3 py-1 text-xs font-medium ${!annual ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+              >
+                Monthly
+              </button>
+              <button
+                onClick={() => setAnnual(true)}
+                className={`rounded-full px-3 py-1 text-xs font-medium ${annual ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+              >
+                Annual · save ~20%
+              </button>
             </div>
           </div>
           <Card className="mt-4">
             <CardHeader className="pb-3">
-              <div className="flex items-center gap-2"><Ticket className="h-4 w-4 text-success" /><CardTitle className="text-base">Have a coupon?</CardTitle></div>
+              <div className="flex items-center gap-2">
+                <Ticket className="h-4 w-4 text-success" />
+                <CardTitle className="text-base">Have a coupon?</CardTitle>
+              </div>
             </CardHeader>
             <CardContent>
               {applied ? (
                 <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-success/40 bg-success/10 p-3 text-sm">
                   <div>
-                    <div className="font-medium">{applied.coupon.code} applied to {applied.plan}</div>
-                    <div className="text-muted-foreground">${applied.amount.toFixed(2)} − ${applied.discount.toFixed(2)} = <strong className="text-foreground">${applied.total.toFixed(2)}</strong></div>
+                    <div className="font-medium">
+                      {applied.coupon.code} applied to {applied.plan}
+                    </div>
+                    <div className="text-muted-foreground">
+                      ${applied.amount.toFixed(2)} − ${applied.discount.toFixed(2)} ={" "}
+                      <strong className="text-foreground">${applied.total.toFixed(2)}</strong>
+                    </div>
                   </div>
-                  <Button size="sm" variant="ghost" onClick={() => { setApplied(null); setCouponInput(""); }}><X className="mr-1 h-4 w-4" />Remove</Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      setApplied(null);
+                      setCouponInput("");
+                    }}
+                  >
+                    <X className="mr-1 h-4 w-4" />
+                    Remove
+                  </Button>
                 </div>
               ) : (
                 <div className="flex flex-col gap-2 sm:flex-row">
-                  <Input placeholder="Enter coupon code" value={couponInput} onChange={(e) => setCouponInput(e.target.value)} className="sm:max-w-xs" />
-                  <p className="text-xs text-muted-foreground sm:self-center">Click "Apply coupon" on a plan to preview the discount before checkout.</p>
+                  <Input
+                    placeholder="Enter coupon code"
+                    value={couponInput}
+                    onChange={(e) => setCouponInput(e.target.value)}
+                    className="sm:max-w-xs"
+                  />
+                  <p className="text-xs text-muted-foreground sm:self-center">
+                    Click "Apply coupon" on a plan to preview the discount before checkout.
+                  </p>
                 </div>
               )}
             </CardContent>
@@ -362,12 +506,24 @@ function Billing() {
               const appliedHere = applied && applied.plan === p.name;
               const busy = checkingOut === p.name;
               return (
-                <Card key={p.tier} className={p.aiMax ? "border-primary/40 ring-2 ring-primary/20" : p.highlight ? "border-success ring-2 ring-success/30" : ""}>
+                <Card
+                  key={p.tier}
+                  className={
+                    p.aiMax
+                      ? "border-primary/40 ring-2 ring-primary/20"
+                      : p.highlight
+                        ? "border-success ring-2 ring-success/30"
+                        : ""
+                  }
+                >
                   <CardContent className="p-5">
                     <div className="flex items-center justify-between">
                       <div className="font-semibold">{p.name}</div>
                       {p.aiMax ? (
-                        <Badge className="bg-primary text-primary-foreground"><Sparkles className="mr-1 h-3 w-3" />AI Max</Badge>
+                        <Badge className="bg-primary text-primary-foreground">
+                          <Sparkles className="mr-1 h-3 w-3" />
+                          AI Max
+                        </Badge>
                       ) : p.badge ? (
                         <Badge className="bg-success text-success-foreground">{p.badge}</Badge>
                       ) : null}
@@ -375,25 +531,49 @@ function Billing() {
                     <div className="mt-2 font-display text-2xl font-bold">
                       {appliedHere ? (
                         <>
-                          <span className="text-muted-foreground line-through mr-2 text-lg">${price}</span>
+                          <span className="text-muted-foreground line-through mr-2 text-lg">
+                            ${price}
+                          </span>
                           ${applied!.total.toFixed(2)}
-                          <span className="text-sm font-normal text-muted-foreground">{suffix}</span>
+                          <span className="text-sm font-normal text-muted-foreground">
+                            {suffix}
+                          </span>
                         </>
                       ) : (
-                        <>${price}<span className="text-sm font-normal text-muted-foreground">{suffix}</span></>
+                        <>
+                          ${price}
+                          <span className="text-sm font-normal text-muted-foreground">
+                            {suffix}
+                          </span>
+                        </>
                       )}
                     </div>
                     <p className="mt-1 text-xs text-muted-foreground">{p.tagline}</p>
-                    {p.seatNote && <p className="mt-1 text-xs text-muted-foreground">{p.seatNote}</p>}
-                    {appliedHere && <div className="mt-1 text-xs text-success">Save ${applied!.discount.toFixed(2)} with {applied!.coupon.code}</div>}
+                    {p.seatNote && (
+                      <p className="mt-1 text-xs text-muted-foreground">{p.seatNote}</p>
+                    )}
+                    {appliedHere && (
+                      <div className="mt-1 text-xs text-success">
+                        Save ${applied!.discount.toFixed(2)} with {applied!.coupon.code}
+                      </div>
+                    )}
                     <ul className="mt-3 space-y-1.5 text-sm">
                       {p.features.map((f) => (
-                        <li key={f} className="flex items-start gap-2"><Check className={`mt-0.5 h-4 w-4 shrink-0 ${p.aiMax ? "text-primary" : "text-success"}`} />{f}</li>
+                        <li key={f} className="flex items-start gap-2">
+                          <Check
+                            className={`mt-0.5 h-4 w-4 shrink-0 ${p.aiMax ? "text-primary" : "text-success"}`}
+                          />
+                          {f}
+                        </li>
                       ))}
                     </ul>
                     <div className="mt-4 flex flex-col gap-2">
                       {!isCurrent && !applied && couponInput.trim() && price > 0 && (
-                        <Button variant="outline" onClick={() => applyCoupon(p.name, price)} disabled={validating}>
+                        <Button
+                          variant="outline"
+                          onClick={() => applyCoupon(p.name, price)}
+                          disabled={validating}
+                        >
                           {validating ? "Validating…" : "Apply coupon"}
                         </Button>
                       )}
@@ -403,7 +583,15 @@ function Billing() {
                         disabled={isCurrent || busy || !p.priceMonthly}
                         onClick={() => checkout(p)}
                       >
-                        {isCurrent ? "Current plan" : !p.priceMonthly ? "Free" : busy ? "Opening…" : appliedHere ? `Checkout ($${applied!.total.toFixed(2)})` : `Choose ${p.name}`}
+                        {isCurrent
+                          ? "Current plan"
+                          : !p.priceMonthly
+                            ? "Free"
+                            : busy
+                              ? "Opening…"
+                              : appliedHere
+                                ? `Checkout ($${applied!.total.toFixed(2)})`
+                                : `Choose ${p.name}`}
                       </Button>
                     </div>
                   </CardContent>
@@ -415,24 +603,44 @@ function Billing() {
         </div>
 
         <Card>
-          <CardHeader><CardTitle>Payment method & invoices</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>Payment method & invoices</CardTitle>
+          </CardHeader>
           <CardContent>
             <div className="flex items-center gap-3 rounded-md border p-3 text-sm">
               <CreditCard className="h-5 w-5 text-muted-foreground" />
-              <div className="text-muted-foreground">Payment methods and invoices are managed inside Stripe checkout. After your first paid subscription, receipts are emailed automatically.</div>
+              <div className="text-muted-foreground">
+                Payment methods and invoices are managed inside Stripe checkout. After your first
+                paid subscription, receipts are emailed automatically.
+              </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      <Dialog open={!!clientSecret} onOpenChange={(o) => { if (!o) { setClientSecret(null); qc.invalidateQueries({ queryKey: ["subscription", userId] }); } }}>
+      <Dialog
+        open={!!clientSecret}
+        onOpenChange={(o) => {
+          if (!o) {
+            setClientSecret(null);
+            qc.invalidateQueries({ queryKey: ["subscription", userId] });
+          }
+        }}
+      >
         <DialogContent className="max-w-2xl">
-          <DialogHeader><DialogTitle>Complete checkout</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>Complete checkout</DialogTitle>
+          </DialogHeader>
           {clientSecret && <StripeEmbeddedCheckout clientSecret={clientSecret} />}
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!receipt} onOpenChange={(o) => { if (!o) setReceipt(null); }}>
+      <Dialog
+        open={!!receipt}
+        onOpenChange={(o) => {
+          if (!o) setReceipt(null);
+        }}
+      >
         <DialogContent className="max-w-md">
           <DialogHeader>
             <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-success/15 text-success">
@@ -449,14 +657,19 @@ function Billing() {
           </DialogHeader>
           {receipt && (
             <div className="mt-2 rounded-lg border bg-muted/30 p-4 text-sm">
-              <div className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">Order summary</div>
+              <div className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">
+                Order summary
+              </div>
               <div className="flex justify-between py-1">
                 <span>{receipt.plan} plan</span>
                 <span>${receipt.amount.toFixed(2)}</span>
               </div>
               {receipt.couponCode && (
                 <div className="flex justify-between py-1 text-success">
-                  <span className="inline-flex items-center gap-1"><Ticket className="h-3.5 w-3.5" />Coupon {receipt.couponCode}</span>
+                  <span className="inline-flex items-center gap-1">
+                    <Ticket className="h-3.5 w-3.5" />
+                    Coupon {receipt.couponCode}
+                  </span>
                   <span>−${receipt.discount.toFixed(2)}</span>
                 </div>
               )}
@@ -471,7 +684,9 @@ function Billing() {
               )}
             </div>
           )}
-          <Button className="mt-2 w-full" onClick={() => setReceipt(null)}>Done</Button>
+          <Button className="mt-2 w-full" onClick={() => setReceipt(null)}>
+            Done
+          </Button>
         </DialogContent>
       </Dialog>
     </>
@@ -484,7 +699,9 @@ function UsageBar({ label, value, max }: { label: string; value: number; max: nu
     <div>
       <div className="flex items-center justify-between text-sm">
         <span className="font-medium">{label}</span>
-        <span className="text-muted-foreground">{value} / {max}</span>
+        <span className="text-muted-foreground">
+          {value} / {max}
+        </span>
       </div>
       <Progress value={pct} className="mt-2" />
     </div>

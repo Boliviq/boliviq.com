@@ -36,7 +36,10 @@ export function getLegacyConnectionApiKey(env: StripeEnv): string | undefined {
 }
 
 export function isStripeApiConfigured(env: StripeEnv): boolean {
-  return !!getDirectStripeSecretKey(env) || (!!getLegacyConnectionApiKey(env) && !!optionalEnv("LOVABLE_API_KEY"));
+  return (
+    !!getDirectStripeSecretKey(env) ||
+    (!!getLegacyConnectionApiKey(env) && !!optionalEnv("LOVABLE_API_KEY"))
+  );
 }
 
 export function createStripeClient(env: StripeEnv): Stripe {
@@ -66,7 +69,9 @@ export function createStripeClient(env: StripeEnv): Stripe {
         ...init,
         headers: {
           ...Object.fromEntries(
-            new Headers(init?.headers ?? (input instanceof Request ? input.headers : undefined)).entries(),
+            new Headers(
+              init?.headers ?? (input instanceof Request ? input.headers : undefined),
+            ).entries(),
           ),
           "X-Connection-Api-Key": connectionApiKey,
           "Lovable-API-Key": lovableApiKey,
@@ -118,7 +123,8 @@ export function getWebhookSecret(env: StripeEnv): string {
 
 export function isStripeWebhookConfigured(env: StripeEnv): boolean {
   return env === "sandbox"
-    ? !!optionalEnv("STRIPE_WEBHOOK_SECRET_TEST") || !!optionalEnv("PAYMENTS_SANDBOX_WEBHOOK_SECRET")
+    ? !!optionalEnv("STRIPE_WEBHOOK_SECRET_TEST") ||
+        !!optionalEnv("PAYMENTS_SANDBOX_WEBHOOK_SECRET")
     : !!optionalEnv("STRIPE_WEBHOOK_SECRET_LIVE") || !!optionalEnv("PAYMENTS_LIVE_WEBHOOK_SECRET");
 }
 
@@ -160,6 +166,7 @@ export async function verifyWebhook(
   if (!v1Signatures.includes(expected)) throw new Error("Invalid webhook signature");
 
   const parsed = JSON.parse(body);
-  if (!parsed?.id || typeof parsed.id !== "string") throw new Error("Webhook payload missing event id");
+  if (!parsed?.id || typeof parsed.id !== "string")
+    throw new Error("Webhook payload missing event id");
   return parsed;
 }

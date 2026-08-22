@@ -8,7 +8,11 @@ export const num = (v: unknown, d = 0) => {
 
 export const fmtMoney = (v: number, digits = 0) =>
   isFinite(v)
-    ? v.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: digits })
+    ? v.toLocaleString("en-US", {
+        style: "currency",
+        currency: "USD",
+        maximumFractionDigits: digits,
+      })
     : "—";
 
 export const fmtPct = (v: number, digits = 1) =>
@@ -61,15 +65,29 @@ export function analyzeFlip(i: FlipInputs) {
   const sellClosing = i.arv * (i.closingSellPct / 100);
   const commissions = i.arv * ((i.sellingCostsPct ?? 6) / 100);
   const holding = i.monthlyHolding * i.holdingMonths;
-  const totalCost = i.purchasePrice + i.rehab + buyClosing + sellClosing + commissions + holding + i.financingCost;
+  const totalCost =
+    i.purchasePrice + i.rehab + buyClosing + sellClosing + commissions + holding + i.financingCost;
   const netProfit = i.arv - totalCost;
   const returnOnInvestment = roi(netProfit, totalCost);
   const margin = i.arv > 0 ? netProfit / i.arv : 0;
-  const maoVal = mao(i.arv, i.rehab, 0.7, i.desiredProfit ?? 0, buyClosing + holding + i.financingCost);
+  const maoVal = mao(
+    i.arv,
+    i.rehab,
+    0.7,
+    i.desiredProfit ?? 0,
+    buyClosing + holding + i.financingCost,
+  );
   const breakEven = totalCost - i.purchasePrice; // resale price at breakeven
   return {
-    buyClosing, sellClosing, commissions, holding, totalCost,
-    netProfit, roi: returnOnInvestment, margin, mao: maoVal,
+    buyClosing,
+    sellClosing,
+    commissions,
+    holding,
+    totalCost,
+    netProfit,
+    roi: returnOnInvestment,
+    margin,
+    mao: maoVal,
     breakEven: totalCost, // must sell at this or above to break even
   };
 }
@@ -111,8 +129,15 @@ export function analyzeRental(i: RentalInputs) {
   const noiAnnual = noiMonthly * 12;
   const cashInvested = down + i.rehab;
   return {
-    loan, down, mortgage: mtg, vacancy, opex,
-    noiMonthly, noiAnnual, cashFlow, annualCashFlow: cashFlow * 12,
+    loan,
+    down,
+    mortgage: mtg,
+    vacancy,
+    opex,
+    noiMonthly,
+    noiAnnual,
+    cashFlow,
+    annualCashFlow: cashFlow * 12,
     capRate: capRate(noiAnnual, i.purchasePrice + i.rehab),
     cashOnCash: cashOnCash(cashFlow * 12, cashInvested),
     dscr: mtg > 0 ? noiMonthly / mtg : 0,
@@ -138,7 +163,10 @@ export function analyzeBrrrr(i: BrrrrInputs) {
   const mtg = monthlyMortgage(refiLoan, i.refiRatePct, i.refiYears);
   const cashFlow = i.monthlyRent - i.monthlyOpex - mtg;
   return {
-    totalBasis, refiLoan, cashLeft, mortgage: mtg,
+    totalBasis,
+    refiLoan,
+    cashLeft,
+    mortgage: mtg,
     monthlyCashFlow: cashFlow,
     cashOnCash: cashOnCash(cashFlow * 12, Math.max(cashLeft, 1)),
   };
@@ -174,7 +202,8 @@ export interface ScoreInputs {
 }
 export function dealScore(i: ScoreInputs) {
   // Sub-scores each 0-100
-  const priceVsArv = i.arv > 0 ? clamp01(1 - (i.purchasePrice + i.rehab) / (i.arv * 0.85)) * 100 : 0;
+  const priceVsArv =
+    i.arv > 0 ? clamp01(1 - (i.purchasePrice + i.rehab) / (i.arv * 0.85)) * 100 : 0;
   const profit = clamp01(i.flipNetProfit / 40000) * 100;
   const roiScore = clamp01(i.flipRoi / 0.25) * 100;
   const cashScore = clamp01(i.monthlyCashFlow / 400) * 100;
@@ -195,7 +224,7 @@ export function dealScore(i: ScoreInputs) {
       seller * 0.08 +
       comp * 0.09 +
       nbhd * 0.05 +
-      fin * 0.05
+      fin * 0.05,
   );
 
   return {
@@ -208,7 +237,9 @@ export function dealScore(i: ScoreInputs) {
   };
 }
 
-function clamp01(v: number) { return Math.max(0, Math.min(1, v)); }
+function clamp01(v: number) {
+  return Math.max(0, Math.min(1, v));
+}
 
 export function scoreBand(s: number) {
   if (s >= 80) return { label: "Excellent", tone: "success" as const };
@@ -227,8 +258,23 @@ export const REHAB_PRESETS = {
 } as const;
 
 export const REHAB_CATEGORIES = [
-  "Roof", "HVAC", "Plumbing", "Electrical", "Foundation",
-  "Windows", "Exterior", "Siding", "Paint", "Drywall",
-  "Flooring", "Kitchen", "Bathrooms", "Appliances",
-  "Landscaping", "Cleanup", "Permits", "Contingency", "Other",
+  "Roof",
+  "HVAC",
+  "Plumbing",
+  "Electrical",
+  "Foundation",
+  "Windows",
+  "Exterior",
+  "Siding",
+  "Paint",
+  "Drywall",
+  "Flooring",
+  "Kitchen",
+  "Bathrooms",
+  "Appliances",
+  "Landscaping",
+  "Cleanup",
+  "Permits",
+  "Contingency",
+  "Other",
 ] as const;

@@ -53,11 +53,12 @@ export const listAllUsers = createServerFn({ method: "POST" })
         email_confirmed_at: u.email_confirmed_at ?? null,
         roles: rolesByUser.get(u.id) ?? [],
       }))
-      .filter((u) =>
-        !search ||
-        u.email.toLowerCase().includes(search) ||
-        u.full_name.toLowerCase().includes(search) ||
-        u.id.includes(search),
+      .filter(
+        (u) =>
+          !search ||
+          u.email.toLowerCase().includes(search) ||
+          u.full_name.toLowerCase().includes(search) ||
+          u.id.includes(search),
       );
 
     return { users, page, perPage, total: users.length };
@@ -82,7 +83,8 @@ export const setUserRole = createServerFn({ method: "POST" })
       const { error } = await supabaseAdmin
         .from("user_roles")
         .insert({ user_id: data.userId, role: data.role });
-      if (error && !`${error.message}`.toLowerCase().includes("duplicate")) throw new Error(error.message);
+      if (error && !`${error.message}`.toLowerCase().includes("duplicate"))
+        throw new Error(error.message);
     } else {
       const { error } = await supabaseAdmin
         .from("user_roles")

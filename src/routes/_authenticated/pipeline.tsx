@@ -2,8 +2,14 @@ import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  DndContext, PointerSensor, useSensor, useSensors, useDroppable, useDraggable,
-  DragOverlay, type DragEndEvent,
+  DndContext,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  useDroppable,
+  useDraggable,
+  DragOverlay,
+  type DragEndEvent,
 } from "@dnd-kit/core";
 import { GripVertical, Kanban, DollarSign, Flag } from "lucide-react";
 import { toast } from "sonner";
@@ -35,23 +41,31 @@ function PipelinePage() {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
   const leadsQuery = useQuery({
-    queryKey: ["leads-pipeline", userId], enabled: !!userId,
+    queryKey: ["leads-pipeline", userId],
+    enabled: !!userId,
     queryFn: async () => {
-      const { data, error } = await supabase.from("leads").select("*").order("updated_at", { ascending: false });
+      const { data, error } = await supabase
+        .from("leads")
+        .select("*")
+        .order("updated_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as Lead[];
     },
   });
   const propsQuery = useQuery({
-    queryKey: ["properties-min", userId], enabled: !!userId,
+    queryKey: ["properties-min", userId],
+    enabled: !!userId,
     queryFn: async () => {
-      const { data, error } = await supabase.from("properties").select("id, address, estimated_profit, list_price");
+      const { data, error } = await supabase
+        .from("properties")
+        .select("id, address, estimated_profit, list_price");
       if (error) throw error;
       return (data ?? []) as Property[];
     },
   });
   const contactsQuery = useQuery({
-    queryKey: ["contacts-min", userId], enabled: !!userId,
+    queryKey: ["contacts-min", userId],
+    enabled: !!userId,
     queryFn: async () => {
       const { data, error } = await supabase.from("contacts").select("id, name");
       if (error) throw error;
@@ -59,8 +73,14 @@ function PipelinePage() {
     },
   });
 
-  const propMap = useMemo(() => Object.fromEntries((propsQuery.data ?? []).map((p) => [p.id, p])), [propsQuery.data]);
-  const contactMap = useMemo(() => Object.fromEntries((contactsQuery.data ?? []).map((c) => [c.id, c])), [contactsQuery.data]);
+  const propMap = useMemo(
+    () => Object.fromEntries((propsQuery.data ?? []).map((p) => [p.id, p])),
+    [propsQuery.data],
+  );
+  const contactMap = useMemo(
+    () => Object.fromEntries((contactsQuery.data ?? []).map((c) => [c.id, c])),
+    [contactsQuery.data],
+  );
 
   const move = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
@@ -71,7 +91,8 @@ function PipelinePage() {
       await qc.cancelQueries({ queryKey: ["leads-pipeline"] });
       const prev = qc.getQueryData<Lead[]>(["leads-pipeline", userId]);
       qc.setQueryData<Lead[]>(["leads-pipeline", userId], (old) =>
-        (old ?? []).map((l) => (l.id === id ? { ...l, status } : l)));
+        (old ?? []).map((l) => (l.id === id ? { ...l, status } : l)),
+      );
       return { prev };
     },
     onError: (_e, _v, ctx) => {
@@ -105,21 +126,32 @@ function PipelinePage() {
 
   return (
     <>
-      <PageHeader title="Pipeline" description="Canon stages from new lead through close, including estimates, in-progress work, and long-term follow-up. Legacy statuses map into these columns." />
+      <PageHeader
+        title="Pipeline"
+        description="Canon stages from new lead through close, including estimates, in-progress work, and long-term follow-up. Legacy statuses map into these columns."
+      />
       <div className="p-4 sm:p-6">
         {leadsQuery.isLoading ? (
           <div className="flex gap-3 overflow-x-auto">
-            {PIPELINE_STAGES.map((s) => <Skeleton key={s.key} className="h-64 w-64 shrink-0" />)}
+            {PIPELINE_STAGES.map((s) => (
+              <Skeleton key={s.key} className="h-64 w-64 shrink-0" />
+            ))}
           </div>
         ) : (leadsQuery.data ?? []).length === 0 ? (
           <div className="rounded-2xl border-2 border-dashed bg-card p-10 text-center">
             <Kanban className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
             <h3 className="font-display text-lg font-semibold">Pipeline is empty</h3>
-            <p className="mt-2 text-sm text-muted-foreground">Create leads from the Leads page to start moving them through your pipeline.</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Create leads from the Leads page to start moving them through your pipeline.
+            </p>
           </div>
         ) : (
-          <DndContext sensors={sensors} onDragEnd={onDragEnd}
-            onDragStart={(e) => setActiveId(String(e.active.id))} onDragCancel={() => setActiveId(null)}>
+          <DndContext
+            sensors={sensors}
+            onDragEnd={onDragEnd}
+            onDragStart={(e) => setActiveId(String(e.active.id))}
+            onDragCancel={() => setActiveId(null)}
+          >
             <div className="flex gap-3 overflow-x-auto pb-4">
               {PIPELINE_STAGES.map((stage) => {
                 const leads = grouped[stage.key] ?? [];
@@ -128,12 +160,21 @@ function PipelinePage() {
                   return sum + Number(p?.estimated_profit ?? 0);
                 }, 0);
                 return (
-                  <StageColumn key={stage.key} stageKey={stage.key} label={stage.label}
-                    color={stage.color} count={leads.length} totalProfit={totalProfit}>
+                  <StageColumn
+                    key={stage.key}
+                    stageKey={stage.key}
+                    label={stage.label}
+                    color={stage.color}
+                    count={leads.length}
+                    totalProfit={totalProfit}
+                  >
                     {leads.map((l) => (
-                      <LeadCard key={l.id} lead={l}
+                      <LeadCard
+                        key={l.id}
+                        lead={l}
                         property={l.property_id ? propMap[l.property_id] : null}
-                        contact={l.contact_id ? contactMap[l.contact_id] : null} />
+                        contact={l.contact_id ? contactMap[l.contact_id] : null}
+                      />
                     ))}
                   </StageColumn>
                 );
@@ -141,9 +182,12 @@ function PipelinePage() {
             </div>
             <DragOverlay>
               {activeLead && (
-                <LeadCard lead={activeLead}
+                <LeadCard
+                  lead={activeLead}
                   property={activeLead.property_id ? propMap[activeLead.property_id] : null}
-                  contact={activeLead.contact_id ? contactMap[activeLead.contact_id] : null} dragging />
+                  contact={activeLead.contact_id ? contactMap[activeLead.contact_id] : null}
+                  dragging
+                />
               )}
             </DragOverlay>
           </DndContext>
@@ -153,14 +197,28 @@ function PipelinePage() {
   );
 }
 
-function StageColumn({ stageKey, label, color, count, totalProfit, children }: {
-  stageKey: string; label: string; color: string; count: number; totalProfit: number; children: React.ReactNode;
+function StageColumn({
+  stageKey,
+  label,
+  color,
+  count,
+  totalProfit,
+  children,
+}: {
+  stageKey: string;
+  label: string;
+  color: string;
+  count: number;
+  totalProfit: number;
+  children: React.ReactNode;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: stageKey });
   return (
-    <div ref={setNodeRef}
+    <div
+      ref={setNodeRef}
       className={`flex w-72 shrink-0 flex-col rounded-lg border bg-muted/30 transition
-        ${isOver ? "ring-2 ring-primary" : ""}`}>
+        ${isOver ? "ring-2 ring-primary" : ""}`}
+    >
       <div className="flex items-center justify-between border-b bg-card px-3 py-2">
         <div className="flex items-center gap-2">
           <span className="h-2 w-2 rounded-full" style={{ background: color }} />
@@ -176,13 +234,25 @@ function StageColumn({ stageKey, label, color, count, totalProfit, children }: {
   );
 }
 
-function LeadCard({ lead, property, contact, dragging }: {
-  lead: Lead; property?: Property | null; contact?: Contact | null; dragging?: boolean;
+function LeadCard({
+  lead,
+  property,
+  contact,
+  dragging,
+}: {
+  lead: Lead;
+  property?: Property | null;
+  contact?: Contact | null;
+  dragging?: boolean;
 }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: lead.id });
   return (
-    <Card ref={setNodeRef} {...attributes} {...listeners}
-      className={`cursor-grab active:cursor-grabbing ${isDragging || dragging ? "opacity-40" : ""}`}>
+    <Card
+      ref={setNodeRef}
+      {...attributes}
+      {...listeners}
+      className={`cursor-grab active:cursor-grabbing ${isDragging || dragging ? "opacity-40" : ""}`}
+    >
       <CardContent className="space-y-1.5 p-3 text-sm">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
@@ -197,19 +267,29 @@ function LeadCard({ lead, property, contact, dragging }: {
         </div>
         <div className="flex flex-wrap items-center gap-2 text-xs">
           {lead.priority && (
-            <Badge variant="outline"
-              className={lead.priority === "high" ? "bg-destructive/15 text-destructive border-destructive/30" :
-                lead.priority === "medium" ? "bg-warning/15 text-warning-foreground border-warning/30" : ""}>
+            <Badge
+              variant="outline"
+              className={
+                lead.priority === "high"
+                  ? "bg-destructive/15 text-destructive border-destructive/30"
+                  : lead.priority === "medium"
+                    ? "bg-warning/15 text-warning-foreground border-warning/30"
+                    : ""
+              }
+            >
               <Flag className="h-3 w-3" /> {lead.priority}
             </Badge>
           )}
           {property?.estimated_profit && (
             <span className="flex items-center gap-1 text-success">
-              <DollarSign className="h-3 w-3" />{currency(property.estimated_profit, { compact: true })}
+              <DollarSign className="h-3 w-3" />
+              {currency(property.estimated_profit, { compact: true })}
             </span>
           )}
           {lead.next_follow_up_at && (
-            <span className="text-muted-foreground">Follow up {dateShort(lead.next_follow_up_at)}</span>
+            <span className="text-muted-foreground">
+              Follow up {dateShort(lead.next_follow_up_at)}
+            </span>
           )}
         </div>
         {lead.assigned_to && (

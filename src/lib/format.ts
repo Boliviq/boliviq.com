@@ -2,8 +2,17 @@ export const currency = (n: number | null | undefined, opts: { compact?: boolean
   if (n == null || Number.isNaN(Number(n))) return "—";
   const v = Number(n);
   if (opts.compact && Math.abs(v) >= 1000)
-    return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", notation: "compact", maximumFractionDigits: 1 }).format(v);
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(v);
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      notation: "compact",
+      maximumFractionDigits: 1,
+    }).format(v);
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(v);
 };
 
 export const num = (n: number | null | undefined) =>

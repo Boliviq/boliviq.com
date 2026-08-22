@@ -16,10 +16,30 @@ export const Route = createFileRoute("/help")({
 });
 
 const cards = [
-  { icon: PlayCircle, t: "Getting started", d: "Set up your workspace, add your first property, and run your first analysis.", link: "/auth" },
-  { icon: BookOpen, t: "How-to guides", d: "Deal analyzer, pipeline, calls, automations, and reports — step by step.", link: "/features" },
-  { icon: LifeBuoy, t: "Contact support", d: "Talk to a human when you're stuck.", link: "/contact" },
-  { icon: Bug, t: "Report a bug", d: "Tell us what broke and we'll investigate.", link: "/contact" },
+  {
+    icon: PlayCircle,
+    t: "Getting started",
+    d: "Set up your workspace, add your first property, and run your first analysis.",
+    link: "/auth",
+  },
+  {
+    icon: BookOpen,
+    t: "How-to guides",
+    d: "Deal analyzer, pipeline, calls, automations, and reports — step by step.",
+    link: "/features",
+  },
+  {
+    icon: LifeBuoy,
+    t: "Contact support",
+    d: "Talk to a human when you're stuck.",
+    link: "/contact",
+  },
+  {
+    icon: Bug,
+    t: "Report a bug",
+    d: "Tell us what broke and we'll investigate.",
+    link: "/contact",
+  },
   { icon: Lightbulb, t: "Request a feature", d: "Shape the roadmap.", link: "/contact" },
 ];
 
@@ -28,7 +48,9 @@ function Help() {
     <MarketingLayout>
       <section className="mx-auto max-w-4xl px-4 py-16">
         <h1 className="text-4xl font-bold">Help center</h1>
-        <p className="mt-3 text-muted-foreground">Guides, support, and everything you need to get the most out of Boliviq.</p>
+        <p className="mt-3 text-muted-foreground">
+          Guides, support, and everything you need to get the most out of Boliviq.
+        </p>
         <div className="mt-10 grid gap-4 sm:grid-cols-2">
           {cards.map((c) => (
             <Link key={c.t} to={c.link}>

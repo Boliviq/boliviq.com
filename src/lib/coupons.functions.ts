@@ -16,11 +16,7 @@ export type ValidateResult =
   | { ok: true; coupon: ValidatedCoupon; discount: number; total: number }
   | { ok: false; error: string };
 
-function computeDiscount(
-  type: "percentage" | "fixed",
-  value: number,
-  amount: number,
-): number {
+function computeDiscount(type: "percentage" | "fixed", value: number, amount: number): number {
   if (type === "percentage") return Math.min(amount, +(amount * (value / 100)).toFixed(2));
   return Math.min(amount, +Number(value).toFixed(2));
 }
@@ -63,8 +59,14 @@ export const validateCoupon = createServerFn({ method: "POST" })
     if (coupon.max_total_uses != null && coupon.current_uses >= coupon.max_total_uses) {
       return { ok: false, error: "This coupon has reached its usage limit." };
     }
-    if (coupon.restricted_plan && coupon.restricted_plan.toLowerCase() !== data.plan.toLowerCase()) {
-      return { ok: false, error: `This coupon only applies to the ${coupon.restricted_plan} plan.` };
+    if (
+      coupon.restricted_plan &&
+      coupon.restricted_plan.toLowerCase() !== data.plan.toLowerCase()
+    ) {
+      return {
+        ok: false,
+        error: `This coupon only applies to the ${coupon.restricted_plan} plan.`,
+      };
     }
 
     if (coupon.admin_only) {
@@ -86,7 +88,11 @@ export const validateCoupon = createServerFn({ method: "POST" })
       }
     }
 
-    const discount = computeDiscount(coupon.discount_type, Number(coupon.discount_value), data.amount);
+    const discount = computeDiscount(
+      coupon.discount_type,
+      Number(coupon.discount_value),
+      data.amount,
+    );
     const total = Math.max(0, +(data.amount - discount).toFixed(2));
 
     return {

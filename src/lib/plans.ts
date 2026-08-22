@@ -1,5 +1,11 @@
 // Boliviq plan catalog — mirrors Stripe products. Adjust prices here AND in Stripe.
-export type PlanTier = "free" | "beginner" | "professional" | "professional_ai_max" | "team" | "team_ai_max";
+export type PlanTier =
+  | "free"
+  | "beginner"
+  | "professional"
+  | "professional_ai_max"
+  | "team"
+  | "team_ai_max";
 
 export type Plan = {
   tier: PlanTier;

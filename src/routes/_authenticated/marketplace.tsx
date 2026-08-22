@@ -1,94 +1,89 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { Flag, FolderKanban, Heart, MapPin, MessageSquare, Plus, Search, Store } from "lucide-react";
+import {
+  Flag,
+  FolderKanban,
+  Heart,
+  MapPin,
+  MessageSquare,
+  Plus,
+  Search,
+  Store,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { MARKETPLACE_CATEGORIES, type MarketplaceCategoryId } from "@/lib/canons";
 import type { SeedListing } from "@/lib/marketplace-seed";
-import { fromTable, isMissingRelation } from "@/lib/supabase-safe";
 import { useAccount } from "@/hooks/use-current-user";
-import { useWorkspace } from "@/hooks/use-workspace";
 import { currency } from "@/lib/format";
+import { categoryLabel, startConversation, type MarketplaceListing } from "@/lib/workspace-store";
 import {
-  categoryLabel,
-  createListing,
-  createProjectFromListing,
-  listListings,
-  mergeById,
-  reportListing,
-  savedListingIds,
-  startConversation,
-  toggleSavedListing,
-  type MarketplaceListing,
-} from "@/lib/workspace-store";
+  useListings,
+  useCreateListing,
+  useSavedListingIds,
+  useToggleSavedListing,
+  useReportListing,
+  useCreateProject,
+} from "@/hooks/use-workspace-data";
 
 export const Route = createFileRoute("/_authenticated/marketplace")({
   component: MarketplacePage,
 });
 
 function MarketplacePage() {
-  const { userId, tick } = useWorkspace();
-  const { account } = useAccount();
+  const { account, userId } = useAccount();
   const navigate = useNavigate();
   const [q, setQ] = useState("");
   const [category, setCategory] = useState<MarketplaceCategoryId | "all">("all");
   const [view, setView] = useState<"list" | "cards">("cards");
   const [compose, setCompose] = useState(false);
-  const [draft, setDraft] = useState({ title: "", description: "", category: "repairs" as MarketplaceCategoryId, location: "", price: "" });
-  void tick;
-
-  const remote = useQuery({
-    queryKey: ["marketplace-listings", userId],
-    enabled: !!userId,
-    queryFn: async () => {
-      const { data, error } = await fromTable("marketplace_listings")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (error) {
-        if (isMissingRelation(error)) return [] as MarketplaceListing[];
-        throw error;
-      }
-      return ((data ?? []) as Record<string, unknown>[]).map((row): MarketplaceListing => ({
-        id: String(row.id),
-        title: String(row.title ?? "Listing"),
-        description: String(row.description ?? ""),
-        category: (row.category as MarketplaceCategoryId) || "homes_for_sale",
-        location: String(row.location ?? [row.city, row.state].filter(Boolean).join(", ")),
-        city: String(row.city ?? ""),
-        state: String(row.state ?? ""),
-        price: row.price != null ? Number(row.price) : undefined,
-        budget: row.budget != null ? Number(row.budget) : undefined,
-        photos: Array.isArray(row.photos) ? row.photos as string[] : [],
-        postedBy: "You",
-        role: account.primary_role,
-        createdAt: String(row.created_at ?? "").slice(0, 10),
-        ownerId: userId ?? undefined,
-      }));
-    },
+  const [draft, setDraft] = useState({
+    title: "",
+    description: "",
+    category: "repairs" as MarketplaceCategoryId,
+    location: "",
+    price: "",
   });
 
-  const saved = savedListingIds(userId);
+  const { data: allListings = [], isLoading } = useListings();
+  const { data: savedIds = [] } = useSavedListingIds();
+  const createListing = useCreateListing();
+  const toggleSaved = useToggleSavedListing();
+  const reportListing = useReportListing();
+  const createProject = useCreateProject();
+  const saved = new Set(savedIds);
+
   const listings = useMemo(() => {
-    const merged = mergeById(listListings(userId), remote.data ?? []);
-    return merged.filter((l) => {
+    return allListings.filter((l) => {
       const hay = `${l.title} ${l.description} ${l.location}`.toLowerCase();
       const okQ = !q || hay.includes(q.toLowerCase());
       const okC = category === "all" || l.category === category;
       return okQ && okC;
     });
-  }, [userId, remote.data, q, category, tick]);
+  }, [allListings, q, category]);
 
-  const publish = async () => {
+  const publish = () => {
     if (!draft.title.trim()) {
       toast.error("Add a title");
       return;
@@ -97,32 +92,29 @@ function MarketplacePage() {
       toast.error("Sign in to use your workspace");
       return;
     }
-    const row = createListing(userId, {
-      title: draft.title,
-      description: draft.description,
-      category: draft.category,
-      location: draft.location || "Unspecified",
-      price: draft.price ? Number(draft.price) : undefined,
-      role: account.primary_role,
-      authorRole: account.primary_role,
-      authorName: account.full_name || "You",
-      postedBy: account.full_name || "You",
-    });
-    setCompose(false);
-    setDraft({ title: "", description: "", category: "repairs", location: "", price: "" });
-    toast.success("Listing posted", { description: "Message a professional or convert it into a project from this card." });
-
-    const { error } = await fromTable("marketplace_listings").insert({
-      user_id: userId,
-      title: row.title,
-      description: row.description,
-      category: row.category,
-      location: row.location,
-      price: row.price ?? null,
-      visibility: "public",
-      status: "active",
-    });
-    if (error && !isMissingRelation(error)) toast.error(error.message);
+    createListing.mutate(
+      {
+        title: draft.title,
+        description: draft.description,
+        category: draft.category,
+        location: draft.location || "Unspecified",
+        price: draft.price ? Number(draft.price) : undefined,
+        role: account.primary_role,
+        authorName: account.full_name || "You",
+        postedBy: account.full_name || "You",
+        visibility: "public",
+      },
+      {
+        onSuccess: () => {
+          setCompose(false);
+          setDraft({ title: "", description: "", category: "repairs", location: "", price: "" });
+          toast.success("Listing posted", {
+            description: "Message a professional or convert it into a project from this card.",
+          });
+        },
+        onError: (e) => toast.error(e instanceof Error ? e.message : "Could not post the listing"),
+      },
+    );
   };
 
   const messageAbout = (listing: MarketplaceListing) => {
@@ -151,16 +143,38 @@ function MarketplacePage() {
       toast.error("Sign in to use your workspace");
       return;
     }
-    const project = createProjectFromListing(userId, listing);
-    startConversation(
-      userId,
-      project.name,
-      `Project · ${project.address}`,
-      `Opened a project from marketplace listing "${listing.title}".`,
-      { project: project.name, property: project.address, listing: listing.title, listingId: listing.id },
+    createProject.mutate(
+      {
+        name: listing.title,
+        address: listing.location || "Unspecified",
+        status: "new",
+        budget: listing.budget ?? listing.price ?? 0,
+        spent: 0,
+        nextMilestone: "Collect estimates",
+      },
+      {
+        onSuccess: (project) => {
+          startConversation(
+            userId,
+            project.name,
+            `Project · ${project.address}`,
+            `Opened a project from marketplace listing "${listing.title}".`,
+            {
+              project: project.name,
+              property: project.address,
+              listing: listing.title,
+              listingId: listing.id,
+            },
+          );
+          toast.success("Project created", {
+            description: "The listing, conversation, and project now share a record.",
+          });
+          void navigate({ to: "/projects" });
+        },
+        onError: (e) =>
+          toast.error(e instanceof Error ? e.message : "Could not create the project"),
+      },
     );
-    toast.success("Project created", { description: "The listing, conversation, and project now share a record." });
-    void navigate({ to: "/projects" });
   };
 
   return (
@@ -169,7 +183,10 @@ function MarketplacePage() {
         title="Marketplace"
         description="Craigslist-simple, built for real estate and construction. A repair post can become a contractor lead; an accepted estimate becomes a project."
         action={
-          <Button className="gap-2 bg-[#70bf2b] hover:bg-[#80ce38]" onClick={() => setCompose(true)}>
+          <Button
+            className="gap-2 bg-[#70bf2b] hover:bg-[#80ce38]"
+            onClick={() => setCompose(true)}
+          >
             <Plus className="h-4 w-4" /> Post listing
           </Button>
         }
@@ -178,11 +195,28 @@ function MarketplacePage() {
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search location, keyword, project type…" className="pl-9" />
+            <Input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search location, keyword, project type…"
+              className="pl-9"
+            />
           </div>
           <div className="flex gap-2">
-            <Button variant={view === "cards" ? "default" : "outline"} size="sm" onClick={() => setView("cards")}>Cards</Button>
-            <Button variant={view === "list" ? "default" : "outline"} size="sm" onClick={() => setView("list")}>List</Button>
+            <Button
+              variant={view === "cards" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setView("cards")}
+            >
+              Cards
+            </Button>
+            <Button
+              variant={view === "list" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setView("list")}
+            >
+              List
+            </Button>
           </div>
         </div>
 
@@ -206,11 +240,17 @@ function MarketplacePage() {
           ))}
         </div>
 
-        {listings.length === 0 ? (
+        {isLoading ? (
+          <div className="rounded-2xl border-2 border-dashed p-10 text-center text-sm text-muted-foreground">
+            Loading listings…
+          </div>
+        ) : listings.length === 0 ? (
           <div className="rounded-2xl border-2 border-dashed p-10 text-center">
             <Store className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
             <div className="font-display font-semibold">No listings match</div>
-            <p className="mt-1 text-sm text-muted-foreground">Try another category or post the first one.</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Try another category or post the first one.
+            </p>
           </div>
         ) : view === "cards" ? (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -224,8 +264,9 @@ function MarketplacePage() {
                     toast.error("Sign in to use your workspace");
                     return;
                   }
-                  toggleSavedListing(userId, l.id);
-                  toast.success(saved.has(l.id) ? "Removed from saved" : "Saved");
+                  const wasSaved = saved.has(l.id);
+                  toggleSaved.mutate(l.id);
+                  toast.success(wasSaved ? "Removed from saved" : "Saved");
                 }}
                 onMessage={() => messageAbout(l)}
                 onProject={() => convert(l)}
@@ -234,8 +275,13 @@ function MarketplacePage() {
                     toast.error("Sign in to use your workspace");
                     return;
                   }
-                  reportListing(userId, l.id, "User reported from marketplace");
-                  toast.message("Report received", { description: "Moderation queue will review this listing." });
+                  reportListing.mutate({
+                    listingId: l.id,
+                    reason: "User reported from marketplace",
+                  });
+                  toast.message("Report received", {
+                    description: "Moderation queue will review this listing.",
+                  });
                 }}
               />
             ))}
@@ -246,11 +292,15 @@ function MarketplacePage() {
               <div key={l.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
                 <div className="min-w-0">
                   <div className="font-medium">{l.title}</div>
-                  <div className="text-xs text-muted-foreground">{l.location} · {categoryLabel(l.category)} · {l.postedBy}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {l.location} · {categoryLabel(l.category)} · {l.postedBy}
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-semibold">{priceLabel(l)}</span>
-                  <Button size="sm" variant="outline" onClick={() => messageAbout(l)}>Message</Button>
+                  <Button size="sm" variant="outline" onClick={() => messageAbout(l)}>
+                    Message
+                  </Button>
                 </div>
               </div>
             ))}
@@ -264,23 +314,62 @@ function MarketplacePage() {
             <DialogTitle>Post a listing</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
-            <div className="space-y-1"><Label>Title</Label><Input value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} /></div>
+            <div className="space-y-1">
+              <Label>Title</Label>
+              <Input
+                value={draft.title}
+                onChange={(e) => setDraft({ ...draft, title: e.target.value })}
+              />
+            </div>
             <div className="space-y-1">
               <Label>Category</Label>
-              <Select value={draft.category} onValueChange={(v) => setDraft({ ...draft, category: v as MarketplaceCategoryId })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+              <Select
+                value={draft.category}
+                onValueChange={(v) => setDraft({ ...draft, category: v as MarketplaceCategoryId })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
-                  {MARKETPLACE_CATEGORIES.map((c) => <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>)}
+                  {MARKETPLACE_CATEGORIES.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1"><Label>Location</Label><Input value={draft.location} onChange={(e) => setDraft({ ...draft, location: e.target.value })} /></div>
-            <div className="space-y-1"><Label>Price or budget</Label><Input type="number" value={draft.price} onChange={(e) => setDraft({ ...draft, price: e.target.value })} /></div>
-            <div className="space-y-1"><Label>Description</Label><Textarea value={draft.description} onChange={(e) => setDraft({ ...draft, description: e.target.value })} rows={4} /></div>
+            <div className="space-y-1">
+              <Label>Location</Label>
+              <Input
+                value={draft.location}
+                onChange={(e) => setDraft({ ...draft, location: e.target.value })}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>Price or budget</Label>
+              <Input
+                type="number"
+                value={draft.price}
+                onChange={(e) => setDraft({ ...draft, price: e.target.value })}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>Description</Label>
+              <Textarea
+                value={draft.description}
+                onChange={(e) => setDraft({ ...draft, description: e.target.value })}
+                rows={4}
+              />
+            </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCompose(false)}>Cancel</Button>
-            <Button onClick={() => void publish()} className="bg-[#70bf2b] hover:bg-[#80ce38]">Publish</Button>
+            <Button variant="outline" onClick={() => setCompose(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => void publish()} className="bg-[#70bf2b] hover:bg-[#80ce38]">
+              Publish
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -314,12 +403,16 @@ function ListingCard({
       {l.photos[0] ? (
         <img src={l.photos[0]} alt="" className="h-40 w-full object-cover" />
       ) : (
-        <div className="grid h-28 place-items-center bg-[#071729] text-white/70"><Store className="h-8 w-8" /></div>
+        <div className="grid h-28 place-items-center bg-[#071729] text-white/70">
+          <Store className="h-8 w-8" />
+        </div>
       )}
       <CardContent className="space-y-2 p-4">
         <div className="flex items-start justify-between gap-2">
           <div className="font-semibold leading-snug">{l.title}</div>
-          <Badge variant="outline" className="shrink-0">{categoryLabel(l.category)}</Badge>
+          <Badge variant="outline" className="shrink-0">
+            {categoryLabel(l.category)}
+          </Badge>
         </div>
         <p className="line-clamp-2 text-sm text-muted-foreground">{l.description}</p>
         <div className="flex items-center gap-1 text-xs text-muted-foreground">

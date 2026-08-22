@@ -26,7 +26,9 @@ export function VerificationBadge({
   tier: VerificationTierId;
   className?: string;
 }) {
-  const meta = VERIFICATION_TIERS.find((t) => t.id === tier) ?? VERIFICATION_TIERS[4];
+  const meta =
+    VERIFICATION_TIERS.find((t) => t.id === tier) ??
+    VERIFICATION_TIERS.find((t) => t.id === "unverified")!;
   const Icon = ICONS[tier] ?? ShieldAlert;
   return (
     <Badge variant="outline" className={cn("gap-1 font-medium", TONES[tier], className)}>

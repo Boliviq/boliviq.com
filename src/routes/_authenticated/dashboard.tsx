@@ -7,7 +7,8 @@ import { ArrowUpRight, Sparkles } from "lucide-react";
 import { dashboardForRole, LIFECYCLE } from "@/lib/canons";
 import { useAccount } from "@/hooks/use-current-user";
 import { useWorkspace } from "@/hooks/use-workspace";
-import { listDocuments, listListings, listProjects, listThreads } from "@/lib/workspace-store";
+import { useDocuments, useProjects } from "@/hooks/use-workspace-data";
+import { listListings, listThreads } from "@/lib/workspace-store";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
@@ -16,12 +17,14 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 function Dashboard() {
   const { account } = useAccount();
   const { userId, tick } = useWorkspace();
+  const { data: projects = [] } = useProjects();
+  const { data: documents = [] } = useDocuments();
   const dash = dashboardForRole(account.primary_role);
   const live = {
     listings: listListings(userId).length,
     messages: listThreads(userId).length,
-    projects: listProjects(userId).length,
-    documents: listDocuments(userId).length,
+    projects: projects.length,
+    documents: documents.length,
   };
   void tick;
 
@@ -45,14 +48,32 @@ function Dashboard() {
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[
-            { label: "Marketplace posts", value: String(live.listings), hint: "Including your saved workspace listings" },
-            { label: "Conversations", value: String(live.messages), hint: "Property- and project-linked threads" },
-            { label: "Projects", value: String(live.projects), hint: "Repair requests that became jobs" },
-            { label: "Documents", value: String(live.documents), hint: "Filed against the matching record" },
+            {
+              label: "Marketplace posts",
+              value: String(live.listings),
+              hint: "Including your saved workspace listings",
+            },
+            {
+              label: "Conversations",
+              value: String(live.messages),
+              hint: "Property- and project-linked threads",
+            },
+            {
+              label: "Projects",
+              value: String(live.projects),
+              hint: "Repair requests that became jobs",
+            },
+            {
+              label: "Documents",
+              value: String(live.documents),
+              hint: "Filed against the matching record",
+            },
           ].map((s) => (
             <Card key={s.label}>
               <CardContent className="p-5">
-                <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{s.label}</div>
+                <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  {s.label}
+                </div>
                 <div className="mt-2 font-display text-2xl font-bold">{s.value}</div>
                 <div className="mt-1 text-xs text-muted-foreground">{s.hint}</div>
               </CardContent>
@@ -62,10 +83,16 @@ function Dashboard() {
 
         <div className="grid gap-4 lg:grid-cols-2">
           <Card>
-            <CardHeader><CardTitle className="text-base">Do next</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle className="text-base">Do next</CardTitle>
+            </CardHeader>
             <CardContent className="grid gap-2">
               {dash.quickLinks.map((q) => (
-                <Link key={q.to + q.label} to={q.to} className="rounded-lg border p-3 hover:bg-muted/40">
+                <Link
+                  key={q.to + q.label}
+                  to={q.to}
+                  className="rounded-lg border p-3 hover:bg-muted/40"
+                >
                   <div className="text-sm font-semibold">{q.label}</div>
                   <div className="text-xs text-muted-foreground">{q.detail}</div>
                 </Link>

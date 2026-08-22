@@ -6,3 +6,10 @@ pnpm-lock.yaml
 package-lock.json
 bun.lock
 routeTree.gen.ts
+
+# Content docs (canons, build plan, etc.) are authored prose — don't reflow them.
+*.md
+
+# Supabase local stack (transient state from `supabase start`)
+supabase/.temp
+supabase/.branches

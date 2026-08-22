@@ -18,7 +18,10 @@ function ResetPassword() {
     setLoading(true);
     const { error } = await supabase.auth.updateUser({ password });
     setLoading(false);
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     toast.success("Password updated");
     navigate({ to: "/dashboard" });
   };
@@ -30,9 +33,18 @@ function ResetPassword() {
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <div className="space-y-2">
             <Label htmlFor="password">New password</Label>
-            <Input id="password" type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} />
+            <Input
+              id="password"
+              type="password"
+              required
+              minLength={8}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
           </div>
-          <Button type="submit" className="w-full" disabled={loading}>Update password</Button>
+          <Button type="submit" className="w-full" disabled={loading}>
+            Update password
+          </Button>
         </form>
       </div>
     </div>

@@ -22,7 +22,8 @@ export const MARKETPLACE_SEED: SeedListing[] = [
   {
     id: "lst-oak",
     title: "412 Oak Street — 3/2 fixer, Austin",
-    description: "Owner-occupied single family. High motivation. Convert this listing into a cash-offer request, realtor consult, or contractor bid.",
+    description:
+      "Owner-occupied single family. High motivation. Convert this listing into a cash-offer request, realtor consult, or contractor bid.",
     category: "homes_for_sale",
     location: "Austin, TX 78702",
     city: "Austin",
@@ -37,7 +38,8 @@ export const MARKETPLACE_SEED: SeedListing[] = [
   {
     id: "lst-offmarket",
     title: "Off-market duplex — East Dallas",
-    description: "Not on MLS. Investor-direct. Boliviq will never represent this as an MLS listing.",
+    description:
+      "Not on MLS. Investor-direct. Boliviq will never represent this as an MLS listing.",
     category: "off_market",
     location: "Dallas, TX 75204",
     city: "Dallas",
@@ -52,7 +54,8 @@ export const MARKETPLACE_SEED: SeedListing[] = [
   {
     id: "lst-flip",
     title: "Houston flip candidate — 14% below market",
-    description: "88 Riverside Dr. Score 91. Repair estimate $62k. Assignment or joint-venture partners welcome.",
+    description:
+      "88 Riverside Dr. Score 91. Repair estimate $62k. Assignment or joint-venture partners welcome.",
     category: "investment",
     location: "Houston, TX 77007",
     city: "Houston",
@@ -125,7 +128,8 @@ export const MARKETPLACE_SEED: SeedListing[] = [
   {
     id: "lst-kitchen",
     title: "Kitchen + bath remodel — Oak Street",
-    description: "Homeowner requesting contractor estimates. Convert this post into a project when a bid is accepted.",
+    description:
+      "Homeowner requesting contractor estimates. Convert this post into a project when a bid is accepted.",
     category: "repairs",
     location: "Austin, TX 78702",
     city: "Austin",
@@ -156,7 +160,8 @@ export const MARKETPLACE_SEED: SeedListing[] = [
   {
     id: "lst-gc",
     title: "General contractor — Austin service radius 40 mi",
-    description: "License + insurance on file. Kitchen, bath, full rehab. Portfolio in Professionals.",
+    description:
+      "License + insurance on file. Kitchen, bath, full rehab. Portfolio in Professionals.",
     category: "contractor_services",
     location: "Austin, TX",
     city: "Austin",
@@ -208,7 +213,8 @@ export const MARKETPLACE_SEED: SeedListing[] = [
   {
     id: "lst-pm",
     title: "Full-service property management — SATX",
-    description: "Owner reporting, work orders, vendor directory. Tenant screening via compliant third parties only.",
+    description:
+      "Owner reporting, work orders, vendor directory. Tenant screening via compliant third parties only.",
     category: "property_management",
     location: "San Antonio, TX",
     city: "San Antonio",
