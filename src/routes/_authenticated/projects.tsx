@@ -17,9 +17,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { useProjects, useCreateProject } from "@/hooks/use-workspace-data";
+import { useProjects, useCreateProject, useStartConversation } from "@/hooks/use-workspace-data";
 import { currency } from "@/lib/format";
-import { startConversation, type ProjectRecord } from "@/lib/workspace-store";
+import type { ProjectRecord } from "@/lib/workspace-store";
 
 export const Route = createFileRoute("/_authenticated/projects")({
   component: ProjectsPage,
@@ -38,6 +38,7 @@ function ProjectsPage() {
   const navigate = useNavigate();
   const { data: projects = [], isLoading } = useProjects();
   const createProjectMut = useCreateProject();
+  const startConversation = useStartConversation();
   const [compose, setCompose] = useState(false);
   const [draft, setDraft] = useState({ name: "", address: "", budget: "" });
 
@@ -61,19 +62,26 @@ function ProjectsPage() {
       },
       {
         onSuccess: (project) => {
-          const thread = startConversation(
-            userId,
-            project.name,
-            `Project · ${project.address}`,
-            `Opened project "${project.name}".`,
-            { project: project.name, property: project.address },
+          startConversation.mutate(
+            {
+              title: project.name,
+              context: `Project · ${project.address}`,
+              firstMessage: `Opened project "${project.name}".`,
+              extra: { project: project.name, property: project.address },
+            },
+            {
+              onSuccess: (thread) => {
+                setCompose(false);
+                setDraft({ name: "", address: "", budget: "" });
+                toast.success("Project created", {
+                  description: "A conversation is attached to this job.",
+                });
+                void navigate({ to: "/messages", search: { thread } });
+              },
+              onError: (e) =>
+                toast.error(e instanceof Error ? e.message : "Could not start the conversation"),
+            },
           );
-          setCompose(false);
-          setDraft({ name: "", address: "", budget: "" });
-          toast.success("Project created", {
-            description: "A conversation is attached to this job.",
-          });
-          void navigate({ to: "/messages", search: { thread } });
         },
         onError: (e) =>
           toast.error(e instanceof Error ? e.message : "Could not create the project"),
@@ -127,14 +135,22 @@ function ProjectsPage() {
                     size="sm"
                     onClick={() => {
                       if (!userId) return;
-                      const thread = startConversation(
-                        userId,
-                        p.name,
-                        `Project · ${p.address}`,
-                        `Following up on ${p.name}.`,
-                        { project: p.name, property: p.address },
+                      startConversation.mutate(
+                        {
+                          title: p.name,
+                          context: `Project · ${p.address}`,
+                          firstMessage: `Following up on ${p.name}.`,
+                          extra: { project: p.name, property: p.address },
+                        },
+                        {
+                          onSuccess: (thread) =>
+                            void navigate({ to: "/messages", search: { thread } }),
+                          onError: (e) =>
+                            toast.error(
+                              e instanceof Error ? e.message : "Could not start the conversation",
+                            ),
+                        },
                       );
-                      void navigate({ to: "/messages", search: { thread } });
                     }}
                   >
                     Open conversation

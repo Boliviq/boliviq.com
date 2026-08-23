@@ -110,7 +110,7 @@ export const PROFILE_ROLES = [
       "trade",
       "other",
     ],
-    widgets: ["hot_deals", "pipeline", "analyzers", "projects", "leads"],
+    widgets: ["hot_deals", "pipeline", "analyzers", "projects", "crm_leads"],
     shortcuts: [
       { label: "Deal analyzer", href: "/deal-analyzer" },
       { label: "Properties", href: "/properties" },
@@ -208,7 +208,7 @@ export const PROFILE_ROLES = [
       "wholesaler",
       "designer",
     ],
-    widgets: ["appointments", "reports", "repair_tags", "messages"],
+    widgets: ["appointments", "inspection_reports", "repair_tags", "messages"],
     shortcuts: [
       { label: "Documents", href: "/documents" },
       { label: "Projects", href: "/projects" },
@@ -222,7 +222,7 @@ export const PROFILE_ROLES = [
     description: "Coverage areas, secure document exchange, and licensed report delivery.",
     professional: true,
     connections: ["lender", "homeowner", "realtor", "investor", "attorney", "property_manager"],
-    widgets: ["appointments", "reports", "documents"],
+    widgets: ["appointments", "appraisal_reports", "documents"],
     shortcuts: [
       { label: "Documents", href: "/documents" },
       { label: "Messages", href: "/messages" },
@@ -243,7 +243,7 @@ export const PROFILE_ROLES = [
       "attorney",
       "insurance",
     ],
-    widgets: ["orders", "milestones", "documents", "messages"],
+    widgets: ["closing_orders", "milestones", "documents", "messages"],
     shortcuts: [
       { label: "Documents", href: "/documents" },
       { label: "Projects", href: "/projects" },
@@ -265,7 +265,7 @@ export const PROFILE_ROLES = [
       "realtor",
       "title",
     ],
-    widgets: ["quotes", "policies", "referrals", "messages"],
+    widgets: ["insurance_quotes", "policies", "referrals", "messages"],
     shortcuts: [
       { label: "Professionals", href: "/professionals" },
       { label: "Messages", href: "/messages" },
@@ -315,7 +315,7 @@ export const PROFILE_ROLES = [
     description: "Product catalog, contractor pricing, quotes, and delivery options.",
     professional: true,
     connections: ["contractor", "trade", "homeowner", "investor", "property_manager", "designer"],
-    widgets: ["catalog", "quotes", "orders", "leads"],
+    widgets: ["catalog", "material_quotes", "material_orders", "vendor_leads"],
     shortcuts: [
       { label: "Marketplace", href: "/marketplace" },
       { label: "Messages", href: "/messages" },
@@ -437,12 +437,110 @@ export function mapLeadStatusToPipelineStage(status: string | null | undefined):
   return "new";
 }
 
+/** Allowed CRM stage moves. Lost / long-term follow-up are reachable from most open stages. */
+export const PIPELINE_TRANSITIONS: Record<PipelineStageKey, readonly PipelineStageKey[]> = {
+  new: ["attempting_contact", "contacted", "lost", "follow_up_later"],
+  attempting_contact: ["contacted", "lost", "follow_up_later"],
+  contacted: ["qualified", "appointment_scheduled", "lost", "follow_up_later"],
+  qualified: ["appointment_scheduled", "proposal_created", "lost", "follow_up_later"],
+  appointment_scheduled: ["proposal_created", "qualified", "lost", "follow_up_later"],
+  proposal_created: ["negotiating", "lost", "follow_up_later"],
+  negotiating: ["under_contract", "lost", "follow_up_later"],
+  under_contract: ["in_progress", "lost"],
+  in_progress: ["closed", "lost"],
+  closed: ["follow_up_later"],
+  lost: ["follow_up_later", "new"],
+  follow_up_later: ["attempting_contact", "new"],
+};
+
+export function canAdvancePipeline(from: string, to: string): boolean {
+  const current = mapLeadStatusToPipelineStage(from);
+  const next = mapLeadStatusToPipelineStage(to);
+  if (current === next) return true;
+  return (PIPELINE_TRANSITIONS[current] as readonly string[]).includes(next);
+}
+
+export const CONVERSION_OBJECTS = ["listing", "lead", "project", "property"] as const;
+export type ConversionObject = (typeof CONVERSION_OBJECTS)[number];
+
+export const CONVERSION_KINDS = [
+  { id: "listing_to_lead", from: "listing", to: "lead" },
+  { id: "listing_to_property", from: "listing", to: "property" },
+  { id: "lead_to_project", from: "lead", to: "project" },
+  { id: "lead_to_property", from: "lead", to: "property" },
+  { id: "project_to_property", from: "project", to: "property" },
+  { id: "project_to_listing", from: "project", to: "listing" },
+  { id: "property_to_public_listing", from: "property", to: "listing" },
+  { id: "property_to_private_opportunity", from: "property", to: "listing" },
+  { id: "property_to_repair_request", from: "property", to: "listing" },
+  { id: "property_to_bid_request", from: "property", to: "listing" },
+  { id: "property_to_cash_offer", from: "property", to: "listing" },
+  { id: "property_to_realtor_consult", from: "property", to: "listing" },
+  { id: "property_to_financing", from: "property", to: "listing" },
+  { id: "property_to_property_management", from: "property", to: "listing" },
+] as const;
+
+export type ConversionKindId = (typeof CONVERSION_KINDS)[number]["id"];
+
+export const PROPERTY_POST_TARGETS = [
+  {
+    id: "property_to_public_listing",
+    label: "Public listing",
+    category: "homes_for_sale",
+    visibility: "public" as const,
+  },
+  {
+    id: "property_to_private_opportunity",
+    label: "Private opportunity",
+    category: "off_market",
+    visibility: "limited" as const,
+  },
+  {
+    id: "property_to_repair_request",
+    label: "Repair request",
+    category: "repairs",
+    visibility: "public" as const,
+  },
+  {
+    id: "property_to_bid_request",
+    label: "Contractor bid request",
+    category: "contractor_services",
+    visibility: "public" as const,
+  },
+  {
+    id: "property_to_cash_offer",
+    label: "Cash-offer request",
+    category: "investor_services",
+    visibility: "public" as const,
+  },
+  {
+    id: "property_to_realtor_consult",
+    label: "Realtor consultation",
+    category: "realtor_services",
+    visibility: "public" as const,
+  },
+  {
+    id: "property_to_financing",
+    label: "Financing request",
+    category: "lending",
+    visibility: "public" as const,
+  },
+  {
+    id: "property_to_property_management",
+    label: "Property-management request",
+    category: "property_management",
+    visibility: "public" as const,
+  },
+] as const;
+
+export type PropertyPostTargetId = (typeof PROPERTY_POST_TARGETS)[number]["id"];
+
 export const VERIFICATION_TIERS = [
   {
     id: "unverified",
     label: "Unverified",
     description:
-      "Starting state — shown only when no stackable verification badge has been granted.",
+      "Public label when no stackable badge has been granted. Submitting documents is pending review, not a badge.",
   },
   {
     id: "identity",
@@ -472,8 +570,56 @@ export const VERIFICATION_TIERS = [
 
 export type VerificationTierId = (typeof VERIFICATION_TIERS)[number]["id"];
 
+/** Request pipeline for a badge. These are not public badges. */
+export const VERIFICATION_REVIEW_STATES = [
+  {
+    id: "not_started",
+    label: "Not started",
+    isBadge: false,
+    description: "No documents submitted for this badge.",
+  },
+  {
+    id: "pending_review",
+    label: "Pending review",
+    isBadge: false,
+    description:
+      "Documents submitted. Public directory still shows Unverified until a badge is granted.",
+  },
+  {
+    id: "rejected",
+    label: "Rejected",
+    isBadge: false,
+    description: "Administrator denied this submission. Not a badge.",
+  },
+  {
+    id: "granted",
+    label: "Granted",
+    isBadge: true,
+    description: "The matching stackable badge is now public.",
+  },
+] as const;
+
+export type VerificationReviewStateId = (typeof VERIFICATION_REVIEW_STATES)[number]["id"];
+
 export const VERIFICATION_DISCLAIMER =
   "Verification badges describe documents Boliviq has reviewed. They never imply that Boliviq guarantees a person's services.";
+
+/** Canon 7 owns the ledger. It does not sell credits. */
+export const CREDIT_WALLET_OPERATIONS = [
+  "reserve",
+  "charge",
+  "release",
+  "refund",
+  "admin_adjust",
+  "referral_reward",
+  "promotional_grant",
+] as const;
+
+/** Canon 8 billing events. A verified Stripe webhook may then deposit into the Canon 7 wallet. */
+export const BILLING_CREDIT_PURCHASES = [
+  "credit_pack_purchase",
+  "subscription_credit_deposit",
+] as const;
 
 export const AI_AGENTS = [
   {
@@ -544,7 +690,7 @@ export const INTEGRATIONS = [
   {
     id: "stripe",
     name: "Stripe",
-    purpose: "Subscriptions, credit packs, receipts",
+    purpose: "Subscriptions, Canon 8 credit-pack sales, receipts",
     profiles: "All paid users",
     status: "live" as const,
   },
@@ -653,6 +799,55 @@ export const INTEGRATIONS = [
     profiles: "All users",
     status: "modular" as const,
   },
+  {
+    id: "material_pricing",
+    name: "Material pricing",
+    purpose: "Authorized material cost feeds",
+    profiles: "Contractors",
+    status: "modular" as const,
+  },
+  {
+    id: "permits",
+    name: "Permit data",
+    purpose: "Permit information when available",
+    profiles: "Contractors",
+    status: "modular" as const,
+  },
+  {
+    id: "brokerage_listings",
+    name: "Brokerage listings",
+    purpose: "Brokerage-approved listing systems (not MLS unless authorized)",
+    profiles: "Realtors",
+    status: "modular" as const,
+  },
+  {
+    id: "transaction_management",
+    name: "Transaction management",
+    purpose: "External transaction-management systems",
+    profiles: "Realtors",
+    status: "modular" as const,
+  },
+  {
+    id: "identity_verification",
+    name: "Identity verification",
+    purpose: "KYC / ID checks that feed Canon 6 review; badges stay Canon 6",
+    profiles: "Lenders and verification",
+    status: "modular" as const,
+  },
+  {
+    id: "underwriting",
+    name: "Underwriting data",
+    purpose: "Credit or underwriting providers, only with authorization",
+    profiles: "Lenders",
+    status: "modular" as const,
+  },
+  {
+    id: "loan_origination",
+    name: "Loan origination",
+    purpose: "Loan-origination systems",
+    profiles: "Lenders",
+    status: "modular" as const,
+  },
 ] as const;
 
 export const TRADES = [
@@ -731,6 +926,35 @@ export const SUBSCRIPTION_GROUPS = [
   "Enterprise",
 ] as const;
 
+export type SubscriptionGroup = (typeof SUBSCRIPTION_GROUPS)[number];
+
+/** Maps the sellable Stripe catalog (`src/lib/plans.ts`) onto Canon 8 groups. */
+export const PLAN_TO_CANON_GROUP = {
+  free: "Homeowner Free",
+  beginner: "Professional",
+  professional: "Professional",
+  professional_ai_max: "Professional + AI",
+  team: "Team Professional",
+  team_ai_max: "AI Team",
+} as const;
+
+export const CONVERSATION_THREAD_TYPES = [
+  { id: "direct", label: "Direct message" },
+  { id: "group", label: "Group conversation" },
+  { id: "property", label: "Property conversation" },
+  { id: "project", label: "Project conversation" },
+] as const;
+
+export type ConversationThreadTypeId = (typeof CONVERSATION_THREAD_TYPES)[number]["id"];
+
+export const NOTIFICATION_CHANNELS = [
+  { id: "in_app", label: "In-app", requiresConsent: false },
+  { id: "email", label: "Email", requiresConsent: true },
+  { id: "sms", label: "SMS", requiresConsent: true },
+] as const;
+
+export type NotificationChannelId = (typeof NOTIFICATION_CHANNELS)[number]["id"];
+
 export const LIFECYCLE_STEPS = [
   {
     id: "find",
@@ -781,6 +1005,54 @@ export const LEGAL_ADVICE_NOTICE =
 
 export function isProfileRoleId(value: string | null | undefined): value is ProfileRoleId {
   return !!value && PROFILE_ROLES.some((r) => r.id === value);
+}
+
+/** Administrator is assigned (Canon 10), never a signup or self-serve role change. */
+export function isSignupEligibleRole(value: string | null | undefined): value is ProfileRoleId {
+  return isProfileRoleId(value) && value !== "administrator";
+}
+
+export function signupRoles(): ProfileRole[] {
+  return PROFILE_ROLES.filter((r) => r.id !== "administrator");
+}
+
+export function directoryRoles(): ProfileRole[] {
+  return PROFILE_ROLES.filter((r) => r.professional && r.id !== "administrator");
+}
+
+/** Shared objects that several roles may surface. All other widget IDs must be unique. */
+export const SHARED_WIDGET_IDS = [
+  "messages",
+  "documents",
+  "projects",
+  "appointments",
+  "properties",
+  "professionals",
+  "verification",
+] as const;
+
+export function findDuplicateWidgets(): { widget: string; roles: ProfileRoleId[] }[] {
+  const shared = new Set<string>(SHARED_WIDGET_IDS);
+  const byWidget = new Map<string, ProfileRoleId[]>();
+  for (const role of PROFILE_ROLES) {
+    for (const widget of role.widgets) {
+      const list = byWidget.get(widget) ?? [];
+      list.push(role.id);
+      byWidget.set(widget, list);
+    }
+  }
+  const issues: { widget: string; roles: ProfileRoleId[] }[] = [];
+  for (const [widget, roles] of byWidget) {
+    if (shared.has(widget)) continue;
+    if (roles.length > 1) issues.push({ widget, roles });
+  }
+  return issues;
+}
+
+export function isVerificationTierId(
+  value: string | null | undefined,
+): value is VerificationTierId {
+  return !!value && VERIFICATION_TIERS.some((t) => t.id === value);
 }
 
 export function getProfileRole(id: string | null | undefined): ProfileRole {

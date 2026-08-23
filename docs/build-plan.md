@@ -2,6 +2,10 @@
 
 A phased build plan to take Boliviq from its current state to a complete, launch-ready platform that satisfies the 19 canons (`docs/canons/boliviq-canons-combined.md`).
 
+**Sequencing:** Gates 1–10 in the owner prompt, mapped in `docs/completion-plan.md`, tracked in `docs/launch-readiness.md`. Architecture: `docs/canonical-architecture.md`. Finished pages are Gate 8 (last). This file remains the phase checklist of remaining product work; do not use it to polish throwaway Lovable route shells.
+
+**Stripe:** do not merge `cursor/fix-stripe-supabase-integration-{1dca,58bf,6790,39d2}`. Canonical billing is `embedded_page_v4` on this repository.
+
 The plan is organized into **phases** (dependency-ordered slices of scope), each ending in a **break** (a hard checkpoint: stop, run the full test gate, review against the canon exit criteria, and make a go/no-go decision before starting the next phase). Effort is described by scope, invasiveness, and risk — not calendar time.
 
 ---
@@ -14,7 +18,7 @@ The full-platform DB schema already exists (`supabase/migrations/20260821040000_
 | --- | --- | --- |
 | Investor CRM: `leads`, `contacts`, `pipeline`, `tasks`, `deal-analyzer`, `calculators`, `calls`, `reports`, `settings`, `properties`, `promotions`, `automations` | Real Supabase serverFns | Mostly — needs unification + depth |
 | Billing/Stripe (`billing`, webhook, coupons, entitlements) | Real Supabase + Stripe | Close — needs full lifecycle + credits |
-| Marketplace, Messages, Projects, Documents, Professionals, Verification, Assistant, Dashboard | `src/lib/workspace-store.ts` = browser `localStorage` seeded with static data | No — prototype only |
+| Marketplace, Messages, Projects, Documents, Professionals, Verification, Assistant, Dashboard | Supabase + RLS (`workspace.functions.ts`); `workspace-store.ts` is types/helpers only | Phase 1 complete |
 | `properties.tsx` | Explicit `ComingSoon` placeholder | No |
 
 Core arc: **move the canon platform features off `localStorage` onto the real Supabase tables (persisted, multi-user, RLS-secured, real-time), deepen each canon and integration, then harden and launch.**
@@ -69,36 +73,36 @@ _In progress. Foundation + first modules landed; remaining modules follow the sa
 - [x] Establish the reusable pattern: RLS-scoped serverFns (`src/lib/workspace.functions.ts`) + react-query hooks (`src/hooks/use-workspace-data.ts`)
 - [x] `documents` — Supabase-backed (list/create), route + dashboard count migrated
 - [x] `projects` — Supabase-backed (list/create), route + dashboard count migrated
-- [x] Integration tests: CRUD + cross-user RLS isolation + spoofed-owner rejection (gated for CI)
-- [ ] `marketplace_listings` (needs saved-listings + report handling; `details` JSONB mapping)
-- [ ] `conversations`/`messages` (assemble threads; later Supabase Realtime in Phase 4)
-- [ ] `professional_profiles`, `verification_records`
-- [ ] `credit_wallets`/`credit_ledger`; `workspaces`/`workspace_members`
-- [ ] Account/onboarding draft → `profiles`; assistant log (needs a table)
-- [ ] Convert seeds (`marketplace-seed`, `professional-seed`, `platform-seed`) to admin-only demo seeding
-- [ ] Remove `workspace-store.ts` once all modules are migrated
+- [x] `marketplace_listings` — Supabase-backed (list/create/save/report); added `saved_listings` + `listing_reports` tables (RLS); extra fields in `details` JSONB; convert-to-project uses the Supabase project mutation
+- [x] Integration tests: CRUD + cross-user RLS isolation + spoofed-owner rejection + public-read + saved isolation + report visibility (gated for CI)
+- [x] `conversations`/`messages` (assemble threads; later Supabase Realtime in Phase 4)
+- [x] `professional_profiles`, `verification_records`
+- [x] `credit_wallets`/`credit_ledger`; `workspaces`/`workspace_members`
+- [x] Account/onboarding draft → `profiles`; assistant log (`assistant_logs`)
+- [x] Convert seeds (`marketplace-seed`, `professional-seed`, `platform-seed`) to admin-only demo seeding (directory falls back to seed when empty)
+- [x] Remove `localStorage` I/O from `workspace-store.ts` (types/helpers remain)
 
 **Test gate:** integration tests per module (CRUD + cross-workspace isolation), migration/RLS tests, Phase 0 regression.
-**Break 2:** canon features persist across sessions/devices; workspace isolation enforced by RLS. _Status: proven for documents + projects (UI reload + DB rows + RLS tests); remaining modules pending._
+**Break 2:** canon features persist across sessions/devices; workspace isolation enforced by RLS. _Status: documents, projects, marketplace, conversations, verification, credits, assistant, and account drafts persist in Supabase with RLS tests._
 
 ## Phase 2 — Identity, onboarding & access control (Canons 1, 2)
 
-- [ ] Save-and-resume onboarding wizard; primary + secondary role selection; workspace create/join
-- [ ] Email + phone verification, optional MFA, password reset, session/device history
-- [ ] Brute-force + bot/spam protection (CAPTCHA)
-- [ ] RBAC + server-side entitlement gating; account suspension + appeal
+- [x] Save-and-resume onboarding wizard; primary + secondary role selection; workspace create/join
+- [x] Email + phone verification, optional MFA, password reset, session/device history
+- [ ] Brute-force + bot/spam protection (CAPTCHA) — honeypot on signup now; provider CAPTCHA is Phase 10
+- [x] RBAC + server-side entitlement gating; account suspension + appeal
 
 **Test gate:** e2e signup → verify → MFA → onboarding → gated dashboard; RLS + entitlement authorization tests; suspension/appeal path.
-**Break 3:** a new user registers, picks a role, onboards, and lands in a correctly gated dashboard.
+**Break 3:** a new user registers, picks a role, onboards, and lands in a correctly gated dashboard. _Status: signup creates a personal workspace + wallet; onboarding drafts persist; dashboard is gated on role/onboarded; suspended accounts are redirected to `/suspended`._
 
 ## Phase 3 — Marketplace & Search (Canon 3)
 
-- [ ] Listing CRUD with media upload (cloud storage + signed URLs), categories/subcategories, visibility, expiration, reporting, view/response analytics
-- [ ] Search + filters, map + list views, favorites, saved searches, alerts
-- [ ] "Create lead from listing" conversion
+- [x] Listing CRUD with media upload (`marketplace-media` bucket), categories, visibility, 30-day expiration, reporting, view/response analytics
+- [x] Search + filters, map + list + card views, favorites, saved searches, alert flag (email delivery is Phase 10)
+- [x] "Create lead from listing" conversion (`leads.listing_id`)
 
 **Test gate:** listing lifecycle e2e, search/filter correctness, storage signed-URL access control, moderation hooks.
-**Break 4:** create → discover → message → convert-to-lead loop works end to end.
+**Break 4:** create → discover → message → convert-to-lead loop works end to end. _Status: loop persists in Supabase; map view is location-grouped until Phase 10 geocoding._
 
 ## Phase 4 — Communication Center (Canon 4)
 

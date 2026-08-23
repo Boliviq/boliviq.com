@@ -12,11 +12,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { LANGUAGES, PROFILE_ROLES, type LanguageId, type ProfileRoleId } from "@/lib/canons";
+import { LANGUAGES, signupRoles, type LanguageId, type ProfileRoleId } from "@/lib/canons";
 import { isMissingRelation } from "@/lib/supabase-safe";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { AccountSecurityCard } from "@/components/account-security";
+import { WorkspacePanel } from "@/components/workspace-panel";
 
 export const Route = createFileRoute("/_authenticated/settings")({ component: SettingsPage });
 
@@ -248,7 +250,7 @@ function SettingsPage() {
                   <SelectValue placeholder="Choose a profile" />
                 </SelectTrigger>
                 <SelectContent>
-                  {PROFILE_ROLES.filter((r) => r.id !== "administrator").map((r) => (
+                  {signupRoles().map((r) => (
                     <SelectItem key={r.id} value={r.id}>
                       {r.label}
                     </SelectItem>
@@ -397,6 +399,8 @@ function SettingsPage() {
           </CardContent>
         </Card>
 
+        <WorkspacePanel />
+        <AccountSecurityCard />
         <ComplianceCard />
       </div>
     </>

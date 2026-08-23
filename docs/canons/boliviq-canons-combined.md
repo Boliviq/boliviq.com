@@ -77,9 +77,12 @@ During registration, users select a primary profile from:
 14. Supplier or material vendor
 15. Trade professional or subcontractor
 16. Other real estate service provider
-17. Administrator
 
 Users may select secondary roles, subject to verification and subscription rules.
+
+**Other** uses the shared marketplace, messaging, documents, and directory modules. It does not have a dedicated profile canon.
+
+**Administrator is not a registration profile.** It is assigned by an existing administrator (Canon 10) and must never be offered during signup or self-serve role changes.
 
 ## Key System Rule
 
@@ -160,15 +163,24 @@ Professional accounts should receive: leads, contacts, companies, properties, op
 
 Professional profiles should display: identity verification, email and phone verification, license verification, insurance verification, background-screening status where permitted, completed Boliviq projects, customer reviews, response time, service areas, portfolio, and complaint status.
 
-**Boliviq must distinguish between these verification statuses:**
+**Boliviq must distinguish badges from review states:**
 
-- **Unverified** — starting state; no verification documents submitted (mutually exclusive with the badges below until the first badge is earned)
+**Public display (badges)**
+
+- **Unverified** — public label when no stackable badge has been granted. This is the starting display. Submitting documents does not create a badge.
 - **Identity verified** — stackable badge
 - **License verified** — stackable badge
 - **Insurance verified** — stackable badge
 - **Boliviq certified** — stackable badge earned after platform standards are met
 
-A professional may hold multiple stackable badges at once (for example identity + license + insurance). Display systems should show Unverified only when no stackable badge has been granted.
+**Request states (not badges; visible to the professional and to administrators)**
+
+- **Not started** — no documents submitted for that badge
+- **Pending review** — documents submitted; an administrator has not yet granted or denied the badge. The public directory still shows Unverified until a badge is granted.
+- **Rejected** — administrator denied the submission. The public directory still shows Unverified unless another stackable badge is already held.
+- **Granted** — the matching stackable badge is now public
+
+A professional may hold multiple stackable badges at once (for example identity + license + insurance). Display systems should show Unverified on the public profile only when no stackable badge has been granted. Pending review and rejected are never badges.
 
 **Rule:** No badge should imply that Boliviq guarantees a person's services.
 
@@ -190,7 +202,9 @@ Recommended agents: Lead Qualification Agent, Property Analysis Agent, Construct
 
 ## AI credit system
 
-AI usage should be managed through a shared workspace wallet. The system needs: credit balance; credit-cost catalog; reservations before expensive operations; final charges; releases for unused reservations; refunds for failed operations; immutable transaction ledger; idempotency protection; usage history; low-balance alerts; credit-pack purchases; subscription credit deposits; administrative adjustments; referral rewards; promotional credits.
+AI usage should be managed through a shared workspace wallet. **Canon 7 owns the ledger, not the sale of credits.** The wallet needs: credit balance; credit-cost catalog; reservations before expensive operations; final charges; releases for unused reservations; refunds for failed operations; immutable transaction ledger; idempotency protection; usage history; low-balance alerts; administrative adjustments; referral rewards; promotional grants.
+
+Credit-pack purchases and subscription credit deposits are Canon 8 billing events. After Stripe confirms payment, Canon 8 deposits into this wallet. The wallet never sells packs or collects payment.
 
 ---
 
@@ -206,9 +220,11 @@ The platform should support the latest approved pricing configuration while keep
 
 ## Billing
 
-Needs: Stripe-hosted or embedded checkout; customer billing portal; monthly and annual billing; trials when enabled; coupons; proration; upgrades and downgrades; failed-payment recovery; grace periods; cancellation; receipts and invoices; tax handling; credit-pack purchases; verified webhook processing.
+Needs: Stripe-hosted or embedded checkout; customer billing portal; monthly and annual billing; trials when enabled; coupons; proration; upgrades and downgrades; failed-payment recovery; grace periods; cancellation; receipts and invoices; tax handling; credit-pack purchases; subscription credit deposits; verified webhook processing.
 
 **Rule:** Payment access must be enforced by server-side entitlements, not hidden buttons alone.
+
+**Credit-pack ownership:** Canon 8 sells credit packs and subscription credit deposits through Stripe. A successful, idempotent webhook is the only path that may deposit those credits into the Canon 7 wallet.
 
 ---
 
@@ -218,7 +234,7 @@ Each integration must be modular and configurable. Boliviq should remain functio
 
 | Integration | Purpose | Primary profiles |
 |---|---|---|
-| Stripe | Subscriptions, credit packs, receipts | All paid users |
+| Stripe | Subscriptions, Canon 8 credit-pack sales, receipts | All paid users |
 | Email provider | Verification, alerts, follow-up | All users |
 | SMS/voice provider | Consented messages and calls | Professionals |
 | Maps/geocoding | Locations, service areas, property maps | All users |
@@ -234,6 +250,13 @@ Each integration must be modular and configurable. Boliviq should remain functio
 | Analytics | Product and business performance | Admin |
 | Error monitoring | Reliability and incident response | Admin |
 | Translation services | Multilingual content assistance | All users |
+| Material pricing | Authorized material cost feeds | Contractors |
+| Permit data | Permit information when available | Contractors |
+| Brokerage listings | Brokerage-approved listing systems (not MLS unless authorized) | Realtors |
+| Transaction management | External transaction-management systems | Realtors |
+| Identity verification | KYC / ID checks that feed Canon 6 review; badges stay Canon 6 | Lenders and verification |
+| Underwriting data | Credit or underwriting providers, only with authorization | Lenders |
+| Loan origination | Loan-origination systems | Lenders |
 
 **Rule:** No provider should receive more user data than it needs. Each integration requires consent management, error logging, retry rules, credential security, and a documented replacement strategy.
 
@@ -267,7 +290,7 @@ List a home for sale without an agent; post an off-market property; request a ca
 
 ## Connections
 
-A homeowner can connect with: contractors and trade professionals (repairs/construction), realtors (pricing, listing, purchasing), investors and wholesalers (direct-sale offers), lenders (refinance/purchase options), inspectors (inspections), appraisers (valuations), property managers (rental management), insurance professionals (coverage), title companies and attorneys (closing), architects and engineers (plans), suppliers (material purchases), and other real-estate service providers.
+A homeowner can connect with these Boliviq roles: contractor, trade, realtor, investor, wholesaler, lender, inspector, appraiser, property_manager, insurance, title, attorney, designer, supplier, and other. Homeowners act as sellers or buyers; “buyer” is not a separate profile.
 
 ## Workflow
 
@@ -291,7 +314,7 @@ Homeowners requesting work, investors renovating properties, realtors preparing 
 
 ### Integrations
 
-Calendar synchronization, mapping and service-radius tools, email and SMS notifications, electronic signatures, payment processing, accounting export, cloud document storage, material pricing sources when authorized, permit information sources when available, AI estimating and scope creation. Integration catalog details live in Canon 9.
+Canon 9 providers used here: calendar, maps, email, sms, esign, stripe, accounting, storage, material_pricing, permits, and ai. Do not add providers outside that catalog.
 
 ## Trade professional and subcontractor profile
 
@@ -317,11 +340,11 @@ Agent and brokerage profile; license verification; listing portfolio; buyer and 
 
 ## Connections
 
-Homeowners considering selling, buyers searching for properties, investors and wholesalers, lenders providing preapproval, contractors preparing properties, inspectors and appraisers, title companies and attorneys, property managers, insurance professionals, and other real-estate service providers.
+Homeowners (as sellers or buyers), investors, wholesalers, lenders, contractors, inspectors, appraisers, title, attorneys, property managers, insurance professionals, and other. “Buyer” is a homeowner or investor, not a separate profile.
 
 ## Listing integrations
 
-Where legally and contractually permitted: MLS or IDX feeds, brokerage-approved listing systems, map and geocoding services, property and public-record data, showing calendars, electronic signatures, transaction-management systems, email and calendar platforms.
+Where legally and contractually permitted, use only these Canon 9 providers: mls, brokerage_listings, maps, property_data, calendar, esign, transaction_management, and email.
 
 **Rule:** Boliviq must never represent an off-market listing as an MLS listing unless the listing was legitimately received through an authorized MLS integration.
 
@@ -339,11 +362,11 @@ Investment criteria; buy-box configuration; opportunity feed; property analysis;
 
 ### Connections
 
-Homeowners and motivated sellers, wholesalers, realtors, private and institutional lenders, equity partners, contractors and trade professionals, inspectors, appraisers, title companies and attorneys, property managers, insurance providers, architects and designers, suppliers, and other real-estate service providers.
+Homeowners, wholesalers, realtors, lenders, contractors, trade professionals, inspectors, appraisers, title, attorneys, property managers, insurance, designers, suppliers, and other. Equity partners on the platform use the investor role.
 
 ### Data and service integrations
 
-Subject to licensing and authorization: property data, public records, comparable sales, mapping, rental estimates, market statistics, construction estimating, financing calculators, electronic signatures, document storage, accounting exports. Provider catalog: Canon 9.
+Subject to licensing and authorization, use these Canon 9 providers: property_data, maps, esign, storage, accounting, and ai. Do not add providers outside that catalog.
 
 **Rule:** Automated valuations follow Canon 18 (Appraiser) and Canon 7 (AI Features) — label them as estimates, never as licensed appraisals.
 
@@ -355,7 +378,7 @@ Seller lead pipeline; property intake; deal analysis; offer calculator; contract
 
 ### Connections
 
-Property owners, investors and cash buyers, realtors, transactional and private lenders, contractors, inspectors, title companies and attorneys.
+Homeowners, investors, realtors, lenders, contractors, inspectors, title, and attorneys. Cash buyers on the platform use the investor role.
 
 **Rule:** Boliviq must provide state-sensitive compliance notices because wholesaling, marketing equitable interests, licensing, and disclosure requirements vary by jurisdiction.
 
@@ -369,11 +392,11 @@ Professional lending profile; loan-program directory; borrower intake; prequalif
 
 ## Connections
 
-Homebuyers, investors, realtors, contractors, appraisers, insurance professionals, title and closing professionals, wholesalers, inspectors, attorneys, and architects or designers on construction draws.
+Homeowners (as borrowers), investors, realtors, contractors, appraisers, insurance, title, wholesalers, inspectors, attorneys, and designers on construction draws. “Homebuyer” is the homeowner role.
 
 ## Integrations
 
-Secure application links, identity-verification services, credit or underwriting providers only with authorization, loan-origination systems, document verification, e-signatures, calendar and email, payment calculators. Provider catalog: Canon 9.
+Canon 9 providers used here: identity_verification, underwriting, loan_origination, storage, esign, calendar, and email. Boliviq badges remain Canon 6. Do not add providers outside that catalog.
 
 **Rule (platform policy):** Boliviq should not make lending decisions unless separately licensed and designed to meet applicable lending regulations. AI agents inherit this restriction via Canon 7.
 
@@ -387,9 +410,9 @@ Owner and property portfolios; unit records; tenant contact records; maintenance
 
 ## Connections
 
-Property owners, tenants (via compliant third-party workflows — tenants are not a Boliviq profile role), contractors and trade professionals, realtors, investors, inspectors, appraisers, insurance professionals, attorneys, and suppliers.
+Homeowners and investors (as owners), contractors, trade professionals, realtors, inspectors, appraisers, insurance professionals, attorneys, and suppliers.
 
-**Rule:** Tenant screening, rent collection, and lease execution should only be activated through compliant third-party services and applicable permissions.
+**Rule:** Tenants are not a Boliviq profile role. Tenant screening, rent collection, and lease execution should only be activated through compliant third-party services and applicable permissions. Do not add a tenant role to the connection graph.
 
 ---
 
@@ -401,7 +424,7 @@ Covers Inspector, Appraiser, Title/Closing, Insurance, and Attorney profiles —
 
 **Features:** credentials and service areas; inspection types; availability calendar; appointment requests; report upload; photo and defect documentation; repair-category tagging; contractor referral options; invoice tracking; review collection.
 
-**Connections:** homeowners, buyers, realtors, investors, contractors, lenders, property managers, insurance professionals, wholesalers, and architects or designers when plans are in scope.
+**Connections:** homeowners, realtors, investors, contractors, lenders, property managers, insurance, wholesalers, and designers when plans are in scope. Inspection clients who are buying use the homeowner or investor role.
 
 **Rule:** Inspection findings may create repair requests, but AI must not alter the inspector's signed report.
 
@@ -417,7 +440,7 @@ Covers Inspector, Appraiser, Title/Closing, Insurance, and Attorney profiles —
 
 **Features:** closing-company profile; coverage areas; new-order intake; secure transaction room; required-document checklist; title milestone tracking; closing appointment scheduling; participant communication; final-document delivery; referral reporting.
 
-**Connections:** buyers and sellers, realtors, investors and wholesalers, lenders, attorneys, insurance professionals.
+**Connections:** homeowners (as buyers or sellers), realtors, investors, wholesalers, lenders, attorneys, and insurance professionals.
 
 **Rule:** Sensitive identity, banking, wire, and closing information requires restricted permissions, encryption, warning banners, and anti-wire-fraud protections.
 
@@ -425,13 +448,13 @@ Covers Inspector, Appraiser, Title/Closing, Insurance, and Attorney profiles —
 
 **Features:** agent and carrier information; coverage specialties; quote-request intake; property details; secure document requests; policy milestone tracking; renewal reminders; claim-related contractor referrals; communication history.
 
-**Connections:** homeowners, buyers, investors, lenders, contractors, property managers, inspectors, realtors, and title professionals.
+**Connections:** homeowners, investors, lenders, contractors, property managers, inspectors, realtors, and title professionals.
 
 ## Attorney profile
 
 **Features:** practice areas; jurisdiction and license information; consultation requests; secure client intake; conflict-check status; document exchange; appointment management; matter milestones; referral tracking.
 
-**Connections:** property owners, buyers and sellers, investors and wholesalers, realtors, contractors, lenders, title professionals, property managers, and appraisers.
+**Connections:** homeowners, investors, wholesalers, realtors, contractors, lenders, title professionals, property managers, and appraisers.
 
 **Rule (source of truth for legal advice):** Boliviq AI must not represent itself as an attorney or replace jurisdiction-specific legal advice. AI agents inherit this restriction via Canon 7.
 
@@ -445,7 +468,7 @@ Covers Architect/Engineer/Designer and Supplier/Material-Vendor profiles — the
 
 **Features:** professional credentials; portfolio; design specialties; consultation requests; plan and drawing storage; revision tracking; project milestones; contractor collaboration; client approvals; proposal and invoice tracking.
 
-**Connections:** homeowners, contractors, developers and investors, engineers and consultants, suppliers, inspectors, lenders.
+**Connections:** homeowners, contractors, investors, suppliers, inspectors, and lenders. Developers on the platform use the investor role. Other architects or engineers use this same designer role.
 
 ## Supplier and material-vendor profile
 

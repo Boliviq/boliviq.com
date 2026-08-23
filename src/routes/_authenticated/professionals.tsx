@@ -14,12 +14,16 @@ import {
   PROFILE_ROLES,
   TRADE_LABELS,
   VERIFICATION_DISCLAIMER,
+  directoryRoles,
   type ProfileRoleId,
 } from "@/lib/canons";
-import { PROFESSIONAL_SEED } from "@/lib/professional-seed";
 import { useAccount } from "@/hooks/use-current-user";
 import { useWorkspace } from "@/hooks/use-workspace";
-import { createProject, startConversation } from "@/lib/workspace-store";
+import {
+  useCreateProject,
+  useProfessionals,
+  useStartConversation,
+} from "@/hooks/use-workspace-data";
 
 export const Route = createFileRoute("/_authenticated/professionals")({
   component: ProfessionalsPage,
@@ -31,19 +35,21 @@ function ProfessionalsPage() {
   const navigate = useNavigate();
   const [q, setQ] = useState("");
   const [role, setRole] = useState<ProfileRoleId | "all">("all");
+  const { data: directory = [], isLoading } = useProfessionals();
+  const startConversation = useStartConversation();
+  const createProject = useCreateProject();
 
   const people = useMemo(() => {
-    return PROFESSIONAL_SEED.filter((p) => {
+    return directory.filter((p) => {
       const okRole = role === "all" || p.role === role;
       const hay =
         `${p.name} ${p.company} ${p.serviceArea} ${p.specialties.join(" ")}`.toLowerCase();
       return okRole && (!q || hay.includes(q.toLowerCase()));
     });
-  }, [role, q]);
+  }, [directory, role, q]);
 
-  const directoryRoles = PROFILE_ROLES.filter(
-    (r) => r.id !== "homeowner" && r.id !== "administrator",
-  );
+  const roleFilters = directoryRoles();
+  const showingSeed = directory.some((p) => p.source === "seed");
 
   return (
     <>
@@ -55,6 +61,14 @@ function ProfessionalsPage() {
         <Alert>
           <AlertDescription className="text-sm">{VERIFICATION_DISCLAIMER}</AlertDescription>
         </Alert>
+        {showingSeed && (
+          <Alert>
+            <AlertDescription className="text-sm">
+              No live professional profiles yet — showing the admin demo directory. Message and
+              invite actions still persist to your workspace.
+            </AlertDescription>
+          </Alert>
+        )}
         <div className="flex flex-col gap-3 lg:flex-row">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -74,7 +88,7 @@ function ProfessionalsPage() {
           >
             All roles
           </button>
-          {directoryRoles.map((r) => (
+          {roleFilters.map((r) => (
             <button
               key={r.id}
               type="button"
@@ -87,6 +101,7 @@ function ProfessionalsPage() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
+          {isLoading && <div className="text-sm text-muted-foreground">Loading directory…</div>}
           {people.map((p) => {
             const roleLabel = PROFILE_ROLES.find((r) => r.id === p.role)?.label ?? p.role;
             return (
@@ -101,7 +116,7 @@ function ProfessionalsPage() {
                     </div>
                     <div className="flex items-center gap-1 text-sm font-semibold">
                       {p.rating || "—"}
-                      <span className="font-normal text-muted-foreground">({p.reviews})</span>
+                      <span className="font-normal text-muted-foreground">({p.reviews ?? 0})</span>
                     </div>
                   </div>
                   <VerificationBadgeRow tiers={p.tiers} />
@@ -119,8 +134,9 @@ function ProfessionalsPage() {
                     ))}
                   </div>
                   <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <MapPin className="h-3 w-3" /> {p.serviceArea} · {p.years} yrs · responds{" "}
-                    {p.responseTime}
+                    <MapPin className="h-3 w-3" /> {p.serviceArea}
+                    {p.years ? ` · ${p.years} yrs` : ""}
+                    {p.responseTime ? ` · responds ${p.responseTime}` : ""}
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <Button
@@ -131,15 +147,27 @@ function ProfessionalsPage() {
                           toast.error("Sign in to connect with professionals");
                           return;
                         }
-                        const thread = startConversation(
-                          userId,
-                          `Inquiry — ${p.name}`,
-                          `Professional · ${roleLabel}`,
-                          `Hi ${p.name}, ${account.full_name || "I"} would like to discuss a job in ${p.serviceArea}.`,
-                          { participants: [account.full_name || "You", p.name] },
+                        startConversation.mutate(
+                          {
+                            title: `Inquiry — ${p.name}`,
+                            context: `Professional · ${roleLabel}`,
+                            firstMessage: `Hi ${p.name}, ${account.full_name || "I"} would like to discuss a job in ${p.serviceArea}.`,
+                            extra: {
+                              participants: [account.full_name || "You", p.name],
+                              participantUserId: p.userId,
+                            },
+                          },
+                          {
+                            onSuccess: (thread) => {
+                              toast.success("Conversation started");
+                              void navigate({ to: "/messages", search: { thread } });
+                            },
+                            onError: (e) =>
+                              toast.error(
+                                e instanceof Error ? e.message : "Could not start the conversation",
+                              ),
+                          },
                         );
-                        toast.success("Conversation started");
-                        void navigate({ to: "/messages", search: { thread } });
                       }}
                     >
                       <MessageSquare className="h-3.5 w-3.5" /> Message
@@ -159,27 +187,40 @@ function ProfessionalsPage() {
                           toast.error("Sign in to connect with professionals");
                           return;
                         }
-                        const project = createProject(userId, {
-                          name: `${p.company} — invited`,
-                          address: p.serviceArea,
-                          status: "new",
-                          roleView: `Invited ${p.name}`,
-                          budget: 0,
-                          spent: 0,
-                          nextMilestone: "Share scope and schedule a walk-through",
-                        });
-                        startConversation(
-                          userId,
-                          project.name,
-                          `Project · ${p.name}`,
-                          `Invited ${p.name} (${roleLabel}) onto a project.`,
+                        createProject.mutate(
                           {
-                            project: project.name,
-                            participants: [account.full_name || "You", p.name],
+                            name: `${p.company} — invited`,
+                            address: p.serviceArea,
+                            status: "new",
+                            nextMilestone: "Share scope and schedule a walk-through",
+                          },
+                          {
+                            onSuccess: (project) => {
+                              startConversation.mutate(
+                                {
+                                  title: project.name,
+                                  context: `Project · ${p.name}`,
+                                  firstMessage: `Invited ${p.name} (${roleLabel}) onto a project.`,
+                                  extra: {
+                                    project: project.name,
+                                    participants: [account.full_name || "You", p.name],
+                                    participantUserId: p.userId,
+                                  },
+                                },
+                                {
+                                  onSuccess: () => {
+                                    toast.success("Professional invited to a project");
+                                    void navigate({ to: "/projects" });
+                                  },
+                                },
+                              );
+                            },
+                            onError: (e) =>
+                              toast.error(
+                                e instanceof Error ? e.message : "Could not create the project",
+                              ),
                           },
                         );
-                        toast.success("Professional invited to a project");
-                        void navigate({ to: "/projects" });
                       }}
                     >
                       Invite to project

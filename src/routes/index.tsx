@@ -19,7 +19,7 @@ import {
   Users,
   Workflow,
 } from "lucide-react";
-import { LIFECYCLE_STEPS, PROFILE_ROLES } from "@/lib/canons";
+import { LIFECYCLE_STEPS, signupRoles } from "@/lib/canons";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -73,7 +73,7 @@ const platformFeatures = [
 ];
 
 function Landing() {
-  const roles = PROFILE_ROLES.filter((r) => r.id !== "administrator");
+  const roles = signupRoles();
   return (
     <MarketingLayout>
       <section className="relative isolate overflow-hidden bg-[#071729] text-white">

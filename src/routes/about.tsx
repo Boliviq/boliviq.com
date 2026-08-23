@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { MarketingLayout } from "@/components/marketing-layout";
-import { LIFECYCLE, PROFILE_ROLES } from "@/lib/canons";
+import { LIFECYCLE, signupRoles } from "@/lib/canons";
 
 export const Route = createFileRoute("/about")({
   head: () => ({
@@ -43,7 +43,7 @@ function About() {
         </ol>
         <h2 className="mt-12 text-2xl font-semibold">Who it is for</h2>
         <p className="mt-3 text-muted-foreground">
-          {PROFILE_ROLES.filter((r) => r.id !== "administrator")
+          {signupRoles()
             .map((r) => r.label)
             .join(", ")}
           .

@@ -21,9 +21,11 @@ import {
   PROFILE_ROLES,
   TRADE_LABELS,
   isProfessionalRole,
+  signupRoles,
   type ProfileRoleId,
 } from "@/lib/canons";
-import { DEFAULT_ACCOUNT, loadDraft, saveDraft, type AccountProfile } from "@/lib/workspace-store";
+import { DEFAULT_ACCOUNT, type AccountProfile } from "@/lib/workspace-store";
+import { useAccountProfile, useSaveAccountDraft } from "@/hooks/use-workspace-data";
 
 export const Route = createFileRoute("/_authenticated/onboarding")({ component: Onboarding });
 
@@ -31,34 +33,27 @@ const STEPS = 5;
 
 function Onboarding() {
   const navigate = useNavigate();
-  const [userId, setUserId] = useState<string | null>(null);
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [f, setF] = useState<AccountProfile>(DEFAULT_ACCOUNT);
+  const [hydrated, setHydrated] = useState(false);
+  const { data: remoteDraft } = useAccountProfile();
+  const saveAccountDraft = useSaveAccountDraft();
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      const user = data.user;
-      if (!user) return;
-      setUserId(user.id);
-      const draft = loadDraft(user.id);
-      const meta = (user.user_metadata ?? {}) as Record<string, unknown>;
-      setF({
-        ...draft,
-        full_name: (meta.full_name as string) || draft.full_name || "",
-        phone: (meta.phone as string) || draft.phone,
-        primary_role: (meta.primary_role as ProfileRoleId) || draft.primary_role,
-        onboarded: Boolean(meta.onboarded || draft.onboarded),
-      });
-      if (draft.onboarding_step > 1 && !draft.onboarded) setStep(draft.onboarding_step);
-    });
-  }, []);
+    if (hydrated || !remoteDraft) return;
+    setF(remoteDraft);
+    if (remoteDraft.onboarding_step > 1 && !remoteDraft.onboarded) {
+      setStep(remoteDraft.onboarding_step);
+    }
+    setHydrated(true);
+  }, [remoteDraft, hydrated]);
 
   const persistDraft = (next: AccountProfile, nextStep = step, syncRemote = false) => {
     const row = { ...next, onboarding_step: nextStep };
     setF(row);
-    if (userId) saveDraft(userId, row);
     if (!syncRemote) return;
+    saveAccountDraft.mutate(row);
     void supabase.auth.updateUser({
       data: {
         full_name: row.full_name,
@@ -271,7 +266,7 @@ function Onboarding() {
               Choose your primary profile. You can add secondary roles next.
             </p>
             <div className="grid gap-2 sm:grid-cols-2">
-              {PROFILE_ROLES.filter((r) => r.id !== "administrator").map((r) => (
+              {signupRoles().map((r) => (
                 <button
                   key={r.id}
                   type="button"
@@ -298,8 +293,9 @@ function Onboarding() {
               subscription.
             </p>
             <div className="grid gap-2 sm:grid-cols-2">
-              {PROFILE_ROLES.filter((r) => r.id !== f.primary_role && r.id !== "administrator").map(
-                (r) => (
+              {signupRoles()
+                .filter((r) => r.id !== f.primary_role)
+                .map((r) => (
                   <label
                     key={r.id}
                     className="flex cursor-pointer items-start gap-3 rounded-xl border p-3"
@@ -313,8 +309,7 @@ function Onboarding() {
                       <span className="block text-xs text-muted-foreground">{r.description}</span>
                     </span>
                   </label>
-                ),
-              )}
+                ))}
             </div>
           </>
         )}
