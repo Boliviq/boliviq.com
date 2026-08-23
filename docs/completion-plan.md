@@ -529,9 +529,9 @@ Package manager is `bun`. Commands live in `package.json` and `AGENTS.md`.
 
 Resume autonomously, in this order, still on the working branch:
 
-1. L0/L1/L2 for communication: attachments, read receipts, notification preferences, Realtime (W1).
-2. CRM + property hub conversions (W2) — listing/lead/project/property loop is in. Remaining: companies, notes, appointments, CSV, dedupe.
-3. Trust admin-review functions (W3).
-4. Billing (W4) continues on `embedded_page_v4` (reserve/charge, webhook idempotency). Do not merge the four old Stripe branches.
+1. CRM remaining (W2): companies, notes, appointments, CSV, duplicate detection.
+2. Communication remaining (W1): Realtime delivery. Attachments and outbound intents are in.
+3. Billing (W4) on `embedded_page_v4`: Stripe webhook deposits into the Canon 7 wallet. Do not merge the four old Stripe branches. Keys stay Gate 9.
+4. AI guardrails (W5) after credits: forbidden-action rejects + reserve/charge around tool calls.
 
 That is the entire remaining product, sequenced so **pages are inserted last**.

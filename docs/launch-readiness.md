@@ -18,11 +18,11 @@ Temporary Lovable screens are not Gate 8.
 | Identity / auth / onboarding | 2 | VERIFIED | VERIFIED | PARTIAL | PARTIAL | PARTIAL (CAPTCHA off) | PARTIAL | PARTIAL | shell | IMPLEMENTED — EXTERNAL | PARTIAL |
 | Workspaces / RBAC | 1 | VERIFIED | VERIFIED | VERIFIED | PARTIAL | n/a | PARTIAL | PARTIAL | shell | n/a | PARTIAL |
 | Marketplace | 3 | VERIFIED | VERIFIED | VERIFIED | PARTIAL (listing→lead) | maps off | PARTIAL | PARTIAL | shell | n/a | PARTIAL |
-| Communication | 4 | VERIFIED | PARTIAL | PARTIAL | PARTIAL | email/SMS off | PARTIAL | NOT STARTED | shell | n/a | PARTIAL |
+| Communication | 4 | VERIFIED | PARTIAL | PARTIAL | PARTIAL (intents + attachments; Realtime later) | email/SMS off | PARTIAL | PARTIAL (intent rows) | shell | n/a | PARTIAL |
 | CRM + property hub | 5 | VERIFIED | PARTIAL | PARTIAL | PARTIAL (conversions + stage rules) | n/a | PARTIAL | PARTIAL (audit rows) | shell / Coming Soon | n/a | PARTIAL |
-| Trust / verification | 6 | VERIFIED | PARTIAL | PARTIAL | NOT STARTED (admin review) | identity_verification off | NOT STARTED | PARTIAL | shell | n/a | PARTIAL |
+| Trust / verification | 6 | VERIFIED | VERIFIED | VERIFIED | VERIFIED (admin grant/reject + audit) | identity_verification off | PARTIAL | PARTIAL (audit) | shell | n/a | PARTIAL |
 | AI assistant / agents | 7 | VERIFIED | PARTIAL | PARTIAL | NOT STARTED | AI provider off | NOT STARTED | PARTIAL (logs) | shell | n/a | PARTIAL |
-| Credits wallet | 7 | VERIFIED | PARTIAL | PARTIAL | NOT STARTED (reserve/charge) | n/a | NOT STARTED | NOT STARTED | shell | n/a | PARTIAL |
+| Credits wallet | 7 | VERIFIED | VERIFIED | VERIFIED | VERIFIED (reserve/charge/release/refund) | n/a | PARTIAL | PARTIAL (ledger) | shell | n/a | PARTIAL |
 | Billing / Stripe | 8 | PARTIAL (plan map) | PARTIAL | PARTIAL | PARTIAL | architecture chosen; keys later | NOT STARTED | PARTIAL | shell | BLOCKED — HUMAN (keys) | PARTIAL |
 | Integrations catalog | 9 | VERIFIED | NOT STARTED (flags) | n/a | NOT STARTED | adapters not started | NOT STARTED | NOT STARTED | shell | BLOCKED — HUMAN (providers) | PARTIAL |
 | Admin Intelligence | 10 | PARTIAL | PARTIAL | PARTIAL | NOT STARTED | n/a | NOT STARTED | PARTIAL (audit table) | shell | n/a | PARTIAL |
@@ -39,14 +39,16 @@ Temporary Lovable screens are not Gate 8.
 - Property hub Canon 12 posts (repair, bid, cash offer, etc.)
 - Pipeline stage rules reject illegal jumps
 - Signup creates personal workspace + empty wallet
+- Admin verification review grants stackable badges and writes `admin_audit_logs` (pending is not a badge)
+- Credit reserve → charge / release / refund is idempotent; forged ledger inserts are rejected
+- Message attachments persist for participants; outbound email/SMS are recorded as intents (providers still off)
 - CI: typecheck, lint, unit, build (`.github/workflows/ci.yml`)
 
 ## Gaps this file is tracking next
 
-1. Communication remaining: Realtime delivery, file attachments, outbound email/SMS intents
+1. Communication remaining: Realtime delivery (attachments and outbound intents are in)
 2. CRM remaining: companies/notes/appointments unify, CSV, duplicate detection
-3. Trust admin-review → badge
-4. Credit reserve/charge idempotency on the chosen billing line
-5. Provider adapters (flag-gated, mocked)
-6. Upgrade-from-older-schema automation (fresh install is already proven)
-7. Gate 8 pages — last
+3. Stripe webhook → Canon 8 pack deposit into the Canon 7 wallet (keys are Gate 9)
+4. Provider adapters (flag-gated, mocked)
+5. Upgrade-from-older-schema automation (fresh install is already proven)
+6. Gate 8 pages — last

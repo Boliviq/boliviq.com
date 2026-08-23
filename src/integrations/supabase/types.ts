@@ -606,6 +606,8 @@ export type Database = {
           id: string;
           idempotency_key: string | null;
           label: string;
+          operation: string | null;
+          reservation_id: string | null;
           status: Database["public"]["Enums"]["credit_entry_status"];
           wallet_id: string;
         };
@@ -615,6 +617,8 @@ export type Database = {
           id?: string;
           idempotency_key?: string | null;
           label: string;
+          operation?: string | null;
+          reservation_id?: string | null;
           status?: Database["public"]["Enums"]["credit_entry_status"];
           wallet_id: string;
         };
@@ -624,10 +628,19 @@ export type Database = {
           id?: string;
           idempotency_key?: string | null;
           label?: string;
+          operation?: string | null;
+          reservation_id?: string | null;
           status?: Database["public"]["Enums"]["credit_entry_status"];
           wallet_id?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: "credit_ledger_reservation_id_fkey";
+            columns: ["reservation_id"];
+            isOneToOne: false;
+            referencedRelation: "credit_ledger";
+            referencedColumns: ["id"];
+          },
           {
             foreignKeyName: "credit_ledger_wallet_id_fkey";
             columns: ["wallet_id"];
@@ -983,6 +996,44 @@ export type Database = {
           },
         ];
       };
+      message_attachments: {
+        Row: {
+          byte_size: number | null;
+          content_type: string | null;
+          created_at: string;
+          file_name: string;
+          id: string;
+          message_id: string;
+          storage_path: string;
+        };
+        Insert: {
+          byte_size?: number | null;
+          content_type?: string | null;
+          created_at?: string;
+          file_name: string;
+          id?: string;
+          message_id: string;
+          storage_path: string;
+        };
+        Update: {
+          byte_size?: number | null;
+          content_type?: string | null;
+          created_at?: string;
+          file_name?: string;
+          id?: string;
+          message_id?: string;
+          storage_path?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "message_attachments_message_id_fkey";
+            columns: ["message_id"];
+            isOneToOne: false;
+            referencedRelation: "messages";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       messages: {
         Row: {
           body: string;
@@ -1053,6 +1104,57 @@ export type Database = {
             columns: ["property_id"];
             isOneToOne: false;
             referencedRelation: "properties";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      notification_intents: {
+        Row: {
+          channel: string;
+          conversation_id: string | null;
+          created_at: string;
+          id: string;
+          message_id: string | null;
+          payload: Json;
+          skip_reason: string | null;
+          status: string;
+          user_id: string;
+        };
+        Insert: {
+          channel: string;
+          conversation_id?: string | null;
+          created_at?: string;
+          id?: string;
+          message_id?: string | null;
+          payload?: Json;
+          skip_reason?: string | null;
+          status?: string;
+          user_id: string;
+        };
+        Update: {
+          channel?: string;
+          conversation_id?: string | null;
+          created_at?: string;
+          id?: string;
+          message_id?: string | null;
+          payload?: Json;
+          skip_reason?: string | null;
+          status?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "notification_intents_conversation_id_fkey";
+            columns: ["conversation_id"];
+            isOneToOne: false;
+            referencedRelation: "conversations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "notification_intents_message_id_fkey";
+            columns: ["message_id"];
+            isOneToOne: false;
+            referencedRelation: "messages";
             referencedColumns: ["id"];
           },
         ];
@@ -1812,6 +1914,8 @@ export type Database = {
           created_at: string;
           id: string;
           notes: string | null;
+          review_reason: string | null;
+          reviewed_at: string | null;
           reviewed_by: string | null;
           status: string;
           tier: Database["public"]["Enums"]["verification_tier"];
@@ -1822,6 +1926,8 @@ export type Database = {
           created_at?: string;
           id?: string;
           notes?: string | null;
+          review_reason?: string | null;
+          reviewed_at?: string | null;
           reviewed_by?: string | null;
           status?: string;
           tier: Database["public"]["Enums"]["verification_tier"];
@@ -1832,6 +1938,8 @@ export type Database = {
           created_at?: string;
           id?: string;
           notes?: string | null;
+          review_reason?: string | null;
+          reviewed_at?: string | null;
           reviewed_by?: string | null;
           status?: string;
           tier?: Database["public"]["Enums"]["verification_tier"];
@@ -1980,6 +2088,33 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      apply_credit_operation: {
+        Args: {
+          p_amount: number;
+          p_idempotency_key?: string;
+          p_label: string;
+          p_operation: string;
+          p_reservation_id?: string;
+          p_wallet_id: string;
+        };
+        Returns: {
+          created_at: string;
+          delta: number;
+          id: string;
+          idempotency_key: string | null;
+          label: string;
+          operation: string | null;
+          reservation_id: string | null;
+          status: Database["public"]["Enums"]["credit_entry_status"];
+          wallet_id: string;
+        };
+        SetofOptions: {
+          from: "*";
+          to: "credit_ledger";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       has_active_subscription: {
         Args: { check_env?: string; user_uuid: string };
         Returns: boolean;

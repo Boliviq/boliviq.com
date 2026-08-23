@@ -1,3 +1,4 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ConversationThreadTypeId, NotificationChannelId } from "@/lib/canons";
 
 export type NotificationPreferenceView = {
@@ -73,4 +74,96 @@ export function maySendOutbound(
     return { allowed: false, reason: "quiet_hours" };
   }
   return { allowed: true, reason: "ok" };
+}
+
+const DEFAULT_PREFS: NotificationPreferenceView = {
+  emailEnabled: true,
+  smsEnabled: false,
+  quietHoursStart: null,
+  quietHoursEnd: null,
+  timezone: "America/Chicago",
+  optedOutAt: null,
+};
+
+export type PlannedNotificationIntent = {
+  userId: string;
+  channel: NotificationChannelId;
+  status: "queued" | "skipped";
+  skipReason: string | null;
+};
+
+export function planOutboundIntents(
+  recipientIds: string[],
+  prefsByUser: Record<string, NotificationPreferenceView>,
+  now = new Date(),
+): PlannedNotificationIntent[] {
+  const channels: NotificationChannelId[] = ["in_app", "email", "sms"];
+  return recipientIds.flatMap((userId) => {
+    const prefs = prefsByUser[userId] ?? DEFAULT_PREFS;
+    return channels.map((channel) => {
+      const result = maySendOutbound(channel, prefs, now);
+      return {
+        userId,
+        channel,
+        status: result.allowed ? ("queued" as const) : ("skipped" as const),
+        skipReason: result.allowed ? null : result.reason,
+      };
+    });
+  });
+}
+
+export async function persistNotificationIntents(
+  supabase: SupabaseClient,
+  intents: PlannedNotificationIntent[],
+  conversationId: string,
+  messageId: string,
+): Promise<void> {
+  if (intents.length === 0) return;
+  const { error } = await supabase.from("notification_intents").insert(
+    intents.map((intent) => ({
+      user_id: intent.userId,
+      channel: intent.channel,
+      status: intent.status,
+      skip_reason: intent.skipReason,
+      conversation_id: conversationId,
+      message_id: messageId,
+      payload: { source: "message" },
+    })),
+  );
+  if (error) throw new Error(error.message);
+}
+
+export async function attachMessageFile(
+  supabase: SupabaseClient,
+  userId: string,
+  input: {
+    messageId: string;
+    storagePath: string;
+    fileName: string;
+    contentType?: string;
+    byteSize?: number;
+  },
+): Promise<{ id: string }> {
+  const { data: message, error: readErr } = await supabase
+    .from("messages")
+    .select("id, sender_id")
+    .eq("id", input.messageId)
+    .maybeSingle();
+  if (readErr) throw new Error(readErr.message);
+  if (!message) throw new Error("Message not found");
+  if (message.sender_id !== userId) throw new Error("Forbidden");
+
+  const { data, error } = await supabase
+    .from("message_attachments")
+    .insert({
+      message_id: input.messageId,
+      storage_path: input.storagePath,
+      file_name: input.fileName,
+      content_type: input.contentType ?? null,
+      byte_size: input.byteSize ?? null,
+    })
+    .select("id")
+    .single();
+  if (error) throw new Error(error.message);
+  return { id: data.id };
 }
