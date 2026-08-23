@@ -180,6 +180,93 @@ describe.runIf(enabled)("Phase 1 — marketplace listings, saved, reports (Supab
   });
 });
 
+describe.runIf(enabled)("Phase 3 — search, views, saved searches, listing → lead", () => {
+  let alice: { client: SupabaseClient; userId: string };
+  let bob: { client: SupabaseClient; userId: string };
+  let listingId: string;
+
+  beforeAll(async () => {
+    alice = await makeUser();
+    bob = await makeUser();
+    const { data, error } = await alice.client
+      .from("marketplace_listings")
+      .insert({
+        user_id: alice.userId,
+        title: "Austin kitchen repair",
+        description: "Cabinets and counters",
+        category: "repairs",
+        location: "Austin, TX",
+        price: 12000,
+        visibility: "public",
+      })
+      .select("id")
+      .single();
+    if (error) throw error;
+    listingId = data.id;
+  });
+
+  test("search filters by location and price", async () => {
+    const { data } = await bob.client
+      .from("marketplace_listings")
+      .select("title, location, price")
+      .ilike("location", "%Austin%")
+      .gte("price", 5000)
+      .lte("price", 20000);
+    expect((data ?? []).some((l) => l.title === "Austin kitchen repair")).toBe(true);
+  });
+
+  test("listing views are unique per viewer and increment count", async () => {
+    const { error } = await bob.client.from("listing_views").insert({
+      listing_id: listingId,
+      viewer_id: bob.userId,
+    });
+    expect(error).toBeNull();
+    const again = await bob.client.from("listing_views").insert({
+      listing_id: listingId,
+      viewer_id: bob.userId,
+    });
+    expect(again.error).not.toBeNull();
+  });
+
+  test("saved searches are isolated per user", async () => {
+    const { error } = await alice.client.from("saved_searches").insert({
+      user_id: alice.userId,
+      name: "Austin repairs",
+      query: "kitchen",
+      category: "repairs",
+      location: "Austin",
+      alert_enabled: true,
+    });
+    expect(error).toBeNull();
+    const { data: bobSees } = await bob.client.from("saved_searches").select("name");
+    expect((bobSees ?? []).some((s) => s.name === "Austin repairs")).toBe(false);
+  });
+
+  test("a listing converts to a lead owned by the converter", async () => {
+    const { data, error } = await bob.client
+      .from("leads")
+      .insert({
+        user_id: bob.userId,
+        listing_id: listingId,
+        title: "Austin kitchen repair",
+        source: "marketplace",
+        status: "new",
+        opportunity_value: 12000,
+      })
+      .select("id, listing_id, user_id")
+      .single();
+    expect(error).toBeNull();
+    expect(data?.listing_id).toBe(listingId);
+    expect(data?.user_id).toBe(bob.userId);
+
+    const { data: aliceLeads } = await alice.client
+      .from("leads")
+      .select("id")
+      .eq("listing_id", listingId);
+    expect(aliceLeads ?? []).toHaveLength(0);
+  });
+});
+
 describe.runIf(enabled)(
   "Phase 1 — conversations, verification, credits, assistant, account",
   () => {

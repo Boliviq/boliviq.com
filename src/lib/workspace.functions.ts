@@ -180,7 +180,7 @@ type ListingDetails = {
   projectLabel?: string;
 };
 
-function toListing(row: {
+export function toListing(row: {
   id: string;
   user_id: string;
   title: string;
@@ -193,6 +193,9 @@ function toListing(row: {
   visibility: string | null;
   expires_at: string | null;
   created_at: string | null;
+  subcategory?: string | null;
+  view_count?: number | null;
+  response_count?: number | null;
 }): MarketplaceListing {
   const d = (row.details ?? {}) as ListingDetails;
   return {
@@ -217,11 +220,14 @@ function toListing(row: {
     visibility: (row.visibility as "public" | "limited") ?? "public",
     expiresAt: row.expires_at ?? undefined,
     ownerId: row.user_id,
+    subcategory: row.subcategory ?? undefined,
+    viewCount: Number(row.view_count ?? 0),
+    responseCount: Number(row.response_count ?? 0),
   };
 }
 
-const LISTING_COLUMNS =
-  "id, user_id, title, description, category, location, price, price_label, details, visibility, expires_at, created_at";
+export const LISTING_COLUMNS =
+  "id, user_id, title, description, category, location, price, price_label, details, visibility, expires_at, created_at, subcategory, view_count, response_count";
 
 export const listListingsFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -274,6 +280,7 @@ export const createListingFn = createServerFn({ method: "POST" })
         location: data.location ?? "",
         price: data.price ?? null,
         visibility: data.visibility ?? "public",
+        expires_at: new Date(Date.now() + 30 * 86400000).toISOString(),
         details: details as unknown as Json,
       })
       .select(LISTING_COLUMNS)
@@ -499,6 +506,19 @@ export const startConversationFn = createServerFn({ method: "POST" })
       .from("conversations")
       .update({ updated_at: new Date().toISOString() })
       .eq("id", convo.id);
+
+    if (listingId) {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: listing } = await supabaseAdmin
+        .from("marketplace_listings")
+        .select("response_count")
+        .eq("id", listingId)
+        .maybeSingle();
+      await supabaseAdmin
+        .from("marketplace_listings")
+        .update({ response_count: Number(listing?.response_count ?? 0) + 1 })
+        .eq("id", listingId);
+    }
 
     return convo.id;
   });

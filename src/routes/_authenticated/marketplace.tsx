@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
+  Bell,
   Flag,
   FolderKanban,
   Heart,
@@ -9,6 +10,7 @@ import {
   Plus,
   Search,
   Store,
+  UserPlus,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -39,7 +41,6 @@ import { useAccount } from "@/hooks/use-current-user";
 import { currency } from "@/lib/format";
 import { categoryLabel, type MarketplaceListing } from "@/lib/workspace-store";
 import {
-  useListings,
   useCreateListing,
   useSavedListingIds,
   useToggleSavedListing,
@@ -47,6 +48,15 @@ import {
   useCreateProject,
   useStartConversation,
 } from "@/hooks/use-workspace-data";
+import {
+  useConvertListingToLead,
+  useDeleteSavedSearch,
+  useRecordListingView,
+  useSaveSearch,
+  useSavedSearches,
+  useSearchListings,
+} from "@/hooks/use-marketplace";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/marketplace")({
   component: MarketplacePage,
@@ -57,7 +67,11 @@ function MarketplacePage() {
   const navigate = useNavigate();
   const [q, setQ] = useState("");
   const [category, setCategory] = useState<MarketplaceCategoryId | "all">("all");
-  const [view, setView] = useState<"list" | "cards">("cards");
+  const [location, setLocation] = useState("");
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [savedOnly, setSavedOnly] = useState(false);
+  const [view, setView] = useState<"list" | "cards" | "map">("cards");
   const [compose, setCompose] = useState(false);
   const [draft, setDraft] = useState({
     title: "",
@@ -66,26 +80,41 @@ function MarketplacePage() {
     location: "",
     price: "",
   });
+  const [photoFiles, setPhotoFiles] = useState<File[]>([]);
+  const [uploading, setUploading] = useState(false);
 
-  const { data: allListings = [], isLoading } = useListings();
+  const filters = {
+    query: q || undefined,
+    category: category === "all" ? undefined : category,
+    location: location || undefined,
+    minPrice: minPrice ? Number(minPrice) : undefined,
+    maxPrice: maxPrice ? Number(maxPrice) : undefined,
+    savedOnly: savedOnly || undefined,
+  };
+  const { data: listings = [], isLoading } = useSearchListings(filters);
   const { data: savedIds = [] } = useSavedListingIds();
+  const { data: savedSearches = [] } = useSavedSearches();
   const createListing = useCreateListing();
   const toggleSaved = useToggleSavedListing();
   const reportListing = useReportListing();
   const createProject = useCreateProject();
   const startConversation = useStartConversation();
+  const convertLead = useConvertListingToLead();
+  const recordView = useRecordListingView();
+  const saveSearch = useSaveSearch();
+  const deleteSearch = useDeleteSavedSearch();
   const saved = new Set(savedIds);
 
-  const listings = useMemo(() => {
-    return allListings.filter((l) => {
-      const hay = `${l.title} ${l.description} ${l.location}`.toLowerCase();
-      const okQ = !q || hay.includes(q.toLowerCase());
-      const okC = category === "all" || l.category === category;
-      return okQ && okC;
-    });
-  }, [allListings, q, category]);
+  const byLocation = useMemo(() => {
+    const groups = new Map<string, MarketplaceListing[]>();
+    for (const l of listings) {
+      const key = l.location || "Unspecified";
+      groups.set(key, [...(groups.get(key) ?? []), l]);
+    }
+    return [...groups.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  }, [listings]);
 
-  const publish = () => {
+  const publish = async () => {
     if (!draft.title.trim()) {
       toast.error("Add a title");
       return;
@@ -94,29 +123,49 @@ function MarketplacePage() {
       toast.error("Sign in to use your workspace");
       return;
     }
-    createListing.mutate(
-      {
-        title: draft.title,
-        description: draft.description,
-        category: draft.category,
-        location: draft.location || "Unspecified",
-        price: draft.price ? Number(draft.price) : undefined,
-        role: account.primary_role,
-        authorName: account.full_name || "You",
-        postedBy: account.full_name || "You",
-        visibility: "public",
-      },
-      {
-        onSuccess: () => {
-          setCompose(false);
-          setDraft({ title: "", description: "", category: "repairs", location: "", price: "" });
-          toast.success("Listing posted", {
-            description: "Message a professional or convert it into a project from this card.",
-          });
+    setUploading(true);
+    try {
+      const photos: string[] = [];
+      for (const file of photoFiles.slice(0, 8)) {
+        const path = `${userId}/${crypto.randomUUID()}-${file.name.replace(/[^\w.-]+/g, "")}`;
+        const { error } = await supabase.storage.from("marketplace-media").upload(path, file, {
+          upsert: false,
+        });
+        if (error) throw error;
+        const { data } = supabase.storage.from("marketplace-media").getPublicUrl(path);
+        photos.push(data.publicUrl);
+      }
+      createListing.mutate(
+        {
+          title: draft.title,
+          description: draft.description,
+          category: draft.category,
+          location: draft.location || "Unspecified",
+          price: draft.price ? Number(draft.price) : undefined,
+          photos,
+          role: account.primary_role,
+          authorName: account.full_name || "You",
+          postedBy: account.full_name || "You",
+          visibility: "public",
         },
-        onError: (e) => toast.error(e instanceof Error ? e.message : "Could not post the listing"),
-      },
-    );
+        {
+          onSuccess: () => {
+            setCompose(false);
+            setDraft({ title: "", description: "", category: "repairs", location: "", price: "" });
+            setPhotoFiles([]);
+            toast.success("Listing posted", {
+              description: "Message, convert to a lead, or turn it into a project.",
+            });
+          },
+          onError: (e) =>
+            toast.error(e instanceof Error ? e.message : "Could not post the listing"),
+        },
+      );
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not upload photos");
+    } finally {
+      setUploading(false);
+    }
   };
 
   const messageAbout = (listing: MarketplaceListing) => {
@@ -124,6 +173,7 @@ function MarketplacePage() {
       toast.error("Sign in to use your workspace");
       return;
     }
+    recordView.mutate(listing.id);
     startConversation.mutate(
       {
         title: `Re: ${listing.title}`,
@@ -193,6 +243,22 @@ function MarketplacePage() {
     );
   };
 
+  const toLead = (listing: MarketplaceListing) => {
+    if (!userId) {
+      toast.error("Sign in to use your workspace");
+      return;
+    }
+    convertLead.mutate(listing.id, {
+      onSuccess: () => {
+        toast.success("Lead created from listing", {
+          description: "It is on your pipeline as a new marketplace lead.",
+        });
+        void navigate({ to: "/leads" });
+      },
+      onError: (e) => toast.error(e instanceof Error ? e.message : "Could not create the lead"),
+    });
+  };
+
   return (
     <>
       <PageHeader
@@ -208,17 +274,34 @@ function MarketplacePage() {
         }
       />
       <div className="space-y-4 p-4 sm:p-8">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-          <div className="relative flex-1">
+        <div className="grid gap-3 lg:grid-cols-[1fr_160px_120px_120px_auto]">
+          <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Search location, keyword, project type…"
+              placeholder="Search keyword…"
               className="pl-9"
             />
           </div>
-          <div className="flex gap-2">
+          <Input
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            placeholder="City or area"
+          />
+          <Input
+            type="number"
+            value={minPrice}
+            onChange={(e) => setMinPrice(e.target.value)}
+            placeholder="Min $"
+          />
+          <Input
+            type="number"
+            value={maxPrice}
+            onChange={(e) => setMaxPrice(e.target.value)}
+            placeholder="Max $"
+          />
+          <div className="flex flex-wrap gap-2">
             <Button
               variant={view === "cards" ? "default" : "outline"}
               size="sm"
@@ -232,6 +315,49 @@ function MarketplacePage() {
               onClick={() => setView("list")}
             >
               List
+            </Button>
+            <Button
+              variant={view === "map" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setView("map")}
+            >
+              Map
+            </Button>
+            <Button
+              variant={savedOnly ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSavedOnly((v) => !v)}
+            >
+              Saved
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1"
+              onClick={() => {
+                if (!userId) return;
+                saveSearch.mutate(
+                  {
+                    name: q || location || categoryLabel(category === "all" ? "repairs" : category),
+                    query: q || undefined,
+                    category,
+                    location: location || undefined,
+                    minPrice: minPrice ? Number(minPrice) : undefined,
+                    maxPrice: maxPrice ? Number(maxPrice) : undefined,
+                    alertEnabled: true,
+                  },
+                  {
+                    onSuccess: () =>
+                      toast.success("Search saved", {
+                        description: "New matches can alert you once email delivery is connected.",
+                      }),
+                    onError: (e) =>
+                      toast.error(e instanceof Error ? e.message : "Could not save search"),
+                  },
+                );
+              }}
+            >
+              <Bell className="h-3.5 w-3.5" /> Save search
             </Button>
           </div>
         </div>
@@ -256,6 +382,37 @@ function MarketplacePage() {
           ))}
         </div>
 
+        {savedSearches.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {savedSearches.map((s) => (
+              <button
+                key={s.id}
+                type="button"
+                className="flex items-center gap-2 rounded-full border px-3 py-1 text-xs"
+                onClick={() => {
+                  setQ(s.query);
+                  setCategory((s.category as MarketplaceCategoryId) || "all");
+                  setLocation(s.location ?? "");
+                  setMinPrice(s.minPrice != null ? String(s.minPrice) : "");
+                  setMaxPrice(s.maxPrice != null ? String(s.maxPrice) : "");
+                }}
+              >
+                {s.alertEnabled && <Bell className="h-3 w-3 text-[#70bf2b]" />}
+                {s.name}
+                <span
+                  className="text-muted-foreground"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    deleteSearch.mutate(s.id);
+                  }}
+                >
+                  ×
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+
         {isLoading ? (
           <div className="rounded-2xl border-2 border-dashed p-10 text-center text-sm text-muted-foreground">
             Loading listings…
@@ -268,6 +425,33 @@ function MarketplacePage() {
               Try another category or post the first one.
             </p>
           </div>
+        ) : view === "map" ? (
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {byLocation.map(([place, rows]) => (
+              <Card key={place}>
+                <CardContent className="space-y-3 p-4">
+                  <div className="flex items-center gap-2 font-semibold">
+                    <MapPin className="h-4 w-4 text-[#70bf2b]" /> {place}
+                    <Badge variant="outline">{rows.length}</Badge>
+                  </div>
+                  {rows.map((l) => (
+                    <button
+                      key={l.id}
+                      type="button"
+                      className="block w-full rounded-md border p-2 text-left text-sm hover:bg-muted/50"
+                      onClick={() => {
+                        recordView.mutate(l.id);
+                        messageAbout(l);
+                      }}
+                    >
+                      <div className="font-medium">{l.title}</div>
+                      <div className="text-xs text-muted-foreground">{priceLabel(l)}</div>
+                    </button>
+                  ))}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         ) : view === "cards" ? (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {listings.map((l) => (
@@ -275,6 +459,7 @@ function MarketplacePage() {
                 key={l.id}
                 listing={l}
                 saved={saved.has(l.id)}
+                onOpen={() => recordView.mutate(l.id)}
                 onSave={() => {
                   if (!userId) {
                     toast.error("Sign in to use your workspace");
@@ -286,6 +471,7 @@ function MarketplacePage() {
                 }}
                 onMessage={() => messageAbout(l)}
                 onProject={() => convert(l)}
+                onLead={() => toLead(l)}
                 onReport={() => {
                   if (!userId) {
                     toast.error("Sign in to use your workspace");
@@ -309,13 +495,17 @@ function MarketplacePage() {
                 <div className="min-w-0">
                   <div className="font-medium">{l.title}</div>
                   <div className="text-xs text-muted-foreground">
-                    {l.location} · {categoryLabel(l.category)} · {l.postedBy}
+                    {l.location} · {categoryLabel(l.category)} · {l.postedBy} · {l.viewCount ?? 0}{" "}
+                    views
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-semibold">{priceLabel(l)}</span>
                   <Button size="sm" variant="outline" onClick={() => messageAbout(l)}>
                     Message
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => toLead(l)}>
+                    Lead
                   </Button>
                 </div>
               </div>
@@ -371,6 +561,18 @@ function MarketplacePage() {
               />
             </div>
             <div className="space-y-1">
+              <Label>Photos</Label>
+              <Input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) => setPhotoFiles(Array.from(e.target.files ?? []))}
+              />
+              {photoFiles.length > 0 && (
+                <p className="text-xs text-muted-foreground">{photoFiles.length} file(s) ready</p>
+              )}
+            </div>
+            <div className="space-y-1">
               <Label>Description</Label>
               <Textarea
                 value={draft.description}
@@ -383,8 +585,12 @@ function MarketplacePage() {
             <Button variant="outline" onClick={() => setCompose(false)}>
               Cancel
             </Button>
-            <Button onClick={() => void publish()} className="bg-[#70bf2b] hover:bg-[#80ce38]">
-              Publish
+            <Button
+              onClick={() => void publish()}
+              disabled={uploading || createListing.isPending}
+              className="bg-[#70bf2b] hover:bg-[#80ce38]"
+            >
+              {uploading ? "Uploading…" : "Publish"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -402,20 +608,24 @@ function priceLabel(l: SeedListing) {
 function ListingCard({
   listing: l,
   saved,
+  onOpen,
   onSave,
   onMessage,
   onProject,
+  onLead,
   onReport,
 }: {
-  listing: SeedListing;
+  listing: MarketplaceListing;
   saved: boolean;
+  onOpen: () => void;
   onSave: () => void;
   onMessage: () => void;
   onProject: () => void;
+  onLead: () => void;
   onReport: () => void;
 }) {
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden" onMouseEnter={onOpen}>
       {l.photos[0] ? (
         <img src={l.photos[0]} alt="" className="h-40 w-full object-cover" />
       ) : (
@@ -434,6 +644,9 @@ function ListingCard({
         <div className="flex items-center gap-1 text-xs text-muted-foreground">
           <MapPin className="h-3 w-3" /> {l.location}
         </div>
+        <div className="text-xs text-muted-foreground">
+          {l.viewCount ?? 0} views · {l.responseCount ?? 0} responses
+        </div>
         {(l.propertyLabel || l.projectLabel) && (
           <div className="text-xs text-muted-foreground">
             Linked: {l.propertyLabel ?? l.projectLabel}
@@ -446,6 +659,9 @@ function ListingCard({
         <div className="flex flex-wrap gap-2">
           <Button size="sm" className="flex-1 gap-1" onClick={onMessage}>
             <MessageSquare className="h-3.5 w-3.5" /> Message
+          </Button>
+          <Button size="sm" variant="outline" onClick={onLead} title="Create lead">
+            <UserPlus className="h-3.5 w-3.5" />
           </Button>
           <Button size="sm" variant="outline" onClick={onProject} title="Convert to project">
             <FolderKanban className="h-3.5 w-3.5" />

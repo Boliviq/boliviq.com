@@ -93,12 +93,12 @@ _In progress. Foundation + first modules landed; remaining modules follow the sa
 
 ## Phase 3 — Marketplace & Search (Canon 3)
 
-- [ ] Listing CRUD with media upload (cloud storage + signed URLs), categories/subcategories, visibility, expiration, reporting, view/response analytics
-- [ ] Search + filters, map + list views, favorites, saved searches, alerts
-- [ ] "Create lead from listing" conversion
+- [x] Listing CRUD with media upload (`marketplace-media` bucket), categories, visibility, 30-day expiration, reporting, view/response analytics
+- [x] Search + filters, map + list + card views, favorites, saved searches, alert flag (email delivery is Phase 10)
+- [x] "Create lead from listing" conversion (`leads.listing_id`)
 
 **Test gate:** listing lifecycle e2e, search/filter correctness, storage signed-URL access control, moderation hooks.
-**Break 4:** create → discover → message → convert-to-lead loop works end to end.
+**Break 4:** create → discover → message → convert-to-lead loop works end to end. _Status: loop persists in Supabase; map view is location-grouped until Phase 10 geocoding._
 
 ## Phase 4 — Communication Center (Canon 4)
 

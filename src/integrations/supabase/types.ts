@@ -694,6 +694,7 @@ export type Database = {
           hot: boolean;
           id: string;
           last_contact_at: string | null;
+          listing_id: string | null;
           next_follow_up_at: string | null;
           opportunity_value: number | null;
           priority: string | null;
@@ -702,6 +703,7 @@ export type Database = {
           source: string | null;
           stage_id: string | null;
           status: Database["public"]["Enums"]["lead_status"];
+          title: string | null;
           updated_at: string;
           user_id: string;
         };
@@ -712,6 +714,7 @@ export type Database = {
           hot?: boolean;
           id?: string;
           last_contact_at?: string | null;
+          listing_id?: string | null;
           next_follow_up_at?: string | null;
           opportunity_value?: number | null;
           priority?: string | null;
@@ -720,6 +723,7 @@ export type Database = {
           source?: string | null;
           stage_id?: string | null;
           status?: Database["public"]["Enums"]["lead_status"];
+          title?: string | null;
           updated_at?: string;
           user_id: string;
         };
@@ -730,6 +734,7 @@ export type Database = {
           hot?: boolean;
           id?: string;
           last_contact_at?: string | null;
+          listing_id?: string | null;
           next_follow_up_at?: string | null;
           opportunity_value?: number | null;
           priority?: string | null;
@@ -738,6 +743,7 @@ export type Database = {
           source?: string | null;
           stage_id?: string | null;
           status?: Database["public"]["Enums"]["lead_status"];
+          title?: string | null;
           updated_at?: string;
           user_id?: string;
         };
@@ -747,6 +753,13 @@ export type Database = {
             columns: ["contact_id"];
             isOneToOne: false;
             referencedRelation: "contacts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "leads_listing_id_fkey";
+            columns: ["listing_id"];
+            isOneToOne: false;
+            referencedRelation: "marketplace_listings";
             referencedColumns: ["id"];
           },
           {
@@ -797,6 +810,35 @@ export type Database = {
           },
         ];
       };
+      listing_views: {
+        Row: {
+          created_at: string;
+          id: string;
+          listing_id: string;
+          viewer_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          listing_id: string;
+          viewer_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          listing_id?: string;
+          viewer_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "listing_views_listing_id_fkey";
+            columns: ["listing_id"];
+            isOneToOne: false;
+            referencedRelation: "marketplace_listings";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       marketplace_listings: {
         Row: {
           category: string;
@@ -809,9 +851,12 @@ export type Database = {
           price: number | null;
           price_label: string | null;
           reported: boolean;
+          response_count: number;
+          subcategory: string | null;
           title: string;
           updated_at: string;
           user_id: string;
+          view_count: number;
           visibility: Database["public"]["Enums"]["listing_visibility"];
           workspace_id: string | null;
         };
@@ -826,9 +871,12 @@ export type Database = {
           price?: number | null;
           price_label?: string | null;
           reported?: boolean;
+          response_count?: number;
+          subcategory?: string | null;
           title: string;
           updated_at?: string;
           user_id: string;
+          view_count?: number;
           visibility?: Database["public"]["Enums"]["listing_visibility"];
           workspace_id?: string | null;
         };
@@ -843,9 +891,12 @@ export type Database = {
           price?: number | null;
           price_label?: string | null;
           reported?: boolean;
+          response_count?: number;
+          subcategory?: string | null;
           title?: string;
           updated_at?: string;
           user_id?: string;
+          view_count?: number;
           visibility?: Database["public"]["Enums"]["listing_visibility"];
           workspace_id?: string | null;
         };
@@ -1361,6 +1412,45 @@ export type Database = {
           },
         ];
       };
+      saved_searches: {
+        Row: {
+          alert_enabled: boolean;
+          category: string | null;
+          created_at: string;
+          id: string;
+          location: string | null;
+          max_price: number | null;
+          min_price: number | null;
+          name: string;
+          query: string;
+          user_id: string;
+        };
+        Insert: {
+          alert_enabled?: boolean;
+          category?: string | null;
+          created_at?: string;
+          id?: string;
+          location?: string | null;
+          max_price?: number | null;
+          min_price?: number | null;
+          name: string;
+          query?: string;
+          user_id: string;
+        };
+        Update: {
+          alert_enabled?: boolean;
+          category?: string | null;
+          created_at?: string;
+          id?: string;
+          location?: string | null;
+          max_price?: number | null;
+          min_price?: number | null;
+          name?: string;
+          query?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       subscriptions: {
         Row: {
           cancel_at_period_end: boolean | null;
@@ -1739,6 +1829,14 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"];
           _user_id: string;
         };
+        Returns: boolean;
+      };
+      is_conversation_participant: {
+        Args: { _conversation_id: string; _user_id: string };
+        Returns: boolean;
+      };
+      is_workspace_member: {
+        Args: { _user_id: string; _workspace_id: string };
         Returns: boolean;
       };
     };

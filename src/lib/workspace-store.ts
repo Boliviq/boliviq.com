@@ -18,6 +18,28 @@ export type MarketplaceListing = SeedListing & {
   visibility?: "public" | "limited";
   expiresAt?: string;
   ownerId?: string;
+  subcategory?: string;
+  viewCount?: number;
+  responseCount?: number;
+};
+
+export type SavedSearch = {
+  id: string;
+  name: string;
+  query: string;
+  category: string | null;
+  location: string | null;
+  minPrice: number | null;
+  maxPrice: number | null;
+  alertEnabled: boolean;
+};
+
+export type MarketplaceLead = {
+  id: string;
+  listingId: string | null;
+  title: string;
+  source: string;
+  status: string;
 };
 
 export type Thread = {
