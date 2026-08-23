@@ -50,20 +50,8 @@ CREATE POLICY "creator add participants" ON public.conversation_participants
     )
   );
 
-DROP POLICY IF EXISTS "participants read peers" ON public.conversation_participants;
-CREATE POLICY "participants read peers" ON public.conversation_participants
-  FOR SELECT USING (
-    user_id = auth.uid()
-    OR EXISTS (
-      SELECT 1 FROM public.conversation_participants p
-      WHERE p.conversation_id = conversation_participants.conversation_id
-        AND p.user_id = auth.uid()
-    )
-    OR EXISTS (
-      SELECT 1 FROM public.conversations c
-      WHERE c.id = conversation_id AND c.created_by = auth.uid()
-    )
-  );
+-- Do not add a conversation_participants SELECT policy that queries the same
+-- table (or conversations policies that bounce back). That recurses under RLS.
 
 -- ---------------------------------------------------------------------------
 -- Credit wallet/ledger writes (Phase 1 persist; Phase 7 deepens metering)
