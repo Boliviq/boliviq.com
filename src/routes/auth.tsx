@@ -34,6 +34,7 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [honeypot, setHoneypot] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -45,6 +46,10 @@ function AuthPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (honeypot.trim()) {
+      toast.error("Could not create the account");
+      return;
+    }
     setLoading(true);
     try {
       if (mode === "signup") {
@@ -57,8 +62,14 @@ function AuthPage() {
           },
         });
         if (error) throw error;
-        toast.success("Account created! Redirecting…");
-        navigate({ to: "/onboarding" });
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (!sessionData.session) {
+          toast.success("Check your email to confirm the account, then sign in.");
+          setMode("signin");
+        } else {
+          toast.success("Account created! Redirecting…");
+          navigate({ to: "/onboarding" });
+        }
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
@@ -163,6 +174,17 @@ function AuthPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div aria-hidden="true" className="hidden">
+              <label htmlFor="company_website">Company website</label>
+              <input
+                id="company_website"
+                name="company_website"
+                tabIndex={-1}
+                autoComplete="off"
+                value={honeypot}
+                onChange={(e) => setHoneypot(e.target.value)}
+              />
+            </div>
             {mode === "signup" && (
               <div className="space-y-2">
                 <Label htmlFor="name">Full name</Label>

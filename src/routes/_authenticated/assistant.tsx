@@ -1,6 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
 import { Sparkles, Wallet } from "lucide-react";
 import { toast } from "sonner";
 
@@ -18,49 +17,33 @@ import {
   LENDING_DECISION_NOTICE,
   getProfileRole,
 } from "@/lib/canons";
-import { CREDIT_WALLET_SEED } from "@/lib/platform-seed";
 import { useWorkspace } from "@/hooks/use-workspace";
-import { isMissingRelation, fromTable } from "@/lib/supabase-safe";
-import {
-  creditBalance,
-  creditLedger,
-  loadAssistantLog,
-  saveAssistantLog,
-} from "@/lib/workspace-store";
+import { useAssistantLog, useCreditWallet, useSaveAssistantLog } from "@/hooks/use-workspace-data";
+import type { AssistantTurn } from "@/lib/workspace-store";
 
 export const Route = createFileRoute("/_authenticated/assistant")({
   component: AssistantPage,
 });
 
 function AssistantPage() {
-  const { primaryRole, userId } = useWorkspace();
+  const { primaryRole } = useWorkspace();
   const role = getProfileRole(primaryRole);
   const [prompt, setPrompt] = useState("");
-  const [log, setLog] = useState<{ role: "user" | "assistant"; text: string }[]>(() => {
-    const stored = loadAssistantLog(userId);
-    return stored.length
-      ? stored
-      : [
-          {
-            role: "assistant",
-            text: `I understand you as a ${role.label}. I can search Boliviq, draft listings and messages, summarize conversations, create tasks, analyze properties, estimate repairs, and organize documents — only with data you are authorized to see.`,
-          },
-        ];
-  });
+  const greeting: AssistantTurn = {
+    role: "assistant",
+    text: `I understand you as a ${role.label}. I can search Boliviq, draft listings and messages, summarize conversations, create tasks, analyze properties, estimate repairs, and organize documents — only with data you are authorized to see.`,
+  };
+  const { data: storedLog } = useAssistantLog();
+  const saveLog = useSaveAssistantLog();
+  const wallet = useCreditWallet();
+  const [log, setLog] = useState<AssistantTurn[]>([greeting]);
+  const [hydrated, setHydrated] = useState(false);
 
-  const wallet = useQuery({
-    queryKey: ["credit-wallet", userId],
-    enabled: !!userId,
-    queryFn: async () => {
-      const { data, error } = await fromTable("credit_wallets").select("*").limit(1).maybeSingle();
-      if (error) {
-        if (isMissingRelation(error)) return CREDIT_WALLET_SEED;
-        throw error;
-      }
-      if (!data) return CREDIT_WALLET_SEED;
-      return { ...CREDIT_WALLET_SEED, balance: Number(data.balance ?? CREDIT_WALLET_SEED.balance) };
-    },
-  });
+  useEffect(() => {
+    if (hydrated || storedLog === undefined) return;
+    if (storedLog.length) setLog(storedLog);
+    setHydrated(true);
+  }, [storedLog, hydrated]);
 
   const suggestions = useMemo(() => {
     switch (role.id) {
@@ -116,19 +99,19 @@ function AssistantPage() {
       "Credits: this preview does not charge the workspace wallet.",
     ].join("\n");
     setLog((prev) => {
-      const next = [
+      const next: AssistantTurn[] = [
         ...prev,
-        { role: "user" as const, text: q },
-        { role: "assistant" as const, text: reply },
+        { role: "user", text: q },
+        { role: "assistant", text: reply },
       ];
-      if (userId) saveAssistantLog(userId, next);
+      saveLog.mutate(next);
       return next;
     });
     setPrompt("");
     toast.message("Assistant reply generated", { description: "No autonomous side effects." });
   };
 
-  const credits = wallet.data ?? CREDIT_WALLET_SEED;
+  const credits = wallet.data;
 
   return (
     <>
@@ -194,13 +177,15 @@ function AssistantPage() {
               <CardTitle className="text-base">Credit wallet</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
-              <div className="font-display text-3xl font-bold">{credits.balance}</div>
+              <div className="font-display text-3xl font-bold">{credits?.balance ?? 0}</div>
               <div className="text-xs text-muted-foreground">
-                Workspace wallet {creditBalance()} · Reserved {CREDIT_WALLET_SEED.reserved} ·
-                Monthly grant {CREDIT_WALLET_SEED.monthlyGrant}
+                Workspace wallet · Reserved {credits?.reserved ?? 0}
               </div>
               <div className="space-y-1 pt-2">
-                {creditLedger().map((row) => (
+                {(credits?.ledger ?? []).length === 0 && (
+                  <div className="text-xs text-muted-foreground">No ledger entries yet.</div>
+                )}
+                {(credits?.ledger ?? []).map((row) => (
                   <div key={row.id} className="flex justify-between text-xs">
                     <span className="truncate pr-2">{row.label}</span>
                     <span className={row.delta < 0 ? "text-destructive" : "text-success"}>

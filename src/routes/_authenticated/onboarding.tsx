@@ -23,7 +23,8 @@ import {
   isProfessionalRole,
   type ProfileRoleId,
 } from "@/lib/canons";
-import { DEFAULT_ACCOUNT, loadDraft, saveDraft, type AccountProfile } from "@/lib/workspace-store";
+import { DEFAULT_ACCOUNT, type AccountProfile } from "@/lib/workspace-store";
+import { useAccountProfile, useSaveAccountDraft } from "@/hooks/use-workspace-data";
 
 export const Route = createFileRoute("/_authenticated/onboarding")({ component: Onboarding });
 
@@ -31,34 +32,27 @@ const STEPS = 5;
 
 function Onboarding() {
   const navigate = useNavigate();
-  const [userId, setUserId] = useState<string | null>(null);
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [f, setF] = useState<AccountProfile>(DEFAULT_ACCOUNT);
+  const [hydrated, setHydrated] = useState(false);
+  const { data: remoteDraft } = useAccountProfile();
+  const saveAccountDraft = useSaveAccountDraft();
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      const user = data.user;
-      if (!user) return;
-      setUserId(user.id);
-      const draft = loadDraft(user.id);
-      const meta = (user.user_metadata ?? {}) as Record<string, unknown>;
-      setF({
-        ...draft,
-        full_name: (meta.full_name as string) || draft.full_name || "",
-        phone: (meta.phone as string) || draft.phone,
-        primary_role: (meta.primary_role as ProfileRoleId) || draft.primary_role,
-        onboarded: Boolean(meta.onboarded || draft.onboarded),
-      });
-      if (draft.onboarding_step > 1 && !draft.onboarded) setStep(draft.onboarding_step);
-    });
-  }, []);
+    if (hydrated || !remoteDraft) return;
+    setF(remoteDraft);
+    if (remoteDraft.onboarding_step > 1 && !remoteDraft.onboarded) {
+      setStep(remoteDraft.onboarding_step);
+    }
+    setHydrated(true);
+  }, [remoteDraft, hydrated]);
 
   const persistDraft = (next: AccountProfile, nextStep = step, syncRemote = false) => {
     const row = { ...next, onboarding_step: nextStep };
     setF(row);
-    if (userId) saveDraft(userId, row);
     if (!syncRemote) return;
+    saveAccountDraft.mutate(row);
     void supabase.auth.updateUser({
       data: {
         full_name: row.full_name,

@@ -10,8 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useWorkspace } from "@/hooks/use-workspace";
+import { useConversations, useSendMessage } from "@/hooks/use-workspace-data";
 import { cn } from "@/lib/utils";
-import { listThreads, sendMessage } from "@/lib/workspace-store";
 
 const searchSchema = z.object({
   thread: z.string().optional(),
@@ -24,7 +24,9 @@ export const Route = createFileRoute("/_authenticated/messages")({
 
 function MessagesPage() {
   const { thread: threadParam } = Route.useSearch();
-  const { userId, tick } = useWorkspace();
+  const { userId } = useWorkspace();
+  const { data: threads = [], isLoading } = useConversations();
+  const sendMessage = useSendMessage();
   const [activeId, setActiveId] = useState(threadParam ?? "");
   const [q, setQ] = useState("");
   const [draft, setDraft] = useState("");
@@ -33,18 +35,17 @@ function MessagesPage() {
     if (threadParam) setActiveId(threadParam);
   }, [threadParam]);
 
-  const threads = useMemo(() => {
-    const merged = listThreads(userId);
-    if (!q) return merged;
+  const filtered = useMemo(() => {
+    if (!q) return threads;
     const needle = q.toLowerCase();
-    return merged.filter((t) =>
+    return threads.filter((t) =>
       `${t.title} ${t.lastMessage} ${t.property ?? ""} ${t.project ?? ""} ${t.listing ?? ""}`
         .toLowerCase()
         .includes(needle),
     );
-  }, [userId, q, tick]);
+  }, [threads, q]);
 
-  const active = threads.find((t) => t.id === activeId) ?? threads[0];
+  const active = filtered.find((t) => t.id === activeId) ?? filtered[0];
 
   const send = () => {
     if (!draft.trim() || !active) return;
@@ -52,9 +53,17 @@ function MessagesPage() {
       toast.error("Sign in to send messages");
       return;
     }
-    sendMessage(userId, active.id, draft.trim());
-    setDraft("");
-    toast.success("Message sent in-platform");
+    const body = draft.trim();
+    sendMessage.mutate(
+      { conversationId: active.id, body },
+      {
+        onSuccess: () => {
+          setDraft("");
+          toast.success("Message sent in-platform");
+        },
+        onError: (e) => toast.error(e instanceof Error ? e.message : "Could not send the message"),
+      },
+    );
   };
 
   return (
@@ -73,7 +82,15 @@ function MessagesPage() {
             />
           </div>
           <div className="max-h-[40vh] overflow-y-auto lg:max-h-none">
-            {threads.map((t) => (
+            {isLoading && (
+              <div className="p-3 text-sm text-muted-foreground">Loading conversations…</div>
+            )}
+            {!isLoading && filtered.length === 0 && (
+              <div className="p-6 text-sm text-muted-foreground">
+                No conversations yet. Message a listing or professional to start one.
+              </div>
+            )}
+            {filtered.map((t) => (
               <button
                 key={t.id}
                 type="button"
@@ -177,7 +194,11 @@ function MessagesPage() {
                     }
                   }}
                 />
-                <Button onClick={send} className="gap-1 bg-[#70bf2b] hover:bg-[#80ce38]">
+                <Button
+                  onClick={send}
+                  disabled={sendMessage.isPending}
+                  className="gap-1 bg-[#70bf2b] hover:bg-[#80ce38]"
+                >
                   <MessageSquare className="h-4 w-4" /> Send
                 </Button>
               </div>

@@ -783,6 +783,12 @@ export function isProfileRoleId(value: string | null | undefined): value is Prof
   return !!value && PROFILE_ROLES.some((r) => r.id === value);
 }
 
+export function isVerificationTierId(
+  value: string | null | undefined,
+): value is VerificationTierId {
+  return !!value && VERIFICATION_TIERS.some((t) => t.id === value);
+}
+
 export function getProfileRole(id: string | null | undefined): ProfileRole {
   const found = PROFILE_ROLES.find((r) => r.id === id);
   return found ?? PROFILE_ROLES[0];

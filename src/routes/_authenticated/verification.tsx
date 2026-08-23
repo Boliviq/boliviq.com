@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { VerificationBadge } from "@/components/verification-badge";
 import { VERIFICATION_DISCLAIMER, VERIFICATION_TIERS } from "@/lib/canons";
 import { useWorkspace } from "@/hooks/use-workspace";
-import { startVerification, startedVerifications } from "@/lib/workspace-store";
+import { useStartVerification, useVerifications } from "@/hooks/use-workspace-data";
 
 export const Route = createFileRoute("/_authenticated/verification")({
   component: VerificationPage,
@@ -44,9 +44,10 @@ const STEPS: Record<string, string[]> = {
 };
 
 function VerificationPage() {
-  const { userId, tick } = useWorkspace();
-  const started = startedVerifications(userId);
-  void tick;
+  const { userId } = useWorkspace();
+  const { data: startedTiers = [] } = useVerifications();
+  const startVerification = useStartVerification();
+  const started = new Set(startedTiers);
 
   return (
     <>
@@ -90,10 +91,16 @@ function VerificationPage() {
                           toast.error("Sign in to start verification");
                           return;
                         }
-                        startVerification(userId, tier.id);
-                        toast.success(`${tier.label} submitted for review`, {
-                          description:
-                            "Administrators record every decision in the audit log. Badges never imply Boliviq guarantees services.",
+                        startVerification.mutate(tier.id, {
+                          onSuccess: () =>
+                            toast.success(`${tier.label} submitted for review`, {
+                              description:
+                                "Administrators record every decision in the audit log. Badges never imply Boliviq guarantees services.",
+                            }),
+                          onError: (e) =>
+                            toast.error(
+                              e instanceof Error ? e.message : "Could not start verification",
+                            ),
                         });
                       }}
                     >

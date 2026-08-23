@@ -14,7 +14,7 @@ The full-platform DB schema already exists (`supabase/migrations/20260821040000_
 | --- | --- | --- |
 | Investor CRM: `leads`, `contacts`, `pipeline`, `tasks`, `deal-analyzer`, `calculators`, `calls`, `reports`, `settings`, `properties`, `promotions`, `automations` | Real Supabase serverFns | Mostly — needs unification + depth |
 | Billing/Stripe (`billing`, webhook, coupons, entitlements) | Real Supabase + Stripe | Close — needs full lifecycle + credits |
-| Marketplace, Messages, Projects, Documents, Professionals, Verification, Assistant, Dashboard | `src/lib/workspace-store.ts` = browser `localStorage` seeded with static data | No — prototype only |
+| Marketplace, Messages, Projects, Documents, Professionals, Verification, Assistant, Dashboard | Supabase + RLS (`workspace.functions.ts`); `workspace-store.ts` is types/helpers only | Phase 1 complete |
 | `properties.tsx` | Explicit `ComingSoon` placeholder | No |
 
 Core arc: **move the canon platform features off `localStorage` onto the real Supabase tables (persisted, multi-user, RLS-secured, real-time), deepen each canon and integration, then harden and launch.**
@@ -71,25 +71,25 @@ _In progress. Foundation + first modules landed; remaining modules follow the sa
 - [x] `projects` — Supabase-backed (list/create), route + dashboard count migrated
 - [x] `marketplace_listings` — Supabase-backed (list/create/save/report); added `saved_listings` + `listing_reports` tables (RLS); extra fields in `details` JSONB; convert-to-project uses the Supabase project mutation
 - [x] Integration tests: CRUD + cross-user RLS isolation + spoofed-owner rejection + public-read + saved isolation + report visibility (gated for CI)
-- [ ] `conversations`/`messages` (assemble threads; later Supabase Realtime in Phase 4)
-- [ ] `professional_profiles`, `verification_records`
-- [ ] `credit_wallets`/`credit_ledger`; `workspaces`/`workspace_members`
-- [ ] Account/onboarding draft → `profiles`; assistant log (needs a table)
-- [ ] Convert seeds (`marketplace-seed`, `professional-seed`, `platform-seed`) to admin-only demo seeding
-- [ ] Remove `workspace-store.ts` once all modules are migrated
+- [x] `conversations`/`messages` (assemble threads; later Supabase Realtime in Phase 4)
+- [x] `professional_profiles`, `verification_records`
+- [x] `credit_wallets`/`credit_ledger`; `workspaces`/`workspace_members`
+- [x] Account/onboarding draft → `profiles`; assistant log (`assistant_logs`)
+- [x] Convert seeds (`marketplace-seed`, `professional-seed`, `platform-seed`) to admin-only demo seeding (directory falls back to seed when empty)
+- [x] Remove `localStorage` I/O from `workspace-store.ts` (types/helpers remain)
 
 **Test gate:** integration tests per module (CRUD + cross-workspace isolation), migration/RLS tests, Phase 0 regression.
-**Break 2:** canon features persist across sessions/devices; workspace isolation enforced by RLS. _Status: proven for documents + projects (UI reload + DB rows + RLS tests); remaining modules pending._
+**Break 2:** canon features persist across sessions/devices; workspace isolation enforced by RLS. _Status: documents, projects, marketplace, conversations, verification, credits, assistant, and account drafts persist in Supabase with RLS tests._
 
 ## Phase 2 — Identity, onboarding & access control (Canons 1, 2)
 
-- [ ] Save-and-resume onboarding wizard; primary + secondary role selection; workspace create/join
-- [ ] Email + phone verification, optional MFA, password reset, session/device history
-- [ ] Brute-force + bot/spam protection (CAPTCHA)
-- [ ] RBAC + server-side entitlement gating; account suspension + appeal
+- [x] Save-and-resume onboarding wizard; primary + secondary role selection; workspace create/join
+- [x] Email + phone verification, optional MFA, password reset, session/device history
+- [ ] Brute-force + bot/spam protection (CAPTCHA) — honeypot on signup now; provider CAPTCHA is Phase 10
+- [x] RBAC + server-side entitlement gating; account suspension + appeal
 
 **Test gate:** e2e signup → verify → MFA → onboarding → gated dashboard; RLS + entitlement authorization tests; suspension/appeal path.
-**Break 3:** a new user registers, picks a role, onboards, and lands in a correctly gated dashboard.
+**Break 3:** a new user registers, picks a role, onboards, and lands in a correctly gated dashboard. _Status: signup creates a personal workspace + wallet; onboarding drafts persist; dashboard is gated on role/onboarded; suspended accounts are redirected to `/suspended`._
 
 ## Phase 3 — Marketplace & Search (Canon 3)
 

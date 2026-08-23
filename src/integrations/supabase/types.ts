@@ -67,6 +67,68 @@ export type Database = {
         };
         Relationships: [];
       };
+      assistant_logs: {
+        Row: {
+          created_at: string;
+          id: string;
+          messages: Json;
+          title: string;
+          updated_at: string;
+          user_id: string;
+          workspace_id: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          messages?: Json;
+          title?: string;
+          updated_at?: string;
+          user_id: string;
+          workspace_id?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          messages?: Json;
+          title?: string;
+          updated_at?: string;
+          user_id?: string;
+          workspace_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "assistant_logs_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      auth_session_log: {
+        Row: {
+          created_at: string;
+          id: string;
+          last_seen_at: string;
+          user_agent: string | null;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          last_seen_at?: string;
+          user_agent?: string | null;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          last_seen_at?: string;
+          user_agent?: string | null;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       automations: {
         Row: {
           action_config: Json | null;
@@ -986,56 +1048,77 @@ export type Database = {
       };
       profiles: {
         Row: {
+          account_draft: Json;
           account_kind: Database["public"]["Enums"]["account_kind"];
+          appeal_note: string | null;
+          appeal_status: string | null;
           avatar_url: string | null;
           comms_consent: boolean;
           company_id: string | null;
           created_at: string;
+          current_workspace_id: string | null;
           full_name: string | null;
           id: string;
           language: string;
           onboarded: boolean;
           onboarding_step: number;
           phone: string | null;
+          phone_verified_at: string | null;
           primary_role: Database["public"]["Enums"]["profile_role"];
           secondary_roles: Database["public"]["Enums"]["profile_role"][];
           service_area: string | null;
+          suspended_at: string | null;
+          suspension_reason: string | null;
           terms_accepted_at: string | null;
           updated_at: string;
         };
         Insert: {
+          account_draft?: Json;
           account_kind?: Database["public"]["Enums"]["account_kind"];
+          appeal_note?: string | null;
+          appeal_status?: string | null;
           avatar_url?: string | null;
           comms_consent?: boolean;
           company_id?: string | null;
           created_at?: string;
+          current_workspace_id?: string | null;
           full_name?: string | null;
           id: string;
           language?: string;
           onboarded?: boolean;
           onboarding_step?: number;
           phone?: string | null;
+          phone_verified_at?: string | null;
           primary_role?: Database["public"]["Enums"]["profile_role"];
           secondary_roles?: Database["public"]["Enums"]["profile_role"][];
           service_area?: string | null;
+          suspended_at?: string | null;
+          suspension_reason?: string | null;
           terms_accepted_at?: string | null;
           updated_at?: string;
         };
         Update: {
+          account_draft?: Json;
           account_kind?: Database["public"]["Enums"]["account_kind"];
+          appeal_note?: string | null;
+          appeal_status?: string | null;
           avatar_url?: string | null;
           comms_consent?: boolean;
           company_id?: string | null;
           created_at?: string;
+          current_workspace_id?: string | null;
           full_name?: string | null;
           id?: string;
           language?: string;
           onboarded?: boolean;
           onboarding_step?: number;
           phone?: string | null;
+          phone_verified_at?: string | null;
           primary_role?: Database["public"]["Enums"]["profile_role"];
           secondary_roles?: Database["public"]["Enums"]["profile_role"][];
           service_area?: string | null;
+          suspended_at?: string | null;
+          suspension_reason?: string | null;
           terms_accepted_at?: string | null;
           updated_at?: string;
         };
@@ -1045,6 +1128,13 @@ export type Database = {
             columns: ["company_id"];
             isOneToOne: false;
             referencedRelation: "companies";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "profiles_current_workspace_id_fkey";
+            columns: ["current_workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
             referencedColumns: ["id"];
           },
         ];
@@ -1529,6 +1619,44 @@ export type Database = {
           stripe_event_id?: string;
         };
         Relationships: [];
+      };
+      workspace_invites: {
+        Row: {
+          accepted_at: string | null;
+          created_at: string;
+          email: string;
+          id: string;
+          invited_by: string;
+          role: string;
+          workspace_id: string;
+        };
+        Insert: {
+          accepted_at?: string | null;
+          created_at?: string;
+          email: string;
+          id?: string;
+          invited_by: string;
+          role?: string;
+          workspace_id: string;
+        };
+        Update: {
+          accepted_at?: string | null;
+          created_at?: string;
+          email?: string;
+          id?: string;
+          invited_by?: string;
+          role?: string;
+          workspace_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "workspace_invites_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       workspace_members: {
         Row: {

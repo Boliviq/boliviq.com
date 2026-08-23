@@ -17,6 +17,8 @@ import { isMissingRelation } from "@/lib/supabase-safe";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { AccountSecurityCard } from "@/components/account-security";
+import { WorkspacePanel } from "@/components/workspace-panel";
 
 export const Route = createFileRoute("/_authenticated/settings")({ component: SettingsPage });
 
@@ -397,6 +399,8 @@ function SettingsPage() {
           </CardContent>
         </Card>
 
+        <WorkspacePanel />
+        <AccountSecurityCard />
         <ComplianceCard />
       </div>
     </>

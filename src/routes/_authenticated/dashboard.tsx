@@ -6,9 +6,12 @@ import { PageHeader } from "@/components/page-header";
 import { ArrowUpRight, Sparkles } from "lucide-react";
 import { dashboardForRole, LIFECYCLE } from "@/lib/canons";
 import { useAccount } from "@/hooks/use-current-user";
-import { useWorkspace } from "@/hooks/use-workspace";
-import { useDocuments, useProjects } from "@/hooks/use-workspace-data";
-import { listListings, listThreads } from "@/lib/workspace-store";
+import {
+  useConversations,
+  useDocuments,
+  useListings,
+  useProjects,
+} from "@/hooks/use-workspace-data";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
@@ -16,17 +19,17 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 
 function Dashboard() {
   const { account } = useAccount();
-  const { userId, tick } = useWorkspace();
   const { data: projects = [] } = useProjects();
   const { data: documents = [] } = useDocuments();
+  const { data: listings = [] } = useListings();
+  const { data: conversations = [] } = useConversations();
   const dash = dashboardForRole(account.primary_role);
   const live = {
-    listings: listListings(userId).length,
-    messages: listThreads(userId).length,
+    listings: listings.length,
+    messages: conversations.length,
     projects: projects.length,
     documents: documents.length,
   };
-  void tick;
 
   return (
     <>
@@ -42,8 +45,8 @@ function Dashboard() {
         }
       />
       <div className="space-y-6 p-4 sm:p-8">
-        <Badge variant="outline" className="border-warning/40 bg-warning/10 text-warning">
-          Connected workspace — demonstration figures mix with anything you add
+        <Badge variant="outline" className="border-[#70bf2b]/40 bg-[#70bf2b]/10 text-[#2f6b12]">
+          Connected workspace — counts come from your Supabase records
         </Badge>
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

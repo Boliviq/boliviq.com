@@ -11,8 +11,30 @@ import {
   listSavedListingIdsFn,
   toggleSavedListingFn,
   reportListingFn,
+  listConversationsFn,
+  startConversationFn,
+  sendMessageFn,
+  listProfessionalsFn,
+  listVerificationsFn,
+  startVerificationFn,
+  getCreditWalletFn,
+  getAccountFn,
+  saveAccountDraftFn,
+  getAssistantLogFn,
+  saveAssistantLogFn,
+  type CreditWalletView,
 } from "@/lib/workspace.functions";
-import type { DocRecord, ProjectRecord, MarketplaceListing } from "@/lib/workspace-store";
+import type {
+  AccountProfile,
+  AssistantTurn,
+  ConversationExtras,
+  DirectoryProfessional,
+  DocRecord,
+  MarketplaceListing,
+  ProjectRecord,
+  Thread,
+} from "@/lib/workspace-store";
+import type { VerificationTierId } from "@/lib/canons";
 
 /**
  * React Query hooks over the Supabase-backed workspace server functions.
@@ -129,5 +151,123 @@ export function useReportListing() {
   return useMutation({
     mutationFn: (input: { listingId: string; reason?: string }) => report({ data: input }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["marketplace-listings"] }),
+  });
+}
+
+export function useConversations() {
+  const { userId } = useCurrentUser();
+  const list = useServerFn(listConversationsFn);
+  return useQuery<Thread[]>({
+    queryKey: ["conversations", userId],
+    queryFn: () => list(),
+    enabled: !!userId,
+  });
+}
+
+export function useStartConversation() {
+  const { userId } = useCurrentUser();
+  const start = useServerFn(startConversationFn);
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: {
+      title: string;
+      context?: string;
+      firstMessage: string;
+      extra?: ConversationExtras & { participantUserId?: string };
+    }) => start({ data: input }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["conversations", userId] }),
+  });
+}
+
+export function useSendMessage() {
+  const { userId } = useCurrentUser();
+  const send = useServerFn(sendMessageFn);
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { conversationId: string; body: string }) => send({ data: input }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["conversations", userId] }),
+  });
+}
+
+export function useProfessionals() {
+  const { userId } = useCurrentUser();
+  const list = useServerFn(listProfessionalsFn);
+  return useQuery<DirectoryProfessional[]>({
+    queryKey: ["professionals", userId],
+    queryFn: () => list(),
+    enabled: !!userId,
+  });
+}
+
+export function useVerifications() {
+  const { userId } = useCurrentUser();
+  const list = useServerFn(listVerificationsFn);
+  return useQuery<VerificationTierId[]>({
+    queryKey: ["verifications", userId],
+    queryFn: () => list(),
+    enabled: !!userId,
+  });
+}
+
+export function useStartVerification() {
+  const { userId } = useCurrentUser();
+  const start = useServerFn(startVerificationFn);
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (tier: Exclude<VerificationTierId, "unverified">) => start({ data: { tier } }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["verifications", userId] }),
+  });
+}
+
+export function useCreditWallet() {
+  const { userId } = useCurrentUser();
+  const get = useServerFn(getCreditWalletFn);
+  return useQuery<CreditWalletView>({
+    queryKey: ["credit-wallet", userId],
+    queryFn: () => get(),
+    enabled: !!userId,
+  });
+}
+
+export function useAccountProfile() {
+  const { userId } = useCurrentUser();
+  const get = useServerFn(getAccountFn);
+  return useQuery<AccountProfile>({
+    queryKey: ["account-profile", userId],
+    queryFn: () => get(),
+    enabled: !!userId,
+  });
+}
+
+export function useSaveAccountDraft() {
+  const { userId } = useCurrentUser();
+  const save = useServerFn(saveAccountDraftFn);
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: Partial<AccountProfile>) => save({ data: input }),
+    onSuccess: (row) => {
+      qc.setQueryData(["account-profile", userId], row);
+      qc.invalidateQueries({ queryKey: ["account-profile", userId] });
+    },
+  });
+}
+
+export function useAssistantLog() {
+  const { userId } = useCurrentUser();
+  const get = useServerFn(getAssistantLogFn);
+  return useQuery<AssistantTurn[]>({
+    queryKey: ["assistant-log", userId],
+    queryFn: () => get(),
+    enabled: !!userId,
+  });
+}
+
+export function useSaveAssistantLog() {
+  const { userId } = useCurrentUser();
+  const save = useServerFn(saveAssistantLogFn);
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (messages: AssistantTurn[]) => save({ data: { messages } }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["assistant-log", userId] }),
   });
 }

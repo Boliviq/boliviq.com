@@ -37,7 +37,7 @@ import { MARKETPLACE_CATEGORIES, type MarketplaceCategoryId } from "@/lib/canons
 import type { SeedListing } from "@/lib/marketplace-seed";
 import { useAccount } from "@/hooks/use-current-user";
 import { currency } from "@/lib/format";
-import { categoryLabel, startConversation, type MarketplaceListing } from "@/lib/workspace-store";
+import { categoryLabel, type MarketplaceListing } from "@/lib/workspace-store";
 import {
   useListings,
   useCreateListing,
@@ -45,6 +45,7 @@ import {
   useToggleSavedListing,
   useReportListing,
   useCreateProject,
+  useStartConversation,
 } from "@/hooks/use-workspace-data";
 
 export const Route = createFileRoute("/_authenticated/marketplace")({
@@ -72,6 +73,7 @@ function MarketplacePage() {
   const toggleSaved = useToggleSavedListing();
   const reportListing = useReportListing();
   const createProject = useCreateProject();
+  const startConversation = useStartConversation();
   const saved = new Set(savedIds);
 
   const listings = useMemo(() => {
@@ -122,20 +124,27 @@ function MarketplacePage() {
       toast.error("Sign in to use your workspace");
       return;
     }
-    const thread = startConversation(
-      userId,
-      `Re: ${listing.title}`,
-      `Listing · ${listing.location}`,
-      `I'm interested in "${listing.title}" at ${listing.location}.`,
+    startConversation.mutate(
       {
-        listing: listing.title,
-        listingId: listing.id,
-        property: listing.propertyLabel,
-        participants: [account.full_name || "You", listing.postedBy],
+        title: `Re: ${listing.title}`,
+        context: `Listing · ${listing.location}`,
+        firstMessage: `I'm interested in "${listing.title}" at ${listing.location}.`,
+        extra: {
+          listing: listing.title,
+          listingId: listing.id,
+          property: listing.propertyLabel,
+          participants: [account.full_name || "You", listing.postedBy],
+        },
+      },
+      {
+        onSuccess: (thread) => {
+          toast.success("Conversation started");
+          void navigate({ to: "/messages", search: { thread } });
+        },
+        onError: (e) =>
+          toast.error(e instanceof Error ? e.message : "Could not start the conversation"),
       },
     );
-    toast.success("Conversation started");
-    void navigate({ to: "/messages", search: { thread } });
   };
 
   const convert = (listing: MarketplaceListing) => {
@@ -154,22 +163,29 @@ function MarketplacePage() {
       },
       {
         onSuccess: (project) => {
-          startConversation(
-            userId,
-            project.name,
-            `Project · ${project.address}`,
-            `Opened a project from marketplace listing "${listing.title}".`,
+          startConversation.mutate(
             {
-              project: project.name,
-              property: project.address,
-              listing: listing.title,
-              listingId: listing.id,
+              title: project.name,
+              context: `Project · ${project.address}`,
+              firstMessage: `Opened a project from marketplace listing "${listing.title}".`,
+              extra: {
+                project: project.name,
+                property: project.address,
+                listing: listing.title,
+                listingId: listing.id,
+              },
+            },
+            {
+              onSuccess: () => {
+                toast.success("Project created", {
+                  description: "The listing, conversation, and project now share a record.",
+                });
+                void navigate({ to: "/projects" });
+              },
+              onError: (e) =>
+                toast.error(e instanceof Error ? e.message : "Could not start the conversation"),
             },
           );
-          toast.success("Project created", {
-            description: "The listing, conversation, and project now share a record.",
-          });
-          void navigate({ to: "/projects" });
         },
         onError: (e) =>
           toast.error(e instanceof Error ? e.message : "Could not create the project"),
