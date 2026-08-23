@@ -3,7 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { LISTING_COLUMNS, toListing } from "@/lib/workspace.functions";
 import type { MarketplaceLead, MarketplaceListing, SavedSearch } from "@/lib/workspace-store";
-import { recordConversion } from "@/lib/crm-conversions";
+import { convertListingToLead } from "@/lib/crm-conversions";
 
 export type ListingSearchInput = {
   query?: string;
@@ -165,61 +165,18 @@ export const convertListingToLeadFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) => leadInput.parse(d))
   .handler(async ({ data, context }): Promise<MarketplaceLead> => {
-    const { data: listing, error: lErr } = await context.supabase
-      .from("marketplace_listings")
-      .select("id, title, price")
-      .eq("id", data.listingId)
-      .maybeSingle();
-    if (lErr) throw new Error(lErr.message);
-    if (!listing) throw new Error("Listing not found");
-
-    const { data: existing } = await context.supabase
-      .from("leads")
-      .select("id, listing_id, title, source, status")
-      .eq("user_id", context.userId)
-      .eq("listing_id", listing.id)
-      .maybeSingle();
-    if (existing) {
-      await recordConversion(
-        context.supabase,
-        context.userId,
-        "listing_to_lead",
-        listing.id,
-        existing.id,
-      );
-      return {
-        id: existing.id,
-        listingId: existing.listing_id,
-        title: existing.title || listing.title,
-        source: existing.source || "marketplace",
-        status: existing.status,
-      };
-    }
-
+    const converted = await convertListingToLead(context.supabase, context.userId, data.listingId);
     const { data: lead, error } = await context.supabase
       .from("leads")
-      .insert({
-        user_id: context.userId,
-        listing_id: listing.id,
-        title: listing.title,
-        source: "marketplace",
-        status: "new",
-        opportunity_value: listing.price,
-      })
       .select("id, listing_id, title, source, status")
+      .eq("id", converted.toId)
+      .eq("user_id", context.userId)
       .single();
     if (error) throw new Error(error.message);
-    await recordConversion(
-      context.supabase,
-      context.userId,
-      "listing_to_lead",
-      listing.id,
-      lead.id,
-    );
     return {
       id: lead.id,
       listingId: lead.listing_id,
-      title: lead.title || listing.title,
+      title: lead.title || "",
       source: lead.source || "marketplace",
       status: lead.status,
     };

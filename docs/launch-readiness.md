@@ -19,7 +19,7 @@ Temporary Lovable screens are not Gate 8.
 | Workspaces / RBAC | 1 | VERIFIED | VERIFIED | VERIFIED | PARTIAL | n/a | PARTIAL | PARTIAL | shell | n/a | PARTIAL |
 | Marketplace | 3 | VERIFIED | VERIFIED | VERIFIED | PARTIAL (listing→lead) | maps off | PARTIAL | PARTIAL | shell | n/a | PARTIAL |
 | Communication | 4 | VERIFIED | PARTIAL | PARTIAL | PARTIAL (intents + attachments; Realtime later) | email/SMS off | PARTIAL | PARTIAL (intent rows) | shell | n/a | PARTIAL |
-| CRM + property hub | 5 | VERIFIED | PARTIAL | PARTIAL | PARTIAL (conversions + stage rules) | n/a | PARTIAL | PARTIAL (audit rows) | shell / Coming Soon | n/a | PARTIAL |
+| CRM + property hub | 5 | VERIFIED | PARTIAL | PARTIAL | VERIFIED (listing→lead→project→property) | n/a | PARTIAL | PARTIAL (conversion rows) | shell / Coming Soon | n/a | PARTIAL |
 | Trust / verification | 6 | VERIFIED | VERIFIED | VERIFIED | VERIFIED (admin grant/reject + audit) | identity_verification off | PARTIAL | PARTIAL (audit) | shell | n/a | PARTIAL |
 | AI assistant / agents | 7 | VERIFIED | PARTIAL | PARTIAL | NOT STARTED | AI provider off | NOT STARTED | PARTIAL (logs) | shell | n/a | PARTIAL |
 | Credits wallet | 7 | VERIFIED | VERIFIED | VERIFIED | VERIFIED (reserve/charge/release/refund) | n/a | PARTIAL | PARTIAL (ledger) | shell | n/a | PARTIAL |

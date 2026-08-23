@@ -5,6 +5,7 @@ import {
   advanceLeadStage,
   convertCompletedProjectToListing,
   convertLeadToProject,
+  convertListingToLead,
   convertListingToProperty,
   convertPropertyPost,
 } from "../src/lib/crm-conversions";
@@ -65,22 +66,14 @@ describe.runIf(enabled)("CRM property hub conversions (Supabase)", () => {
       .single();
     expect(lErr).toBeNull();
 
-    const { data: lead, error: leadErr } = await alice.client
-      .from("leads")
-      .insert({
-        user_id: alice.userId,
-        listing_id: listing!.id,
-        title: "Hub duplex",
-        source: "marketplace",
-        status: "new",
-        opportunity_value: 240000,
-      })
-      .select("id")
-      .single();
-    expect(leadErr).toBeNull();
+    const leadOnce = await convertListingToLead(alice.client, alice.userId, listing!.id);
+    const leadAgain = await convertListingToLead(alice.client, alice.userId, listing!.id);
+    expect(leadOnce.conversion).toBe("listing_to_lead");
+    expect(leadAgain.toId).toBe(leadOnce.toId);
+    expect(leadAgain.reused).toBe(true);
 
-    const first = await convertLeadToProject(alice.client, alice.userId, lead!.id);
-    const again = await convertLeadToProject(alice.client, alice.userId, lead!.id);
+    const first = await convertLeadToProject(alice.client, alice.userId, leadOnce.toId);
+    const again = await convertLeadToProject(alice.client, alice.userId, leadOnce.toId);
     expect(first.toId).toBe(again.toId);
     expect(again.reused).toBe(true);
 
@@ -92,23 +85,47 @@ describe.runIf(enabled)("CRM property hub conversions (Supabase)", () => {
     expect(project?.listing_id).toBe(listing!.id);
     expect(project?.property_id).toBeTruthy();
 
+    const { data: property } = await alice.client
+      .from("properties")
+      .select("id, listing_id, user_id")
+      .eq("id", project!.property_id!)
+      .single();
+    expect(property?.user_id).toBe(alice.userId);
+    expect(property?.listing_id).toBe(listing!.id);
+
+    const { data: conversions } = await alice.client
+      .from("object_conversions")
+      .select("conversion, from_id, to_id")
+      .in("conversion", ["listing_to_lead", "lead_to_project", "lead_to_property"]);
+    expect(
+      conversions?.some((c) => c.conversion === "listing_to_lead" && c.to_id === leadOnce.toId),
+    ).toBe(true);
+    expect(
+      conversions?.some((c) => c.conversion === "lead_to_project" && c.to_id === first.toId),
+    ).toBe(true);
+    expect(
+      conversions?.some((c) => c.conversion === "lead_to_property" && c.to_id === property!.id),
+    ).toBe(true);
+
     const { data: bobProject } = await bob.client
       .from("projects")
       .select("id")
       .eq("id", first.toId);
     expect(bobProject ?? []).toHaveLength(0);
 
-    await expect(convertLeadToProject(bob.client, bob.userId, lead!.id)).rejects.toThrow(
+    await expect(convertListingToLead(bob.client, bob.userId, listing!.id)).resolves.toBeTruthy();
+    await expect(convertLeadToProject(bob.client, bob.userId, leadOnce.toId)).rejects.toThrow(
       /Lead not found/,
     );
 
     const { data: updatedLead } = await alice.client
       .from("leads")
       .select("status, project_id, property_id")
-      .eq("id", lead!.id)
+      .eq("id", leadOnce.toId)
       .single();
     expect(updatedLead?.status).toBe("in_progress");
     expect(updatedLead?.project_id).toBe(first.toId);
+    expect(updatedLead?.property_id).toBe(property!.id);
   });
 
   test("illegal stage move fails; completed project can become a listing", async () => {

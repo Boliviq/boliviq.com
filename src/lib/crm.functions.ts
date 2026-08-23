@@ -7,6 +7,7 @@ import {
   convertCompletedProjectToListing,
   convertLeadToProject,
   convertLeadToProperty,
+  convertListingToLead,
   convertListingToProperty,
   convertProjectToProperty,
   convertPropertyPost,
@@ -14,6 +15,14 @@ import {
 } from "@/lib/crm-conversions";
 
 const idInput = z.object({ id: z.string().uuid() });
+
+export const convertListingToLeadFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) => idInput.parse(d))
+  .handler(
+    async ({ data, context }): Promise<ConversionResult> =>
+      convertListingToLead(context.supabase, context.userId, data.id),
+  );
 
 export const convertListingToPropertyFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

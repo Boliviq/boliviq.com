@@ -131,6 +131,44 @@ async function loadListing(supabase: SupabaseClient, listingId: string) {
   return data;
 }
 
+export async function convertListingToLead(
+  supabase: SupabaseClient,
+  userId: string,
+  listingId: string,
+): Promise<ConversionResult> {
+  const reusedId = await existingConversion(supabase, userId, "listing_to_lead", listingId);
+  if (reusedId)
+    return { conversion: "listing_to_lead", fromId: listingId, toId: reusedId, reused: true };
+
+  const listing = await loadListing(supabase, listingId);
+  const { data: existing } = await supabase
+    .from("leads")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("listing_id", listing.id)
+    .maybeSingle();
+  if (existing) {
+    await recordConversion(supabase, userId, "listing_to_lead", listingId, existing.id);
+    return { conversion: "listing_to_lead", fromId: listingId, toId: existing.id, reused: true };
+  }
+
+  const { data: lead, error } = await supabase
+    .from("leads")
+    .insert({
+      user_id: userId,
+      listing_id: listing.id,
+      title: listing.title,
+      source: "marketplace",
+      status: "new",
+      opportunity_value: listing.price,
+    })
+    .select("id")
+    .single();
+  if (error) throw new Error(error.message);
+  await recordConversion(supabase, userId, "listing_to_lead", listingId, lead.id);
+  return { conversion: "listing_to_lead", fromId: listingId, toId: lead.id, reused: false };
+}
+
 export async function convertListingToProperty(
   supabase: SupabaseClient,
   userId: string,

@@ -6,6 +6,7 @@ import {
   convertCompletedProjectToListingFn,
   convertLeadToProjectFn,
   convertLeadToPropertyFn,
+  convertListingToLeadFn,
   convertListingToPropertyFn,
   convertProjectToPropertyFn,
   convertPropertyPostFn,
@@ -20,6 +21,15 @@ function useInvalidateCrm() {
     qc.invalidateQueries({ queryKey: ["marketplace-search"] });
     qc.invalidateQueries({ queryKey: ["projects", userId] });
   };
+}
+
+export function useConvertListingToLead() {
+  const run = useServerFn(convertListingToLeadFn);
+  const invalidate = useInvalidateCrm();
+  return useMutation({
+    mutationFn: (id: string) => run({ data: { id } }),
+    onSuccess: invalidate,
+  });
 }
 
 export function useConvertLeadToProject() {
