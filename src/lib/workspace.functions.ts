@@ -21,7 +21,13 @@ import type {
   VerificationTierId,
 } from "@/lib/canons";
 import { isProfileRoleId } from "@/lib/canons";
-import { inferThreadType, type NotificationPreferenceView } from "@/lib/communication";
+import {
+  inferThreadType,
+  persistNotificationIntents,
+  planOutboundIntents,
+  type NotificationPreferenceView,
+} from "@/lib/communication";
+import { loadCreditWallet } from "@/lib/credits";
 import type { Json } from "@/integrations/supabase/types";
 
 /**
@@ -577,12 +583,42 @@ export const sendMessageFn = createServerFn({ method: "POST" })
       }
     }
 
-    const { error } = await context.supabase.from("messages").insert({
-      conversation_id: data.conversationId,
-      sender_id: context.userId,
-      body: data.body,
-    });
+    const { data: message, error } = await context.supabase
+      .from("messages")
+      .insert({
+        conversation_id: data.conversationId,
+        sender_id: context.userId,
+        body: data.body,
+      })
+      .select("id")
+      .single();
     if (error) throw new Error(error.message);
+
+    if (otherIds.length > 0) {
+      const { data: prefRows } = await context.supabase
+        .from("notification_preferences")
+        .select(
+          "user_id, email_enabled, sms_enabled, quiet_hours_start, quiet_hours_end, timezone, opted_out_at",
+        )
+        .in("user_id", otherIds);
+      const prefsByUser: Record<string, NotificationPreferenceView> = {};
+      for (const row of prefRows ?? []) {
+        prefsByUser[row.user_id] = {
+          emailEnabled: row.email_enabled,
+          smsEnabled: row.sms_enabled,
+          quietHoursStart: row.quiet_hours_start,
+          quietHoursEnd: row.quiet_hours_end,
+          timezone: row.timezone,
+          optedOutAt: row.opted_out_at,
+        };
+      }
+      await persistNotificationIntents(
+        context.supabase,
+        planOutboundIntents(otherIds, prefsByUser),
+        data.conversationId,
+        message.id,
+      );
+    }
 
     await context.supabase
       .from("conversations")
@@ -847,52 +883,26 @@ export type CreditWalletView = {
   walletId: string;
   balance: number;
   reserved: number;
+  available?: number;
   ledger: CreditLedgerRow[];
 };
 
 export const getCreditWalletFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<CreditWalletView> => {
-    const { data: existingWallet, error } = await context.supabase
-      .from("credit_wallets")
-      .select("id, balance")
-      .eq("user_id", context.userId)
-      .maybeSingle();
-    if (error) throw new Error(error.message);
-    let wallet = existingWallet;
-    if (!wallet) {
-      const { data: created, error: cErr } = await context.supabase
-        .from("credit_wallets")
-        .insert({ user_id: context.userId, balance: 0 })
-        .select("id, balance")
-        .single();
-      if (cErr) throw new Error(cErr.message);
-      wallet = created;
-    }
-
-    const { data: rows, error: lErr } = await context.supabase
-      .from("credit_ledger")
-      .select("id, label, delta, status, created_at")
-      .eq("wallet_id", wallet.id)
-      .order("created_at", { ascending: false });
-    if (lErr) throw new Error(lErr.message);
-
-    const ledger: CreditLedgerRow[] = (rows ?? []).map((r) => ({
-      id: r.id,
-      at: r.created_at,
-      label: r.label,
-      delta: Number(r.delta),
-      status: r.status as CreditLedgerRow["status"],
-    }));
-    const reserved = ledger
-      .filter((r) => r.status === "reserved")
-      .reduce((s, r) => s + Math.abs(r.delta), 0);
-
+    const snapshot = await loadCreditWallet(context.supabase, context.userId);
     return {
-      walletId: wallet.id,
-      balance: Number(wallet.balance ?? 0),
-      reserved,
-      ledger,
+      walletId: snapshot.walletId,
+      balance: snapshot.balance,
+      reserved: snapshot.reserved,
+      available: snapshot.available,
+      ledger: snapshot.ledger.map((r) => ({
+        id: r.id,
+        at: r.at,
+        label: r.label,
+        delta: r.delta,
+        status: r.status,
+      })),
     };
   });
 

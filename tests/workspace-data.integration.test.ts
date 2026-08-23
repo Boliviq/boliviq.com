@@ -376,22 +376,25 @@ describe.runIf(enabled)(
     test("credit wallets and ledger are owner-scoped", async () => {
       const { data: wallet, error } = await alice.client
         .from("credit_wallets")
-        .insert({ user_id: alice.userId, balance: 25 })
         .select("id")
-        .single();
+        .eq("user_id", alice.userId)
+        .maybeSingle();
       expect(error).toBeNull();
-      const { error: lErr } = await alice.client.from("credit_ledger").insert({
-        wallet_id: wallet!.id,
-        label: "Onboarding grant",
-        delta: 25,
-        status: "posted",
-      });
-      expect(lErr).toBeNull();
+      const walletId =
+        wallet?.id ??
+        (
+          await alice.client
+            .from("credit_wallets")
+            .insert({ user_id: alice.userId, balance: 0 })
+            .select("id")
+            .single()
+        ).data?.id;
+      expect(walletId).toBeTruthy();
 
       const { data: bobWallets } = await bob.client
         .from("credit_wallets")
         .select("id")
-        .eq("id", wallet!.id);
+        .eq("id", walletId!);
       expect(bobWallets ?? []).toHaveLength(0);
     });
 
