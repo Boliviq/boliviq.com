@@ -1,8 +1,12 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, test } from "vitest";
 import {
   AI_AGENTS,
   AI_FORBIDDEN_ACTIONS,
+  BILLING_CREDIT_PURCHASES,
   CANON_INDEX,
+  CREDIT_WALLET_OPERATIONS,
   INTEGRATIONS,
   LIFECYCLE,
   MARKETPLACE_CATEGORIES,
@@ -11,11 +15,15 @@ import {
   TRADES,
   TRADE_LABELS,
   VERIFICATION_DISCLAIMER,
+  VERIFICATION_REVIEW_STATES,
   VERIFICATION_TIERS,
   dashboardForRole,
   findConnectionAsymmetries,
+  findDuplicateWidgets,
+  isSignupEligibleRole,
   mapLeadStatusToPipelineStage,
   navForRole,
+  signupRoles,
 } from "../src/lib/canons";
 
 describe("Boliviq canons catalog", () => {
@@ -28,6 +36,17 @@ describe("Boliviq canons catalog", () => {
     expect(PROFILE_ROLES.map((r) => r.id)).toContain("homeowner");
     expect(PROFILE_ROLES.map((r) => r.id)).toContain("administrator");
     expect(PROFILE_ROLES.find((r) => r.id === "homeowner")?.professional).toBe(false);
+  });
+
+  test("administrator is assigned, not a signup role", () => {
+    expect(signupRoles()).toHaveLength(16);
+    expect(signupRoles().map((r) => r.id)).not.toContain("administrator");
+    expect(isSignupEligibleRole("administrator")).toBe(false);
+    expect(isSignupEligibleRole("homeowner")).toBe(true);
+  });
+
+  test("role widgets do not collide except shared objects", () => {
+    expect(findDuplicateWidgets()).toEqual([]);
   });
 
   test("role connections are bidirectional (excluding administrator)", () => {
@@ -76,6 +95,25 @@ describe("Boliviq canons catalog", () => {
     );
   });
 
+  test("pending review is a request state, not a badge", () => {
+    expect(VERIFICATION_REVIEW_STATES.map((s) => s.id)).toEqual([
+      "not_started",
+      "pending_review",
+      "rejected",
+      "granted",
+    ]);
+    expect(VERIFICATION_REVIEW_STATES.find((s) => s.id === "pending_review")?.isBadge).toBe(false);
+    expect(VERIFICATION_TIERS.map((t) => t.id)).not.toContain("pending_review");
+  });
+
+  test("Canon 7 ledger and Canon 8 purchases are separate", () => {
+    expect(CREDIT_WALLET_OPERATIONS).not.toContain("credit_pack_purchase");
+    expect(BILLING_CREDIT_PURCHASES).toEqual([
+      "credit_pack_purchase",
+      "subscription_credit_deposit",
+    ]);
+  });
+
   test("AI agents are permissioned and cannot act autonomously on forbidden actions", () => {
     expect(AI_AGENTS).toHaveLength(10);
     expect(AI_FORBIDDEN_ACTIONS.map((a) => a.toLowerCase())).toEqual(
@@ -88,10 +126,36 @@ describe("Boliviq canons catalog", () => {
     );
   });
 
-  test("integrations stay modular with 16 catalog entries", () => {
-    expect(INTEGRATIONS).toHaveLength(16);
+  test("integrations stay modular with the Canon 9 catalog", () => {
+    expect(INTEGRATIONS).toHaveLength(23);
     expect(INTEGRATIONS.map((i) => i.id)).toContain("stripe");
     expect(INTEGRATIONS.map((i) => i.id)).toContain("mls");
+    expect(INTEGRATIONS.map((i) => i.id)).toEqual(
+      expect.arrayContaining([
+        "material_pricing",
+        "permits",
+        "brokerage_listings",
+        "transaction_management",
+        "identity_verification",
+        "underwriting",
+        "loan_origination",
+      ]),
+    );
+  });
+
+  test("combined canon spec matches the cleaned rules", () => {
+    const spec = readFileSync(
+      resolve(process.cwd(), "docs/canons/boliviq-canons-combined.md"),
+      "utf8",
+    );
+    expect(spec).toMatch(/Administrator is not a registration profile/);
+    expect(spec).not.toMatch(/17\. Administrator/);
+    expect(spec).toMatch(/\*\*Pending review\*\*/);
+    expect(spec).toMatch(/Canon 7 owns the ledger/);
+    expect(spec).toMatch(/Credit-pack ownership/);
+    expect(spec).toMatch(/Material pricing/);
+    expect(spec).not.toMatch(/\bbuyers searching for properties\b/);
+    expect(spec).not.toMatch(/equity partners,/);
   });
 
   test("lifecycle and trades match construction + real estate canons", () => {

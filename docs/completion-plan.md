@@ -121,8 +121,8 @@ Existing route files may call new server functions during L2–L3 so we can prov
 - Keep `CRM_PIPELINE_STAGES` as the 12 canon stages; map any leftover investor-CRM statuses through `LEGACY_STATUS_TO_PIPELINE`.
 - Keep `AI_FORBIDDEN_ACTIONS` as the hard list agents cannot do.
 - Add missing catalogs as code, not as page copy:
-  - verification badge states (unverified vs stackable identity / license / insurance / certified)
-  - credit operation types (reserve, charge, release, refund, admin adjust, pack purchase, subscription deposit)
+  - verification badges (unverified + stackable identity / license / insurance / certified) vs request states (not started / pending review / rejected / granted)
+  - Canon 7 wallet operations (reserve, charge, release, refund, admin adjust) vs Canon 8 purchases (pack, subscription deposit)
   - notification consent + quiet-hours rules
   - entitlement keys (team seats, AI access, credits, marketplace, CRM, storage, automations)
   - conversion graph: listing → lead → project → transaction / property record
@@ -434,17 +434,17 @@ These are the finished surfaces. Until they exist, we keep building L0–L7.
 | Contractor | lead feed, bids, projects, estimates, verification |
 | Trade | job feed, availability, projects, invoices |
 | Realtor | listings, buyer/seller pipeline, showings, offers, documents |
-| Investor | hot deals, pipeline, analyzers, projects, leads |
+| Investor | hot deals, pipeline, analyzers, projects, crm_leads |
 | Wholesaler | seller pipeline, buyer list, assignments, compliance, documents |
 | Lender | loan pipeline, prequal, documents, conditions |
 | Property manager | work orders, vendors, properties, documents, messages |
-| Inspector | appointments, reports, repair tags, messages |
-| Appraiser | appointments, reports, documents |
-| Title | orders, milestones, documents, messages |
-| Insurance | quotes, policies, referrals, messages |
+| Inspector | appointments, inspection_reports, repair tags, messages |
+| Appraiser | appointments, appraisal_reports, documents |
+| Title | closing_orders, milestones, documents, messages |
+| Insurance | insurance_quotes, policies, referrals, messages |
 | Attorney | matters, documents, appointments |
 | Designer | portfolio, plans, projects, approvals |
-| Supplier | catalog, quotes, orders, leads |
+| Supplier | catalog, material_quotes, material_orders, vendor_leads |
 | Admin | users, verification review, moderation, credits, audit |
 
 **Admin**

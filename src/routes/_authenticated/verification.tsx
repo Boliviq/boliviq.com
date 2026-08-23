@@ -53,7 +53,7 @@ function VerificationPage() {
     <>
       <PageHeader
         title="Trust & verification"
-        description="Identity, license, insurance, and Boliviq certified are distinct tiers. Unverified profiles remain visible but unlabeled."
+        description="Stackable badges are public. Pending review and rejected are request states, not badges. Unverified stays on the public profile until a badge is granted."
       />
       <div className="space-y-4 p-4 sm:p-8">
         <Alert>

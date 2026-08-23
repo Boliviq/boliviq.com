@@ -14,6 +14,7 @@ import {
   PROFILE_ROLES,
   TRADE_LABELS,
   VERIFICATION_DISCLAIMER,
+  directoryRoles,
   type ProfileRoleId,
 } from "@/lib/canons";
 import { useAccount } from "@/hooks/use-current-user";
@@ -47,9 +48,7 @@ function ProfessionalsPage() {
     });
   }, [directory, role, q]);
 
-  const directoryRoles = PROFILE_ROLES.filter(
-    (r) => r.id !== "homeowner" && r.id !== "administrator",
-  );
+  const roleFilters = directoryRoles();
   const showingSeed = directory.some((p) => p.source === "seed");
 
   return (
@@ -89,7 +88,7 @@ function ProfessionalsPage() {
           >
             All roles
           </button>
-          {directoryRoles.map((r) => (
+          {roleFilters.map((r) => (
             <button
               key={r.id}
               type="button"
