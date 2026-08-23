@@ -2,6 +2,8 @@
 
 A phased build plan to take Boliviq from its current state to a complete, launch-ready platform that satisfies the 19 canons (`docs/canons/boliviq-canons-combined.md`).
 
+**Sequencing source of truth:** `docs/completion-plan.md`. Finished pages are not available yet. Build the engine (law → data → access → workflows → integrations → admin APIs → hardening) first. Insert or replace screens last. This file remains the phase checklist of remaining product work; do not use it to polish throwaway Lovable route shells.
+
 The plan is organized into **phases** (dependency-ordered slices of scope), each ending in a **break** (a hard checkpoint: stop, run the full test gate, review against the canon exit criteria, and make a go/no-go decision before starting the next phase). Effort is described by scope, invasiveness, and risk — not calendar time.
 
 ---
