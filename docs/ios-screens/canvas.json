@@ -1,0 +1,852 @@
+{
+  "artboards": [
+    {
+      "file": "BB01-01-Home-Dashboard.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "BB01\u201101 \u00b7 Home Dashboard"
+    },
+    {
+      "file": "BB01-02-Personal-Profile.dc.html",
+      "x": 480,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "BB01\u201102 \u00b7 Personal Profile"
+    },
+    {
+      "file": "BB01-03-Workspace.dc.html",
+      "x": 960,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "BB01\u201103 \u00b7 Professional Workspace"
+    },
+    {
+      "file": "BB01-04-Account-Settings.dc.html",
+      "x": 1440,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "BB01\u201104 \u00b7 Account & Privacy Settings"
+    },
+    {
+      "file": "BB01-05-Credit-Wallet.dc.html",
+      "x": 1920,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "BB01\u201105 \u00b7 Credit Wallet"
+    },
+    {
+      "file": "BB02-01-Welcome.dc.html",
+      "x": 0,
+      "y": 1024,
+      "w": 390,
+      "h": 844,
+      "title": "BB02\u201101 \u00b7 Welcome"
+    },
+    {
+      "file": "BB02-02-Sign-Up.dc.html",
+      "x": 480,
+      "y": 1024,
+      "w": 390,
+      "h": 844,
+      "title": "BB02\u201102 \u00b7 Sign Up"
+    },
+    {
+      "file": "BB02-03-Verify-Phone.dc.html",
+      "x": 960,
+      "y": 1024,
+      "w": 390,
+      "h": 844,
+      "title": "BB02\u201103 \u00b7 Mobile Verification"
+    },
+    {
+      "file": "BB02-04-Role-Selection.dc.html",
+      "x": 1440,
+      "y": 1024,
+      "w": 390,
+      "h": 844,
+      "title": "BB02\u201104 \u00b7 Primary Role Selection"
+    },
+    {
+      "file": "BB02-05-Business-Info.dc.html",
+      "x": 1920,
+      "y": 1024,
+      "w": 390,
+      "h": 844,
+      "title": "BB02\u201105 \u00b7 Professional Business Info"
+    },
+    {
+      "file": "BB02-06-Subscription.dc.html",
+      "x": 2400,
+      "y": 1024,
+      "w": 390,
+      "h": 844,
+      "title": "BB02\u201106 \u00b7 Subscription & Payment"
+    },
+    {
+      "file": "BB02-07-Login.dc.html",
+      "x": 2880,
+      "y": 1024,
+      "w": 390,
+      "h": 844,
+      "title": "BB02\u201107 \u00b7 Login"
+    },
+    {
+      "file": "BB03-01-Marketplace-Home.dc.html",
+      "x": 0,
+      "y": 2048,
+      "w": 390,
+      "h": 844,
+      "title": "BB03\u201101 \u00b7 Marketplace Home"
+    },
+    {
+      "file": "BB03-02-Search-Results.dc.html",
+      "x": 480,
+      "y": 2048,
+      "w": 390,
+      "h": 844,
+      "title": "BB03\u201102 \u00b7 Search Results"
+    },
+    {
+      "file": "BB03-03-Listing-Detail.dc.html",
+      "x": 960,
+      "y": 2048,
+      "w": 390,
+      "h": 844,
+      "title": "BB03\u201103 \u00b7 Listing Detail"
+    },
+    {
+      "file": "BB03-04-Create-Post.dc.html",
+      "x": 1440,
+      "y": 2048,
+      "w": 390,
+      "h": 844,
+      "title": "BB03\u201104 \u00b7 Create Post"
+    },
+    {
+      "file": "BB03-05-Saved-Alerts.dc.html",
+      "x": 1920,
+      "y": 2048,
+      "w": 390,
+      "h": 844,
+      "title": "BB03\u201105 \u00b7 Saved & Alerts"
+    },
+    {
+      "file": "BB04-01-Inbox.dc.html",
+      "x": 0,
+      "y": 3072,
+      "w": 390,
+      "h": 844,
+      "title": "BB04\u201101 \u00b7 Message Inbox"
+    },
+    {
+      "file": "BB04-02-Conversation-Thread.dc.html",
+      "x": 480,
+      "y": 3072,
+      "w": 390,
+      "h": 844,
+      "title": "BB04\u201102 \u00b7 Conversation Thread"
+    },
+    {
+      "file": "BB04-03-Schedule-Meeting.dc.html",
+      "x": 960,
+      "y": 3072,
+      "w": 390,
+      "h": 844,
+      "title": "BB04\u201103 \u00b7 Schedule Call / Video Meeting"
+    },
+    {
+      "file": "BB04-04-Notification-Consent.dc.html",
+      "x": 1440,
+      "y": 3072,
+      "w": 390,
+      "h": 844,
+      "title": "BB04\u201104 \u00b7 Notifications & Consent"
+    },
+    {
+      "file": "BB04-05-Report-Block.dc.html",
+      "x": 1920,
+      "y": 3072,
+      "w": 390,
+      "h": 844,
+      "title": "BB04\u201105 \u00b7 Report or Block Contact"
+    },
+    {
+      "file": "BB05-01-Pipeline-Board.dc.html",
+      "x": 0,
+      "y": 4096,
+      "w": 390,
+      "h": 844,
+      "title": "BB05\u201101 \u00b7 Pipeline Board"
+    },
+    {
+      "file": "BB05-02-Lead-Detail.dc.html",
+      "x": 480,
+      "y": 4096,
+      "w": 390,
+      "h": 844,
+      "title": "BB05\u201102 \u00b7 Lead / Contact Detail"
+    },
+    {
+      "file": "BB05-03-Add-Task.dc.html",
+      "x": 960,
+      "y": 4096,
+      "w": 390,
+      "h": 844,
+      "title": "BB05\u201103 \u00b7 Add Task / Follow-Up"
+    },
+    {
+      "file": "BB05-04-Contacts-List.dc.html",
+      "x": 1440,
+      "y": 4096,
+      "w": 390,
+      "h": 844,
+      "title": "BB05\u201104 \u00b7 Contacts List"
+    },
+    {
+      "file": "BB05-05-Pipeline-Reports.dc.html",
+      "x": 1920,
+      "y": 4096,
+      "w": 390,
+      "h": 844,
+      "title": "BB05\u201105 \u00b7 Pipeline Reporting"
+    },
+    {
+      "file": "BB06-01-Public-Profile.dc.html",
+      "x": 0,
+      "y": 5120,
+      "w": 390,
+      "h": 844,
+      "title": "BB06\u201101 \u00b7 Public Professional Profile"
+    },
+    {
+      "file": "BB06-02-Verification-Center.dc.html",
+      "x": 480,
+      "y": 5120,
+      "w": 390,
+      "h": 844,
+      "title": "BB06\u201102 \u00b7 Verification Center"
+    },
+    {
+      "file": "BB06-03-Reviews-List.dc.html",
+      "x": 960,
+      "y": 5120,
+      "w": 390,
+      "h": 844,
+      "title": "BB06\u201103 \u00b7 Reviews List"
+    },
+    {
+      "file": "BB06-04-Write-Review.dc.html",
+      "x": 1440,
+      "y": 5120,
+      "w": 390,
+      "h": 844,
+      "title": "BB06\u201104 \u00b7 Leave a Review"
+    },
+    {
+      "file": "BB06-05-Complaint-Status.dc.html",
+      "x": 1920,
+      "y": 5120,
+      "w": 390,
+      "h": 844,
+      "title": "BB06\u201105 \u00b7 Complaint / Dispute Status"
+    },
+    {
+      "file": "BB07-01-AI-Assistant-Chat.dc.html",
+      "x": 0,
+      "y": 6144,
+      "w": 390,
+      "h": 844,
+      "title": "BB07\u201101 \u00b7 AI Assistant Chat"
+    },
+    {
+      "file": "BB07-02-AI-Agent-Directory.dc.html",
+      "x": 480,
+      "y": 6144,
+      "w": 390,
+      "h": 844,
+      "title": "BB07\u201102 \u00b7 AI Agent Directory"
+    },
+    {
+      "file": "BB07-03-Agent-Run-Detail.dc.html",
+      "x": 960,
+      "y": 6144,
+      "w": 390,
+      "h": 844,
+      "title": "BB07\u201103 \u00b7 Agent Run Detail"
+    },
+    {
+      "file": "BB07-04-Agent-Approval.dc.html",
+      "x": 1440,
+      "y": 6144,
+      "w": 390,
+      "h": 844,
+      "title": "BB07\u201104 \u00b7 Agent Approval Sheet"
+    },
+    {
+      "file": "BB07-05-Credit-Transaction.dc.html",
+      "x": 1920,
+      "y": 6144,
+      "w": 390,
+      "h": 844,
+      "title": "BB07\u201105 \u00b7 AI Credit Transaction Detail"
+    },
+    {
+      "file": "BB08-01-Billing-Home.dc.html",
+      "x": 0,
+      "y": 7168,
+      "w": 390,
+      "h": 844,
+      "title": "BB08\u201101 \u00b7 Billing Home"
+    },
+    {
+      "file": "BB08-02-Change-Plan.dc.html",
+      "x": 480,
+      "y": 7168,
+      "w": 390,
+      "h": 844,
+      "title": "BB08\u201102 \u00b7 Change Plan"
+    },
+    {
+      "file": "BB08-03-Payment-Method.dc.html",
+      "x": 960,
+      "y": 7168,
+      "w": 390,
+      "h": 844,
+      "title": "BB08\u201103 \u00b7 Payment Method"
+    },
+    {
+      "file": "BB08-04-Invoice-History.dc.html",
+      "x": 1440,
+      "y": 7168,
+      "w": 390,
+      "h": 844,
+      "title": "BB08\u201104 \u00b7 Invoice History"
+    },
+    {
+      "file": "BB09-01-Integrations-List.dc.html",
+      "x": 0,
+      "y": 8192,
+      "w": 390,
+      "h": 844,
+      "title": "BB09\u201101 \u00b7 Integrations"
+    },
+    {
+      "file": "BB09-02-Integration-Detail.dc.html",
+      "x": 480,
+      "y": 8192,
+      "w": 390,
+      "h": 844,
+      "title": "BB09\u201102 \u00b7 Integration Detail (MLS/IDX)"
+    },
+    {
+      "file": "BB10-01-Admin-Dashboard.dc.html",
+      "x": 0,
+      "y": 9216,
+      "w": 390,
+      "h": 844,
+      "title": "BB10\u201101 \u00b7 Admin Dashboard"
+    },
+    {
+      "file": "BB10-02-Verification-Queue.dc.html",
+      "x": 480,
+      "y": 9216,
+      "w": 390,
+      "h": 844,
+      "title": "BB10\u201102 \u00b7 Verification Queue"
+    },
+    {
+      "file": "BB10-03-Content-Moderation.dc.html",
+      "x": 960,
+      "y": 9216,
+      "w": 390,
+      "h": 844,
+      "title": "BB10\u201103 \u00b7 Content Moderation"
+    },
+    {
+      "file": "BB10-04-Audit-Log.dc.html",
+      "x": 1440,
+      "y": 9216,
+      "w": 390,
+      "h": 844,
+      "title": "BB10\u201104 \u00b7 Audit Log"
+    },
+    {
+      "file": "BB11-01-Location-Priming.dc.html",
+      "x": 0,
+      "y": 10240,
+      "w": 390,
+      "h": 844,
+      "title": "BB11\u201101 \u00b7 Location Permission Priming"
+    },
+    {
+      "file": "BB11-02-Document-Scanner.dc.html",
+      "x": 480,
+      "y": 10240,
+      "w": 390,
+      "h": 844,
+      "title": "BB11\u201102 \u00b7 Document Scanner"
+    },
+    {
+      "file": "BB11-03-Offline-Drafts.dc.html",
+      "x": 960,
+      "y": 10240,
+      "w": 390,
+      "h": 844,
+      "title": "BB11\u201103 \u00b7 Offline Drafts"
+    },
+    {
+      "file": "BB12-01-Homeowner-Home.dc.html",
+      "x": 0,
+      "y": 11264,
+      "w": 390,
+      "h": 844,
+      "title": "BB12\u201101 \u00b7 Homeowner Home"
+    },
+    {
+      "file": "BB12-02-My-Property.dc.html",
+      "x": 480,
+      "y": 11264,
+      "w": 390,
+      "h": 844,
+      "title": "BB12\u201102 \u00b7 My Property"
+    },
+    {
+      "file": "BB12-03-Compare-Proposals.dc.html",
+      "x": 960,
+      "y": 11264,
+      "w": 390,
+      "h": 844,
+      "title": "BB12\u201103 \u00b7 Compare Contractor Proposals"
+    },
+    {
+      "file": "BB12-04-Invite-a-Pro.dc.html",
+      "x": 1440,
+      "y": 11264,
+      "w": 390,
+      "h": 844,
+      "title": "BB12\u201104 \u00b7 Invite a Pro to Property"
+    },
+    {
+      "file": "BB13-01-Estimate-Builder.dc.html",
+      "x": 0,
+      "y": 12288,
+      "w": 390,
+      "h": 844,
+      "title": "BB13\u201101 \u00b7 Estimate Builder"
+    },
+    {
+      "file": "BB13-02-Project-Schedule-Log.dc.html",
+      "x": 480,
+      "y": 12288,
+      "w": 390,
+      "h": 844,
+      "title": "BB13\u201102 \u00b7 Project Schedule & Daily Log"
+    },
+    {
+      "file": "BB13-03-Trade-Job-Feed.dc.html",
+      "x": 960,
+      "y": 12288,
+      "w": 390,
+      "h": 844,
+      "title": "BB13\u201103 \u00b7 Trade Job Feed"
+    },
+    {
+      "file": "BB13-04-Change-Order.dc.html",
+      "x": 1440,
+      "y": 12288,
+      "w": 390,
+      "h": 844,
+      "title": "BB13\u201104 \u00b7 Change Order"
+    },
+    {
+      "file": "BB14-01-Agent-Dashboard.dc.html",
+      "x": 0,
+      "y": 13312,
+      "w": 390,
+      "h": 844,
+      "title": "BB14\u201101 \u00b7 Agent Dashboard"
+    },
+    {
+      "file": "BB14-02-Listing-Portfolio.dc.html",
+      "x": 480,
+      "y": 13312,
+      "w": 390,
+      "h": 844,
+      "title": "BB14\u201102 \u00b7 Listing Portfolio"
+    },
+    {
+      "file": "BB14-03-CMA-Workspace.dc.html",
+      "x": 960,
+      "y": 13312,
+      "w": 390,
+      "h": 844,
+      "title": "BB14\u201103 \u00b7 CMA Workspace"
+    },
+    {
+      "file": "BB14-04-Showings-Open-House.dc.html",
+      "x": 1440,
+      "y": 13312,
+      "w": 390,
+      "h": 844,
+      "title": "BB14\u201104 \u00b7 Showings & Open House"
+    },
+    {
+      "file": "BB15-01-Deal-Calculator.dc.html",
+      "x": 0,
+      "y": 14336,
+      "w": 390,
+      "h": 844,
+      "title": "BB15\u201101 \u00b7 Deal Calculator"
+    },
+    {
+      "file": "BB15-02-Investor-Portfolio.dc.html",
+      "x": 480,
+      "y": 14336,
+      "w": 390,
+      "h": 844,
+      "title": "BB15\u201102 \u00b7 Investor Portfolio"
+    },
+    {
+      "file": "BB15-03-Disposition.dc.html",
+      "x": 960,
+      "y": 14336,
+      "w": 390,
+      "h": 844,
+      "title": "BB15\u201103 \u00b7 Disposition Marketplace"
+    },
+    {
+      "file": "BB15-04-Due-Diligence.dc.html",
+      "x": 1440,
+      "y": 14336,
+      "w": 390,
+      "h": 844,
+      "title": "BB15\u201104 \u00b7 Due Diligence Checklist"
+    },
+    {
+      "file": "BB16-01-Loan-Pipeline.dc.html",
+      "x": 0,
+      "y": 15360,
+      "w": 390,
+      "h": 844,
+      "title": "BB16\u201101 \u00b7 Loan Pipeline"
+    },
+    {
+      "file": "BB16-02-Prequalification.dc.html",
+      "x": 480,
+      "y": 15360,
+      "w": 390,
+      "h": 844,
+      "title": "BB16\u201102 \u00b7 Borrower Prequalification"
+    },
+    {
+      "file": "BB16-03-Loan-Conditions.dc.html",
+      "x": 960,
+      "y": 15360,
+      "w": 390,
+      "h": 844,
+      "title": "BB16\u201103 \u00b7 Conditions Checklist"
+    },
+    {
+      "file": "BB17-01-PM-Properties.dc.html",
+      "x": 0,
+      "y": 16384,
+      "w": 390,
+      "h": 844,
+      "title": "BB17\u201101 \u00b7 Property Portfolio"
+    },
+    {
+      "file": "BB17-02-Work-Order.dc.html",
+      "x": 480,
+      "y": 16384,
+      "w": 390,
+      "h": 844,
+      "title": "BB17\u201102 \u00b7 Maintenance Work Order"
+    },
+    {
+      "file": "BB17-03-Owner-Report.dc.html",
+      "x": 960,
+      "y": 16384,
+      "w": 390,
+      "h": 844,
+      "title": "BB17\u201103 \u00b7 Owner Report"
+    },
+    {
+      "file": "BB18-01-Inspection-Report.dc.html",
+      "x": 0,
+      "y": 17408,
+      "w": 390,
+      "h": 844,
+      "title": "BB18\u201101 \u00b7 Inspection Report"
+    },
+    {
+      "file": "BB18-02-Appraisal-Status.dc.html",
+      "x": 480,
+      "y": 17408,
+      "w": 390,
+      "h": 844,
+      "title": "BB18\u201102 \u00b7 Appraisal Status"
+    },
+    {
+      "file": "BB18-03-Secure-Closing-Room.dc.html",
+      "x": 960,
+      "y": 17408,
+      "w": 390,
+      "h": 844,
+      "title": "BB18\u201103 \u00b7 Secure Closing Room"
+    },
+    {
+      "file": "BB18-04-Insurance-Quote.dc.html",
+      "x": 1440,
+      "y": 17408,
+      "w": 390,
+      "h": 844,
+      "title": "BB18\u201104 \u00b7 Insurance Quote Request"
+    },
+    {
+      "file": "BB18-05-Attorney-Consultation.dc.html",
+      "x": 1920,
+      "y": 17408,
+      "w": 390,
+      "h": 844,
+      "title": "BB18\u201105 \u00b7 Attorney Consultation Request"
+    },
+    {
+      "file": "BB19-01-Plan-Storage.dc.html",
+      "x": 0,
+      "y": 18432,
+      "w": 390,
+      "h": 844,
+      "title": "BB19\u201101 \u00b7 Plan & Drawing Storage"
+    },
+    {
+      "file": "BB19-02-Supplier-Catalog.dc.html",
+      "x": 480,
+      "y": 18432,
+      "w": 390,
+      "h": 844,
+      "title": "BB19\u201102 \u00b7 Supplier Product Catalog"
+    },
+    {
+      "file": "BB19-03-Quote-Requests.dc.html",
+      "x": 960,
+      "y": 18432,
+      "w": 390,
+      "h": 844,
+      "title": "BB19\u201103 \u00b7 Contractor Quote Requests"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "overview-note",
+      "x": 0,
+      "y": -300,
+      "w": 900,
+      "text": "Boliviq iOS Screens \u2014 Canons BB01\u2013BB19\n\nNumbering follows the canon-index convention: BB{canon #}-{screen seq}, e.g. BB05-02 = Canon BB05 (CRM & Pipeline), 2nd screen in that flow. Canon numbers match claude/canon-index.md.\n\nFrame: iPhone viewport (390x844pt). No fake iOS status bar or keyboard is drawn \u2014 that space is left for the real system chrome, per Apple HIG. Tab bars and nav bars ARE app content and are drawn. Static mockups (not yet wired for interaction), \"core flow\" scope \u2014 5\u20137 screens per canon covering that canon's key journeys, not every possible screen."
+    },
+    {
+      "id": "canon1-title",
+      "x": 0,
+      "y": -70,
+      "w": 620,
+      "text": "CANON BB01 \u2014 Platform Overview & Account Structure  (canon-platform-overview.md)"
+    },
+    {
+      "id": "canon2-title",
+      "x": 0,
+      "y": 954,
+      "w": 620,
+      "text": "CANON BB02 \u2014 Onboarding & Authentication  (canon-onboarding-auth.md)"
+    },
+    {
+      "id": "canon3-title",
+      "x": 0,
+      "y": 1978,
+      "w": 620,
+      "text": "CANON BB03 \u2014 Marketplace & Search  (canon-marketplace-search.md)"
+    },
+    {
+      "id": "canon4-title",
+      "x": 0,
+      "y": 3002,
+      "w": 620,
+      "text": "CANON BB04 \u2014 Communication Center  (canon-communication.md)"
+    },
+    {
+      "id": "canon5-title",
+      "x": 0,
+      "y": 4026,
+      "w": 620,
+      "text": "CANON BB05 \u2014 CRM & Pipeline  (canon-crm-pipeline.md)"
+    },
+    {
+      "id": "canon6-title",
+      "x": 0,
+      "y": 5050,
+      "w": 620,
+      "text": "CANON BB06 \u2014 Trust & Verification  (canon-trust-verification.md)"
+    },
+    {
+      "id": "canon7-title",
+      "x": 0,
+      "y": 6074,
+      "w": 620,
+      "text": "CANON BB07 \u2014 AI Features  (canon-ai-features.md)"
+    },
+    {
+      "id": "canon8-title",
+      "x": 0,
+      "y": 7098,
+      "w": 620,
+      "text": "CANON BB08 \u2014 Subscriptions & Billing  (canon-subscriptions-billing.md)"
+    },
+    {
+      "id": "canon9-title",
+      "x": 0,
+      "y": 8122,
+      "w": 620,
+      "text": "CANON BB09 \u2014 Integrations  (canon-integrations.md)"
+    },
+    {
+      "id": "canon10-title",
+      "x": 0,
+      "y": 9146,
+      "w": 620,
+      "text": "CANON BB10 \u2014 Administrative System  (canon-admin.md)"
+    },
+    {
+      "id": "canon11-title",
+      "x": 0,
+      "y": 10170,
+      "w": 620,
+      "text": "CANON BB11 \u2014 Mobile, PWA & App Requirements  (canon-mobile-pwa.md)"
+    },
+    {
+      "id": "canon12-title",
+      "x": 0,
+      "y": 11194,
+      "w": 620,
+      "text": "CANON BB12 \u2014 Homeowner Profile  (canon-profile-homeowner.md)"
+    },
+    {
+      "id": "canon13-title",
+      "x": 0,
+      "y": 12218,
+      "w": 620,
+      "text": "CANON BB13 \u2014 Contractor & Trades Profile  (canon-profile-contractor-trades.md)"
+    },
+    {
+      "id": "canon14-title",
+      "x": 0,
+      "y": 13242,
+      "w": 620,
+      "text": "CANON BB14 \u2014 Realtor & Broker Profile  (canon-profile-realtor.md)"
+    },
+    {
+      "id": "canon15-title",
+      "x": 0,
+      "y": 14266,
+      "w": 620,
+      "text": "CANON BB15 \u2014 Investor & Wholesaler Profile  (canon-profile-investor-wholesaler.md)"
+    },
+    {
+      "id": "canon16-title",
+      "x": 0,
+      "y": 15290,
+      "w": 620,
+      "text": "CANON BB16 \u2014 Lender Profile  (canon-profile-lender.md)"
+    },
+    {
+      "id": "canon17-title",
+      "x": 0,
+      "y": 16314,
+      "w": 620,
+      "text": "CANON BB17 \u2014 Property Manager Profile  (canon-profile-property-manager.md)"
+    },
+    {
+      "id": "canon18-title",
+      "x": 0,
+      "y": 17338,
+      "w": 620,
+      "text": "CANON BB18 \u2014 Transaction Professionals  (canon-profile-transaction-pros.md)"
+    },
+    {
+      "id": "canon19-title",
+      "x": 0,
+      "y": 18362,
+      "w": 620,
+      "text": "CANON BB19 \u2014 Design & Supply Professionals  (canon-profile-design-supply.md)"
+    },
+    {
+      "id": "ios-compliance-note",
+      "x": 3400,
+      "y": 0,
+      "w": 340,
+      "text": "iOS App Store compliance flagged in these mockups:\n\n\u2022 BB02-02 Sign Up \u2014 Sign in with Apple shown alongside Google (Guideline 4.8: any third-party login requires an equivalent Apple option).\n\n\u2022 BB02-06 Subscription \u2014 digital plan upgrades on iOS must use Apple In-App Purchase / StoreKit (Guideline 3.1.1); Stripe stays web-only. Matches canon-mobile-pwa.md's payment rule.\n\n\u2022 BB01-04 Settings \u2014 in-app \"Delete account\" row is the required self-service deletion path (Guideline 5.1.1(v)).\n\n\u2022 BB11-01 Location Priming and BB11-02 Document Scanner (Canon BB11) show the permission-priming and camera-capture patterns Apple expects ahead of the system prompt \u2014 no fake status bar or keyboard drawn on either, per Apple HIG.\n\nNot yet mocked but needed before submission: push-notification opt-in priming and biometric (Face ID) fallback-to-password state."
+    },
+    {
+      "id": "compliance-note-2",
+      "x": 3400,
+      "y": 3072,
+      "w": 340,
+      "text": "Communication compliance (Canon BB04):\n\n\u2022 BB04-04 bakes in the canon's rule directly \u2014 quiet hours, SMS consent, and an opt-out (STOP) control live in Settings, not buried per-feature.\n\n\u2022 BB04-05 Report/Block implements the canon's spam-reporting and blocking requirement."
+    },
+    {
+      "id": "compliance-note-3",
+      "x": 3400,
+      "y": 5120,
+      "w": 340,
+      "text": "Trust & Verification compliance (Canon BB06):\n\n\u2022 BB06-01 and BB06-02 both carry an explicit disclaimer that a verification badge confirms a document was submitted, not that Boliviq guarantees the professional's work \u2014 this is a hard rule in canon-trust-verification.md, not optional copy.\n\n\u2022 BB06-05 repeats the same disclaimer at the complaint level: a dispute outcome never changes a verification badge."
+    },
+    {
+      "id": "compliance-note-4",
+      "x": 3400,
+      "y": 6144,
+      "w": 340,
+      "text": "AI Features compliance (Canon BB07):\n\n\u2022 BB07-02 and BB07-03 both surface the canon's autonomy limits (agents never send messages, sign agreements, move money, or publish listings without confirmation).\n\n\u2022 BB07-04 is that confirmation gate made concrete \u2014 every outbound AI action stops here first.\n\n\u2022 BB07-05 shows the credit ledger mechanics required by the canon: reserve \u2192 charge/release, with an idempotency key."
+    },
+    {
+      "id": "compliance-note-9",
+      "x": 3400,
+      "y": 8192,
+      "w": 340,
+      "text": "Integrations compliance (Canon BB09):\n\n\u2022 BB09-02 MLS/IDX detail carries the canon's hard rule verbatim \u2014 off-market listings are never labeled or displayed as MLS listings unless received through an authorized MLS integration."
+    },
+    {
+      "id": "compliance-note-14",
+      "x": 3400,
+      "y": 13312,
+      "w": 340,
+      "text": "Realtor compliance (Canon BB14):\n\n\u2022 BB14-03 CMA Workspace labels its suggested price range as a pricing estimate from comparable sales, not a licensed appraisal \u2014 consistent with the same rule applied to investor tools in Canon BB15."
+    },
+    {
+      "id": "compliance-note-15",
+      "x": 3400,
+      "y": 14336,
+      "w": 340,
+      "text": "Investor & Wholesaler compliance (Canon BB15):\n\n\u2022 BB15-01 Deal Calculator discloses that automated valuations and offer calculations are estimates, not licensed appraisals.\n\n\u2022 BB15-03 Disposition carries a state-sensitive compliance notice \u2014 wholesaling, marketing equitable interests, licensing and disclosure requirements vary by jurisdiction, per canon-profile-investor-wholesaler.md."
+    },
+    {
+      "id": "compliance-note-16",
+      "x": 3400,
+      "y": 15360,
+      "w": 340,
+      "text": "Lender compliance (Canon BB16):\n\n\u2022 BB16-02 Prequalification is explicit that this is a prequalification estimate only \u2014 not a lending decision or commitment to lend. Boliviq does not make lending decisions unless separately licensed to do so."
+    },
+    {
+      "id": "compliance-note-18",
+      "x": 3400,
+      "y": 17408,
+      "w": 340,
+      "text": "Transaction Professionals compliance (Canon BB18):\n\n\u2022 BB18-01 Inspection Report states AI can generate repair requests from findings but never edits or alters the inspector's signed report.\n\n\u2022 BB18-02 Appraisal Status separates the licensed appraisal from Boliviq's own automated value estimate \u2014 only the licensed report is used for lending decisions.\n\n\u2022 BB18-03 Secure Closing Room carries an explicit anti-wire-fraud warning \u2014 Boliviq and the title company will never change wiring instructions by email or text.\n\n\u2022 BB18-05 Attorney Consultation states plainly that Boliviq AI is not an attorney and does not provide legal advice \u2014 it only routes requests to a licensed professional."
+    }
+  ],
+  "launch": {
+    "view": "canvas"
+  }
+}

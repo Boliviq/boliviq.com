@@ -51,4 +51,4 @@ Temporary Lovable screens are not Gate 8.
 3. Stripe webhook → Canon 8 pack deposit into the Canon 7 wallet (keys are Gate 9)
 4. Provider adapters (flag-gated, mocked)
 5. Upgrade-from-older-schema automation (fresh install is already proven)
-6. Gate 8 pages — last
+6. Gate 8 pages — last. Official mockups are in `docs/ios-screens/` (80 screens, BB01–BB19). Do not insert until the matching engine workflow passes.

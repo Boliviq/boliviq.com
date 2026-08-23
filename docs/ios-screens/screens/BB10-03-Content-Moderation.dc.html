@@ -1,0 +1,118 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+
+:root{
+  --bg:oklch(98% 0.004 255);
+  --surface:oklch(100% 0 0);
+  --surface-alt:oklch(96.5% 0.006 255);
+  --border:oklch(90% 0.007 255);
+  --border-soft:oklch(93.5% 0.006 255);
+  --text:oklch(25% 0.021 258);
+  --text-soft:oklch(46% 0.021 258);
+  --text-faint:oklch(63% 0.016 258);
+  --accent:oklch(55% 0.163 258);
+  --accent-dark:oklch(46% 0.15 258);
+  --accent-soft:oklch(93.5% 0.032 258);
+  --on-accent:oklch(99% 0 0);
+  --success:oklch(60% 0.135 152);
+  --success-soft:oklch(94% 0.045 152);
+  --warning:oklch(73% 0.14 78);
+  --warning-soft:oklch(94% 0.06 78);
+  --danger:oklch(57% 0.19 24);
+  --danger-soft:oklch(94% 0.05 24);
+}
+*{box-sizing:border-box;-webkit-font-smoothing:antialiased;}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--surface-alt);color:var(--text);}
+a{color:var(--accent);text-decoration:none;}
+a:hover{color:var(--accent-dark);}
+.device{width:390px;height:844px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:var(--bg);box-shadow:0 0 0 1px var(--border);}
+.statusgap{height:47px;flex-shrink:0;}
+.navbar{flex-shrink:0;display:flex;flex-direction:column;background:var(--bg);border-bottom:1px solid var(--border-soft);}
+.navrow{height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 8px 0 8px;}
+.navbtn{display:flex;align-items:center;gap:2px;color:var(--accent);font-size:15px;font-weight:510;padding:6px 8px;min-height:44px;}
+.navtitle-small{font-size:15px;font-weight:600;color:var(--text);}
+.navactions{display:flex;align-items:center;gap:2px;padding-right:4px;}
+.iconbtn{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--text);}
+.largetitle{padding:2px 16px 12px;}
+.largetitle h1{margin:0;font-size:30px;font-weight:750;letter-spacing:-0.4px;color:var(--text);}
+.largetitle p{margin:2px 0 0;font-size:14px;color:var(--text-soft);}
+.content{flex:1;min-height:0;overflow-y:auto;padding-bottom:24px;}
+.tabbar{flex-shrink:0;display:flex;border-top:1px solid var(--border-soft);background:var(--bg);padding-top:8px;}
+.tabbargap{height:22px;flex-shrink:0;background:var(--bg);}
+.tabitem{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--text-faint);font-size:10.5px;font-weight:560;padding-bottom:2px;}
+.tabitem.active{color:var(--accent);}
+.section{padding:20px 16px 4px;}
+.section-title{font-size:12px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--text-faint);margin:0 0 8px 2px;}
+.section-head{display:flex;align-items:baseline;justify-content:space-between;margin:0 0 8px 2px;}
+.section-head .link{font-size:13px;font-weight:600;}
+.card{background:var(--surface);border:1px solid var(--border-soft);border-radius:16px;}
+.grouplist{background:var(--surface);border:1px solid var(--border-soft);border-radius:14px;overflow:hidden;}
+.grouprow{display:flex;align-items:center;gap:12px;padding:12px 14px;min-height:44px;border-bottom:1px solid var(--border-soft);}
+.grouprow:last-child{border-bottom:none;}
+.grouprow .label{flex:1;font-size:15px;font-weight:500;color:var(--text);}
+.grouprow .value{font-size:15px;color:var(--text-faint);}
+.grouprow.danger .label{color:var(--danger);}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:650;padding:3px 8px 3px 6px;border-radius:100px;}
+.badge.success{background:var(--success-soft);color:var(--success);}
+.badge.warning{background:var(--warning-soft);color:oklch(48% 0.11 78);}
+.badge.accent{background:var(--accent-soft);color:var(--accent-dark);}
+.badge.neutral{background:var(--surface-alt);color:var(--text-soft);border:1px solid var(--border);}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;height:50px;border-radius:14px;font-size:16px;font-weight:650;border:none;width:100%;}
+.btn-primary{background:var(--accent);color:var(--on-accent);}
+.btn-secondary{background:var(--surface);color:var(--text);border:1px solid var(--border);}
+.btn-outline-white{background:var(--surface);color:var(--text);border:1.5px solid var(--border);}
+.btn-ghost{background:transparent;color:var(--accent);}
+.input{height:50px;border-radius:12px;border:1px solid var(--border);background:var(--surface);padding:0 14px;font-size:15.5px;color:var(--text);display:flex;align-items:center;}
+.input .placeholder{color:var(--text-faint);}
+.field-label{font-size:12.5px;font-weight:650;color:var(--text-soft);margin:0 0 6px 2px;}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:8px 13px;border-radius:100px;font-size:13.5px;font-weight:600;border:1px solid var(--border);background:var(--surface);color:var(--text);}
+.chip.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent);}
+.avatar{border-radius:100px;background:var(--accent-soft);color:var(--accent-dark);display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;}
+.hr{height:1px;background:var(--border-soft);border:none;margin:0;}
+.progressbar{height:6px;border-radius:100px;background:var(--surface-alt);overflow:hidden;}
+.progressbar > div{height:100%;background:var(--accent);border-radius:100px;}
+.stepper{display:flex;align-items:center;gap:6px;padding:14px 16px 2px;}
+.stepdot{flex:1;height:4px;border-radius:100px;background:var(--border);}
+.stepdot.done{background:var(--accent);}
+
+</style>
+</helmet>
+<div style="display:flex;justify-content:center;padding:0;">
+<div class="device">
+<div class="navbar">
+  <div class="statusgap"></div>
+  <div class="navrow"><span class="navbtn"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color:currentColor;flex-shrink:0;" ><path d="m15 5-7 7 7 7"/></svg><span>Back</span></span><span class="navtitle-small">Reported Content</span><div class="navactions"><div style="width:8px;"></div></div></div>
+  
+</div>
+<div class="content">
+<div style="height:10px;flex-shrink:0;"></div><div style="padding:0 16px;"><div style="display:flex;flex-direction:column;gap:10px;"><div class="card" style="padding:12px 13px;">
+  <div style="font-size:13.5px;font-weight:650;">Cash offer — 40% below market</div>
+  <div style="font-size:11.5px;color:var(--text-faint);margin-top:2px;">Reason: Suspected scam &middot; 4 reports</div>
+  <div style="height:8px;"></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;"><span class="badge warning">Pending</span><a style="font-size:12.5px;font-weight:650;">Review</a></div>
+</div><div class="card" style="padding:12px 13px;">
+  <div style="font-size:13.5px;font-weight:650;">Unlicensed "contractor" services</div>
+  <div style="font-size:11.5px;color:var(--text-faint);margin-top:2px;">Reason: Unlicensed activity &middot; 2 reports</div>
+  <div style="height:8px;"></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;"><span class="badge warning">Pending</span><a style="font-size:12.5px;font-weight:650;">Review</a></div>
+</div><div class="card" style="padding:12px 13px;">
+  <div style="font-size:13.5px;font-weight:650;">Duplicate listing spam</div>
+  <div style="font-size:11.5px;color:var(--text-faint);margin-top:2px;">Reason: Spam &middot; 6 reports</div>
+  <div style="height:8px;"></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;"><span class="badge success">Actioned</span><a style="font-size:12.5px;font-weight:650;">Review</a></div>
+</div></div></div><div style="height:20px;flex-shrink:0;"></div>
+</div>
+
+</div>
+</div>
+</x-dc>
+</body>
+</html>

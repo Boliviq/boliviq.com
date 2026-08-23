@@ -416,9 +416,9 @@ Insert in this order so each screen has somewhere to go:
 9. **Marketing site** (index, features, pricing, about, legal) — last among last, because they do not prove the OS.
 10. **PWA install / a11y / i18n polish** on the finished pages (not on the old shells).
 
-### Page inventory to insert (you do not have these yet)
+### Page inventory to insert
 
-These are the finished surfaces. Until they exist, we keep building L0–L7.
+The finished surfaces are the **80 iPhone mockups** in `docs/ios-screens/` (BB01–BB19). Binding map: `docs/ios-screens/README.md`. They sit in that holding folder. They are not the product until the matching engine tests pass.
 
 **Marketing (public)**
 
