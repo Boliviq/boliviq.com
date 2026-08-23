@@ -21,6 +21,6 @@ New signups create a personal workspace + empty credit wallet via `handle_new_us
 
 Suspended profiles (`profiles.suspended_at`) are redirected to `/suspended` by `_authenticated/route.tsx`. Password reset lives at `/forgot-password` and `/reset-password`. Optional TOTP MFA is enrolled from Settings. Provider CAPTCHA is Phase 10; signup has a honeypot only.
 
-Standard commands: `npm run typecheck`, `npm run lint`, `npm run test`, `npm run dev` (port 8080). Sequencing source of truth is `docs/completion-plan.md` (engine first, finished pages last). `docs/build-plan.md` is the older phase checklist.
+Standard commands: `npm run typecheck`, `npm run lint`, `npm run test`, `npm run dev` (port 8080). Sequencing: `docs/completion-plan.md` (engine first, Gate 8 pages last). Status: `docs/launch-readiness.md`. Architecture: `docs/canonical-architecture.md`. `docs/build-plan.md` is the older phase checklist.
 
 Marketplace listing photos upload to the local `marketplace-media` storage bucket (public read, authenticated write). After `supabase db reset`, the bucket is recreated by `20260823120000_phase3_marketplace.sql`. Convert-to-lead writes `leads.listing_id` + `leads.title`. Map view groups by location text until Phase 10 geocoding.

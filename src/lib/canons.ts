@@ -828,6 +828,35 @@ export const SUBSCRIPTION_GROUPS = [
   "Enterprise",
 ] as const;
 
+export type SubscriptionGroup = (typeof SUBSCRIPTION_GROUPS)[number];
+
+/** Maps the sellable Stripe catalog (`src/lib/plans.ts`) onto Canon 8 groups. */
+export const PLAN_TO_CANON_GROUP = {
+  free: "Homeowner Free",
+  beginner: "Professional",
+  professional: "Professional",
+  professional_ai_max: "Professional + AI",
+  team: "Team Professional",
+  team_ai_max: "AI Team",
+} as const;
+
+export const CONVERSATION_THREAD_TYPES = [
+  { id: "direct", label: "Direct message" },
+  { id: "group", label: "Group conversation" },
+  { id: "property", label: "Property conversation" },
+  { id: "project", label: "Project conversation" },
+] as const;
+
+export type ConversationThreadTypeId = (typeof CONVERSATION_THREAD_TYPES)[number]["id"];
+
+export const NOTIFICATION_CHANNELS = [
+  { id: "in_app", label: "In-app", requiresConsent: false },
+  { id: "email", label: "Email", requiresConsent: true },
+  { id: "sms", label: "SMS", requiresConsent: true },
+] as const;
+
+export type NotificationChannelId = (typeof NOTIFICATION_CHANNELS)[number]["id"];
+
 export const LIFECYCLE_STEPS = [
   {
     id: "find",

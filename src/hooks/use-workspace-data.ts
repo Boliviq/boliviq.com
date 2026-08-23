@@ -14,6 +14,7 @@ import {
   listConversationsFn,
   startConversationFn,
   sendMessageFn,
+  markConversationReadFn,
   listProfessionalsFn,
   listVerificationsFn,
   startVerificationFn,
@@ -185,6 +186,16 @@ export function useSendMessage() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: { conversationId: string; body: string }) => send({ data: input }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["conversations", userId] }),
+  });
+}
+
+export function useMarkConversationRead() {
+  const { userId } = useCurrentUser();
+  const mark = useServerFn(markConversationReadFn);
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (conversationId: string) => mark({ data: { conversationId } }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["conversations", userId] }),
   });
 }

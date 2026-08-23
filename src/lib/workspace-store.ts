@@ -50,6 +50,7 @@ export type Thread = {
   lastMessage: string;
   updatedAt: string;
   unread: number;
+  threadType?: import("@/lib/canons").ConversationThreadTypeId;
   property?: string;
   project?: string;
   listing?: string;

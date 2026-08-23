@@ -309,6 +309,56 @@ describe.runIf(enabled)(
       expect(bobMsgs ?? []).toHaveLength(0);
     });
 
+    test("notification preferences are isolated and last_read_at updates", async () => {
+      const { error: prefErr } = await alice.client.from("notification_preferences").upsert({
+        user_id: alice.userId,
+        email_enabled: true,
+        sms_enabled: false,
+        quiet_hours_start: "21:00",
+        quiet_hours_end: "07:00",
+        timezone: "America/Chicago",
+      });
+      expect(prefErr).toBeNull();
+
+      const { data: bobPrefs } = await bob.client
+        .from("notification_preferences")
+        .select("user_id")
+        .eq("user_id", alice.userId);
+      expect(bobPrefs ?? []).toHaveLength(0);
+
+      const { data: convo } = await alice.client
+        .from("conversations")
+        .insert({
+          created_by: alice.userId,
+          title: "Read receipt",
+          context: "Direct",
+          thread_type: "direct",
+        })
+        .select("id")
+        .single();
+      await alice.client.from("conversation_participants").insert({
+        conversation_id: convo!.id,
+        user_id: alice.userId,
+      });
+      const { error: readErr } = await alice.client
+        .from("conversation_participants")
+        .update({ last_read_at: new Date().toISOString() })
+        .eq("conversation_id", convo!.id)
+        .eq("user_id", alice.userId);
+      expect(readErr).toBeNull();
+
+      const { error: blockErr } = await alice.client.from("conversation_blocks").insert({
+        blocker_id: alice.userId,
+        blocked_id: bob.userId,
+      });
+      expect(blockErr).toBeNull();
+      const { data: bobBlocks } = await bob.client
+        .from("conversation_blocks")
+        .select("blocked_id")
+        .eq("blocker_id", alice.userId);
+      expect(bobBlocks ?? []).toHaveLength(0);
+    });
+
     test("verification records persist per user", async () => {
       const { error } = await alice.client.from("verification_records").insert({
         user_id: alice.userId,

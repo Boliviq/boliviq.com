@@ -14,8 +14,14 @@ import type {
 } from "@/lib/workspace-store";
 import { DEFAULT_ACCOUNT } from "@/lib/workspace-store";
 import { PROFESSIONAL_SEED } from "@/lib/professional-seed";
-import type { MarketplaceCategoryId, ProfileRoleId, VerificationTierId } from "@/lib/canons";
+import type {
+  ConversationThreadTypeId,
+  MarketplaceCategoryId,
+  ProfileRoleId,
+  VerificationTierId,
+} from "@/lib/canons";
 import { isProfileRoleId } from "@/lib/canons";
+import { inferThreadType, type NotificationPreferenceView } from "@/lib/communication";
 import type { Json } from "@/integrations/supabase/types";
 
 /**
@@ -385,14 +391,18 @@ function toThread(
     title: string | null;
     context: string | null;
     listing_id: string | null;
+    thread_type?: string | null;
     updated_at: string;
     created_at: string;
   },
   messages: Thread["messages"],
   currentUserId: string,
+  lastReadAt?: string | null,
 ): Thread {
   const extra = decodeThreadContext(row.context);
   const last = messages.at(-1);
+  const readAt = lastReadAt ? Date.parse(lastReadAt) : 0;
+  const unread = messages.filter((m) => !m.mine && Date.parse(m.at) > readAt).length;
   return {
     id: row.id,
     title: row.title || extra.listing || extra.project || "Conversation",
@@ -400,7 +410,8 @@ function toThread(
     participants: extra.participants?.length ? extra.participants : ["You"],
     lastMessage: last?.body ?? "",
     updatedAt: last?.at ?? row.updated_at ?? row.created_at,
-    unread: 0,
+    unread,
+    threadType: (row.thread_type as ConversationThreadTypeId | undefined) ?? inferThreadType(extra),
     property: extra.property,
     project: extra.project,
     listing: extra.listing,
@@ -417,11 +428,18 @@ export const listConversationsFn = createServerFn({ method: "POST" })
   .handler(async ({ context }): Promise<Thread[]> => {
     const { data: convos, error } = await context.supabase
       .from("conversations")
-      .select("id, title, context, listing_id, updated_at, created_at")
+      .select("id, title, context, listing_id, thread_type, updated_at, created_at")
       .order("updated_at", { ascending: false });
     if (error) throw new Error(error.message);
     const ids = (convos ?? []).map((c) => c.id);
     if (ids.length === 0) return [];
+
+    const { data: reads } = await context.supabase
+      .from("conversation_participants")
+      .select("conversation_id, last_read_at")
+      .eq("user_id", context.userId)
+      .in("conversation_id", ids);
+    const lastRead = new Map((reads ?? []).map((r) => [r.conversation_id, r.last_read_at]));
 
     const { data: msgs, error: mErr } = await context.supabase
       .from("messages")
@@ -443,7 +461,9 @@ export const listConversationsFn = createServerFn({ method: "POST" })
       byConvo.set(m.conversation_id, list);
     }
 
-    return (convos ?? []).map((c) => toThread(c, byConvo.get(c.id) ?? [], context.userId));
+    return (convos ?? []).map((c) =>
+      toThread(c, byConvo.get(c.id) ?? [], context.userId, lastRead.get(c.id)),
+    );
   });
 
 const startConversationInput = z.object({
@@ -469,6 +489,12 @@ export const startConversationFn = createServerFn({ method: "POST" })
     const listingId =
       data.extra?.listingId && UUID_RE.test(data.extra.listingId) ? data.extra.listingId : null;
     const encoded = encodeThreadContext(data.context ?? "Direct message", data.extra);
+    const threadType = inferThreadType({
+      property: data.extra?.property,
+      project: data.extra?.project,
+      listingId,
+      participantCount: data.extra?.participantUserId ? 2 : 1,
+    });
     const { data: convo, error } = await context.supabase
       .from("conversations")
       .insert({
@@ -476,6 +502,7 @@ export const startConversationFn = createServerFn({ method: "POST" })
         title: data.title,
         context: encoded,
         listing_id: listingId,
+        thread_type: threadType,
       })
       .select("id")
       .single();
@@ -532,16 +559,158 @@ export const sendMessageFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) => sendMessageInput.parse(d))
   .handler(async ({ data, context }): Promise<{ ok: true }> => {
+    const { data: others } = await context.supabase
+      .from("conversation_participants")
+      .select("user_id")
+      .eq("conversation_id", data.conversationId)
+      .neq("user_id", context.userId);
+    const otherIds = (others ?? []).map((p) => p.user_id);
+    if (otherIds.length > 0) {
+      const { data: blocked } = await context.supabase
+        .from("conversation_blocks")
+        .select("blocker_id")
+        .eq("blocked_id", context.userId)
+        .in("blocker_id", otherIds)
+        .limit(1);
+      if ((blocked ?? []).length > 0) {
+        throw new Error("You cannot message a user who has blocked you.");
+      }
+    }
+
     const { error } = await context.supabase.from("messages").insert({
       conversation_id: data.conversationId,
       sender_id: context.userId,
       body: data.body,
     });
     if (error) throw new Error(error.message);
+
     await context.supabase
       .from("conversations")
       .update({ updated_at: new Date().toISOString() })
       .eq("id", data.conversationId);
+    return { ok: true };
+  });
+
+export const markConversationReadFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) => z.object({ conversationId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }): Promise<{ ok: true }> => {
+    const { error } = await context.supabase
+      .from("conversation_participants")
+      .update({ last_read_at: new Date().toISOString() })
+      .eq("conversation_id", data.conversationId)
+      .eq("user_id", context.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+const DEFAULT_PREFS: NotificationPreferenceView = {
+  emailEnabled: true,
+  smsEnabled: false,
+  quietHoursStart: null,
+  quietHoursEnd: null,
+  timezone: "America/Chicago",
+  optedOutAt: null,
+};
+
+export const getNotificationPreferencesFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<NotificationPreferenceView> => {
+    const { data, error } = await context.supabase
+      .from("notification_preferences")
+      .select(
+        "email_enabled, sms_enabled, quiet_hours_start, quiet_hours_end, timezone, opted_out_at",
+      )
+      .eq("user_id", context.userId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!data) return DEFAULT_PREFS;
+    return {
+      emailEnabled: data.email_enabled,
+      smsEnabled: data.sms_enabled,
+      quietHoursStart: data.quiet_hours_start,
+      quietHoursEnd: data.quiet_hours_end,
+      timezone: data.timezone,
+      optedOutAt: data.opted_out_at,
+    };
+  });
+
+const prefsInput = z.object({
+  emailEnabled: z.boolean(),
+  smsEnabled: z.boolean(),
+  quietHoursStart: z
+    .string()
+    .regex(/^\d{2}:\d{2}$/)
+    .nullable(),
+  quietHoursEnd: z
+    .string()
+    .regex(/^\d{2}:\d{2}$/)
+    .nullable(),
+  timezone: z.string().trim().min(1).max(80),
+  optedOut: z.boolean(),
+});
+
+export const saveNotificationPreferencesFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) => prefsInput.parse(d))
+  .handler(async ({ data, context }): Promise<NotificationPreferenceView> => {
+    const row = {
+      user_id: context.userId,
+      email_enabled: data.emailEnabled,
+      sms_enabled: data.smsEnabled,
+      quiet_hours_start: data.quietHoursStart,
+      quiet_hours_end: data.quietHoursEnd,
+      timezone: data.timezone,
+      opted_out_at: data.optedOut ? new Date().toISOString() : null,
+      updated_at: new Date().toISOString(),
+    };
+    const { data: saved, error } = await context.supabase
+      .from("notification_preferences")
+      .upsert(row, { onConflict: "user_id" })
+      .select(
+        "email_enabled, sms_enabled, quiet_hours_start, quiet_hours_end, timezone, opted_out_at",
+      )
+      .single();
+    if (error) throw new Error(error.message);
+    return {
+      emailEnabled: saved.email_enabled,
+      smsEnabled: saved.sms_enabled,
+      quietHoursStart: saved.quiet_hours_start,
+      quietHoursEnd: saved.quiet_hours_end,
+      timezone: saved.timezone,
+      optedOutAt: saved.opted_out_at,
+    };
+  });
+
+export const blockUserFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) => z.object({ userId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }): Promise<{ ok: true }> => {
+    if (data.userId === context.userId) throw new Error("You cannot block yourself.");
+    const { error } = await context.supabase.from("conversation_blocks").insert({
+      blocker_id: context.userId,
+      blocked_id: data.userId,
+    });
+    if (error && !error.message.toLowerCase().includes("duplicate")) {
+      throw new Error(error.message);
+    }
+    return { ok: true };
+  });
+
+export const reportConversationFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) =>
+    z
+      .object({ conversationId: z.string().uuid(), reason: z.string().trim().min(3).max(500) })
+      .parse(d),
+  )
+  .handler(async ({ data, context }): Promise<{ ok: true }> => {
+    const { error } = await context.supabase.from("conversation_reports").insert({
+      conversation_id: data.conversationId,
+      reporter_id: context.userId,
+      reason: data.reason,
+    });
+    if (error) throw new Error(error.message);
     return { ok: true };
   });
 

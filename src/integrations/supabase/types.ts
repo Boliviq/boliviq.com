@@ -346,6 +346,24 @@ export type Database = {
         };
         Relationships: [];
       };
+      conversation_blocks: {
+        Row: {
+          blocked_id: string;
+          blocker_id: string;
+          created_at: string;
+        };
+        Insert: {
+          blocked_id: string;
+          blocker_id: string;
+          created_at?: string;
+        };
+        Update: {
+          blocked_id?: string;
+          blocker_id?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       conversation_participants: {
         Row: {
           conversation_id: string;
@@ -372,6 +390,38 @@ export type Database = {
           },
         ];
       };
+      conversation_reports: {
+        Row: {
+          conversation_id: string;
+          created_at: string;
+          id: string;
+          reason: string;
+          reporter_id: string;
+        };
+        Insert: {
+          conversation_id: string;
+          created_at?: string;
+          id?: string;
+          reason: string;
+          reporter_id: string;
+        };
+        Update: {
+          conversation_id?: string;
+          created_at?: string;
+          id?: string;
+          reason?: string;
+          reporter_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "conversation_reports_conversation_id_fkey";
+            columns: ["conversation_id"];
+            isOneToOne: false;
+            referencedRelation: "conversations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       conversations: {
         Row: {
           context: string | null;
@@ -379,7 +429,9 @@ export type Database = {
           created_by: string;
           id: string;
           listing_id: string | null;
+          project_id: string | null;
           property_id: string | null;
+          thread_type: string;
           title: string | null;
           updated_at: string;
         };
@@ -389,7 +441,9 @@ export type Database = {
           created_by: string;
           id?: string;
           listing_id?: string | null;
+          project_id?: string | null;
           property_id?: string | null;
+          thread_type?: string;
           title?: string | null;
           updated_at?: string;
         };
@@ -399,7 +453,9 @@ export type Database = {
           created_by?: string;
           id?: string;
           listing_id?: string | null;
+          project_id?: string | null;
           property_id?: string | null;
+          thread_type?: string;
           title?: string | null;
           updated_at?: string;
         };
@@ -409,6 +465,13 @@ export type Database = {
             columns: ["listing_id"];
             isOneToOne: false;
             referencedRelation: "marketplace_listings";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "conversations_project_id_fkey";
+            columns: ["project_id"];
+            isOneToOne: false;
+            referencedRelation: "projects";
             referencedColumns: ["id"];
           },
           {
@@ -983,6 +1046,39 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
+      };
+      notification_preferences: {
+        Row: {
+          email_enabled: boolean;
+          opted_out_at: string | null;
+          quiet_hours_end: string | null;
+          quiet_hours_start: string | null;
+          sms_enabled: boolean;
+          timezone: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          email_enabled?: boolean;
+          opted_out_at?: string | null;
+          quiet_hours_end?: string | null;
+          quiet_hours_start?: string | null;
+          sms_enabled?: boolean;
+          timezone?: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          email_enabled?: boolean;
+          opted_out_at?: string | null;
+          quiet_hours_end?: string | null;
+          quiet_hours_start?: string | null;
+          sms_enabled?: boolean;
+          timezone?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
       };
       offers: {
         Row: {

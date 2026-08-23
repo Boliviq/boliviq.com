@@ -2,7 +2,30 @@
 
 This is the plan to finish Boliviq against all **19 canons** in `docs/canons/boliviq-canons-combined.md`.
 
-The old phase list in `docs/build-plan.md` is still useful as a checklist of remaining product work. **This document is the sequencing source of truth.** It exists because finished pages are not available yet. We will not wait on design, and we will not polish throwaway screens in the middle of the build.
+The old phase list in `docs/build-plan.md` is still useful as a checklist of remaining product work. **This document is the engine-layer sequencing guide.** Gate status lives in `docs/launch-readiness.md`. The production path lives in `docs/canonical-architecture.md`. Finished pages are not available yet. We will not wait on design, and we will not polish throwaway screens in the middle of the build.
+
+### How the 10 gates map to pages-last
+
+The owner prompt’s Gates 1–10 and the L0–L8 layers are the same sequence. Pages stay last.
+
+| Gate | Layer | Meaning |
+| --- | --- | --- |
+| 1 Law | L0 | Canon as typed code |
+| 2 Data | L1 | Schema, RLS, storage, fresh **and** upgrade migrate |
+| 3 Access | L2 | Server + RLS; hidden buttons are not security |
+| 4 Workflow | L3 | State machines without finished pages |
+| 5 Integration contracts | L4 | Flag-gated adapters; mocks until credentials |
+| 6 E2E | L3/L6 scripts | Journeys across API/DB (Playwright only after Gate 8 starts) |
+| 7 Observe & protect | L5/L7 | Audit, ceilings, rate limits, reconciliation |
+| 8 Production UI | L8 | Insert finished pages last |
+| 9 Live integration | after L7 | Owner secrets via platform fields, not frontend forms |
+| 10 Launch | L7 + human | Security, backup, legal/UAT |
+
+Temporary diagnostic screens are allowed to prove Gates 1–7. They are not Gate 8.
+
+**Alterations kept:** pending review is not a badge; Administrator is not a signup role; connections use real role IDs; widget IDs do not collide; Canon 9 is the only integration catalog; Canon 7 ledger vs Canon 8 credit-pack sales.
+
+**Billing alteration:** architecture is decided now (keep `embedded_page_v4` on this repo). The owner is not asked to pick among four historical Stripe branches. Credentials remain a later Gate 9 form.
 
 Effort is described by scope, invasiveness, and risk — not calendar time.
 
@@ -16,8 +39,7 @@ You do not need pages, terminals, or code reviews to keep this moving.
 | --- | --- | --- |
 | Now (optional) | One-click merge of the current working PR when you want this work on the connected Lovable branch | Saves the engine already built (data, identity, marketplace loop) |
 | Later, labeled form | Production database URL + keys | Required only when we turn on a real hosted environment |
-| Later, two-sentence choice | Which Stripe billing line to keep | Four old Stripe branches cannot be merged together |
-| Later, labeled form | Stripe test key + webhook | Required only when we prove paid checkout |
+| Later, labeled form | Stripe test key + webhook | Architecture is already this repo’s `embedded_page_v4`. Keys are Gate 9 only |
 | Later | Provider accounts (email, SMS, maps, e-sign, CAPTCHA) | Required only for live outbound integrations |
 | Last | Legal / UAT sign-off | Launch gate, after the engine and then the pages |
 
@@ -238,7 +260,7 @@ Each workflow below is **done** when a test or script can run the loop and asser
 
 ### W4 — Billing + credits (Canons 7 credits, 8)
 
-- **Product decision (your later button):** pick one Stripe implementation line. Do not merge the four old Stripe branches.
+- **Architecture decided:** keep `embedded_page_v4` on this repo. Do not merge the four old Stripe branches. Credentials are Gate 9.
 - Plan catalog admin-editable; checkout; portal; proration; trials; coupons; failed-payment + grace; invoices; tax hook.
 - Credit wallet: reserve → charge → release/refund; immutable idempotent ledger; low-balance event; packs; subscription deposits; admin adjust.
 - Server entitlement enforcement on gated functions.
@@ -510,6 +532,6 @@ Resume autonomously, in this order, still on the working branch:
 1. L0/L1/L2 for communication: attachments, read receipts, notification preferences, Realtime (W1).
 2. L1/L2/L3 for CRM + property hub conversions (W2).
 3. Trust admin-review functions (W3).
-4. Stop at billing (W4) until you click the Stripe-line choice.
+4. Billing (W4) continues on `embedded_page_v4` (reserve/charge, webhook idempotency). Do not merge the four old Stripe branches.
 
 That is the entire remaining product, sequenced so **pages are inserted last**.
