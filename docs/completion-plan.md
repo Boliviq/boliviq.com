@@ -530,7 +530,7 @@ Package manager is `bun`. Commands live in `package.json` and `AGENTS.md`.
 Resume autonomously, in this order, still on the working branch:
 
 1. L0/L1/L2 for communication: attachments, read receipts, notification preferences, Realtime (W1).
-2. L1/L2/L3 for CRM + property hub conversions (W2).
+2. CRM + property hub conversions (W2) — listing/lead/project/property loop is in. Remaining: companies, notes, appointments, CSV, dedupe.
 3. Trust admin-review functions (W3).
 4. Billing (W4) continues on `embedded_page_v4` (reserve/charge, webhook idempotency). Do not merge the four old Stripe branches.
 

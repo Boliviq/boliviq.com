@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { LISTING_COLUMNS, toListing } from "@/lib/workspace.functions";
 import type { MarketplaceLead, MarketplaceListing, SavedSearch } from "@/lib/workspace-store";
+import { recordConversion } from "@/lib/crm-conversions";
 
 export type ListingSearchInput = {
   query?: string;
@@ -179,6 +180,13 @@ export const convertListingToLeadFn = createServerFn({ method: "POST" })
       .eq("listing_id", listing.id)
       .maybeSingle();
     if (existing) {
+      await recordConversion(
+        context.supabase,
+        context.userId,
+        "listing_to_lead",
+        listing.id,
+        existing.id,
+      );
       return {
         id: existing.id,
         listingId: existing.listing_id,
@@ -201,6 +209,13 @@ export const convertListingToLeadFn = createServerFn({ method: "POST" })
       .select("id, listing_id, title, source, status")
       .single();
     if (error) throw new Error(error.message);
+    await recordConversion(
+      context.supabase,
+      context.userId,
+      "listing_to_lead",
+      listing.id,
+      lead.id,
+    );
     return {
       id: lead.id,
       listingId: lead.listing_id,

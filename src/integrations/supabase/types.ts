@@ -761,6 +761,7 @@ export type Database = {
           next_follow_up_at: string | null;
           opportunity_value: number | null;
           priority: string | null;
+          project_id: string | null;
           property_id: string | null;
           score: number | null;
           source: string | null;
@@ -781,6 +782,7 @@ export type Database = {
           next_follow_up_at?: string | null;
           opportunity_value?: number | null;
           priority?: string | null;
+          project_id?: string | null;
           property_id?: string | null;
           score?: number | null;
           source?: string | null;
@@ -801,6 +803,7 @@ export type Database = {
           next_follow_up_at?: string | null;
           opportunity_value?: number | null;
           priority?: string | null;
+          project_id?: string | null;
           property_id?: string | null;
           score?: number | null;
           source?: string | null;
@@ -823,6 +826,13 @@ export type Database = {
             columns: ["listing_id"];
             isOneToOne: false;
             referencedRelation: "marketplace_listings";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "leads_project_id_fkey";
+            columns: ["project_id"];
+            isOneToOne: false;
+            referencedRelation: "projects";
             referencedColumns: ["id"];
           },
           {
@@ -1076,6 +1086,39 @@ export type Database = {
           sms_enabled?: boolean;
           timezone?: string;
           updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      object_conversions: {
+        Row: {
+          conversion: string;
+          created_at: string;
+          from_id: string;
+          from_kind: string;
+          id: string;
+          to_id: string;
+          to_kind: string;
+          user_id: string;
+        };
+        Insert: {
+          conversion: string;
+          created_at?: string;
+          from_id: string;
+          from_kind: string;
+          id?: string;
+          to_id: string;
+          to_kind: string;
+          user_id: string;
+        };
+        Update: {
+          conversion?: string;
+          created_at?: string;
+          from_id?: string;
+          from_kind?: string;
+          id?: string;
+          to_id?: string;
+          to_kind?: string;
           user_id?: string;
         };
         Relationships: [];
@@ -1376,6 +1419,7 @@ export type Database = {
           image_url: string | null;
           list_price: number | null;
           listing_agent: string | null;
+          listing_id: string | null;
           listing_url: string | null;
           lot_size: number | null;
           monthly_cashflow: number | null;
@@ -1394,6 +1438,7 @@ export type Database = {
           strategy: string | null;
           updated_at: string;
           user_id: string;
+          workspace_id: string | null;
           year_built: number | null;
           zip: string | null;
         };
@@ -1416,6 +1461,7 @@ export type Database = {
           image_url?: string | null;
           list_price?: number | null;
           listing_agent?: string | null;
+          listing_id?: string | null;
           listing_url?: string | null;
           lot_size?: number | null;
           monthly_cashflow?: number | null;
@@ -1434,6 +1480,7 @@ export type Database = {
           strategy?: string | null;
           updated_at?: string;
           user_id: string;
+          workspace_id?: string | null;
           year_built?: number | null;
           zip?: string | null;
         };
@@ -1456,6 +1503,7 @@ export type Database = {
           image_url?: string | null;
           list_price?: number | null;
           listing_agent?: string | null;
+          listing_id?: string | null;
           listing_url?: string | null;
           lot_size?: number | null;
           monthly_cashflow?: number | null;
@@ -1474,10 +1522,26 @@ export type Database = {
           strategy?: string | null;
           updated_at?: string;
           user_id?: string;
+          workspace_id?: string | null;
           year_built?: number | null;
           zip?: string | null;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "properties_listing_id_fkey";
+            columns: ["listing_id"];
+            isOneToOne: false;
+            referencedRelation: "marketplace_listings";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "properties_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       saved_listings: {
         Row: {

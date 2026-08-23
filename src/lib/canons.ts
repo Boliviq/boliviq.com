@@ -437,6 +437,104 @@ export function mapLeadStatusToPipelineStage(status: string | null | undefined):
   return "new";
 }
 
+/** Allowed CRM stage moves. Lost / long-term follow-up are reachable from most open stages. */
+export const PIPELINE_TRANSITIONS: Record<PipelineStageKey, readonly PipelineStageKey[]> = {
+  new: ["attempting_contact", "contacted", "lost", "follow_up_later"],
+  attempting_contact: ["contacted", "lost", "follow_up_later"],
+  contacted: ["qualified", "appointment_scheduled", "lost", "follow_up_later"],
+  qualified: ["appointment_scheduled", "proposal_created", "lost", "follow_up_later"],
+  appointment_scheduled: ["proposal_created", "qualified", "lost", "follow_up_later"],
+  proposal_created: ["negotiating", "lost", "follow_up_later"],
+  negotiating: ["under_contract", "lost", "follow_up_later"],
+  under_contract: ["in_progress", "lost"],
+  in_progress: ["closed", "lost"],
+  closed: ["follow_up_later"],
+  lost: ["follow_up_later", "new"],
+  follow_up_later: ["attempting_contact", "new"],
+};
+
+export function canAdvancePipeline(from: string, to: string): boolean {
+  const current = mapLeadStatusToPipelineStage(from);
+  const next = mapLeadStatusToPipelineStage(to);
+  if (current === next) return true;
+  return (PIPELINE_TRANSITIONS[current] as readonly string[]).includes(next);
+}
+
+export const CONVERSION_OBJECTS = ["listing", "lead", "project", "property"] as const;
+export type ConversionObject = (typeof CONVERSION_OBJECTS)[number];
+
+export const CONVERSION_KINDS = [
+  { id: "listing_to_lead", from: "listing", to: "lead" },
+  { id: "listing_to_property", from: "listing", to: "property" },
+  { id: "lead_to_project", from: "lead", to: "project" },
+  { id: "lead_to_property", from: "lead", to: "property" },
+  { id: "project_to_property", from: "project", to: "property" },
+  { id: "project_to_listing", from: "project", to: "listing" },
+  { id: "property_to_public_listing", from: "property", to: "listing" },
+  { id: "property_to_private_opportunity", from: "property", to: "listing" },
+  { id: "property_to_repair_request", from: "property", to: "listing" },
+  { id: "property_to_bid_request", from: "property", to: "listing" },
+  { id: "property_to_cash_offer", from: "property", to: "listing" },
+  { id: "property_to_realtor_consult", from: "property", to: "listing" },
+  { id: "property_to_financing", from: "property", to: "listing" },
+  { id: "property_to_property_management", from: "property", to: "listing" },
+] as const;
+
+export type ConversionKindId = (typeof CONVERSION_KINDS)[number]["id"];
+
+export const PROPERTY_POST_TARGETS = [
+  {
+    id: "property_to_public_listing",
+    label: "Public listing",
+    category: "homes_for_sale",
+    visibility: "public" as const,
+  },
+  {
+    id: "property_to_private_opportunity",
+    label: "Private opportunity",
+    category: "off_market",
+    visibility: "limited" as const,
+  },
+  {
+    id: "property_to_repair_request",
+    label: "Repair request",
+    category: "repairs",
+    visibility: "public" as const,
+  },
+  {
+    id: "property_to_bid_request",
+    label: "Contractor bid request",
+    category: "contractor_services",
+    visibility: "public" as const,
+  },
+  {
+    id: "property_to_cash_offer",
+    label: "Cash-offer request",
+    category: "investor_services",
+    visibility: "public" as const,
+  },
+  {
+    id: "property_to_realtor_consult",
+    label: "Realtor consultation",
+    category: "realtor_services",
+    visibility: "public" as const,
+  },
+  {
+    id: "property_to_financing",
+    label: "Financing request",
+    category: "lending",
+    visibility: "public" as const,
+  },
+  {
+    id: "property_to_property_management",
+    label: "Property-management request",
+    category: "property_management",
+    visibility: "public" as const,
+  },
+] as const;
+
+export type PropertyPostTargetId = (typeof PROPERTY_POST_TARGETS)[number]["id"];
+
 export const VERIFICATION_TIERS = [
   {
     id: "unverified",

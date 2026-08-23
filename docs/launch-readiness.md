@@ -19,7 +19,7 @@ Temporary Lovable screens are not Gate 8.
 | Workspaces / RBAC | 1 | VERIFIED | VERIFIED | VERIFIED | PARTIAL | n/a | PARTIAL | PARTIAL | shell | n/a | PARTIAL |
 | Marketplace | 3 | VERIFIED | VERIFIED | VERIFIED | PARTIAL (listing→lead) | maps off | PARTIAL | PARTIAL | shell | n/a | PARTIAL |
 | Communication | 4 | VERIFIED | PARTIAL | PARTIAL | PARTIAL | email/SMS off | PARTIAL | NOT STARTED | shell | n/a | PARTIAL |
-| CRM + property hub | 5 | PARTIAL | PARTIAL | PARTIAL | NOT STARTED (unify + conversions) | n/a | NOT STARTED | NOT STARTED | shell / Coming Soon | n/a | PARTIAL |
+| CRM + property hub | 5 | VERIFIED | PARTIAL | PARTIAL | PARTIAL (conversions + stage rules) | n/a | PARTIAL | PARTIAL (audit rows) | shell / Coming Soon | n/a | PARTIAL |
 | Trust / verification | 6 | VERIFIED | PARTIAL | PARTIAL | NOT STARTED (admin review) | identity_verification off | NOT STARTED | PARTIAL | shell | n/a | PARTIAL |
 | AI assistant / agents | 7 | VERIFIED | PARTIAL | PARTIAL | NOT STARTED | AI provider off | NOT STARTED | PARTIAL (logs) | shell | n/a | PARTIAL |
 | Credits wallet | 7 | VERIFIED | PARTIAL | PARTIAL | NOT STARTED (reserve/charge) | n/a | NOT STARTED | NOT STARTED | shell | n/a | PARTIAL |
@@ -35,14 +35,16 @@ Temporary Lovable screens are not Gate 8.
 - Fresh `supabase db reset` applies every migration on this branch
 - RLS isolation tests in `tests/workspace-data.integration.test.ts` when local Supabase env is set
 - Canon catalog tests in `tests/canons.test.ts` (19 canons, signup excludes admin, widget IDs, credit-pack ownership, 23 integrations)
-- Marketplace listing → CRM lead
+- Marketplace listing → CRM lead → project → property (idempotent, RLS-isolated)
+- Property hub Canon 12 posts (repair, bid, cash offer, etc.)
+- Pipeline stage rules reject illegal jumps
 - Signup creates personal workspace + empty wallet
 - CI: typecheck, lint, unit, build (`.github/workflows/ci.yml`)
 
 ## Gaps this file is tracking next
 
 1. Communication remaining: Realtime delivery, file attachments, outbound email/SMS intents
-2. CRM + property hub conversions
+2. CRM remaining: companies/notes/appointments unify, CSV, duplicate detection
 3. Trust admin-review → badge
 4. Credit reserve/charge idempotency on the chosen billing line
 5. Provider adapters (flag-gated, mocked)
