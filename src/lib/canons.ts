@@ -414,6 +414,7 @@ export type PipelineStageKey = (typeof CRM_PIPELINE_STAGES)[number]["key"];
 export const LEGACY_STATUS_TO_PIPELINE: Record<string, PipelineStageKey> = {
   new: "new",
   researching: "new",
+  watching: "new",
   attempting_contact: "attempting_contact",
   contacted: "contacted",
   qualified: "qualified",
@@ -423,6 +424,8 @@ export const LEGACY_STATUS_TO_PIPELINE: Record<string, PipelineStageKey> = {
   proposal_created: "proposal_created",
   negotiating: "negotiating",
   under_contract: "under_contract",
+  auction_target: "under_contract",
+  due_diligence: "in_progress",
   in_progress: "in_progress",
   closed: "closed",
   lost: "lost",
@@ -938,6 +941,7 @@ export const ADMIN_MODULES = [
   { key: "credits", label: "Credit-wallet management", href: "/assistant" },
   { key: "ai", label: "AI-agent controls", href: "/assistant" },
   { key: "integrations", label: "Integration health", href: "/integrations" },
+  { key: "distress", label: "National Distressed Property Coverage", href: "/admin/distress" },
   { key: "audit", label: "Audit logs", href: "/admin" },
   { key: "coupons", label: "Coupon management", href: "/promotions" },
   { key: "tickets", label: "Support tickets", href: "/support" },
@@ -950,6 +954,7 @@ export type AppHref =
   | "/professionals"
   | "/messages"
   | "/properties"
+  | "/distressed-opportunities"
   | "/projects"
   | "/documents"
   | "/leads"
@@ -970,6 +975,7 @@ export type AppHref =
   | "/support"
   | "/admin"
   | "/admin/users"
+  | "/admin/distress"
   | "/admin/launch-verification"
   | "/admin/checkout-verification"
   | "/promotions";
@@ -982,6 +988,7 @@ const BASE_NAV: NavItem[] = [
   { title: "Professionals", url: "/professionals", group: "discover" },
   { title: "Messages", url: "/messages", group: "discover" },
   { title: "Properties", url: "/properties", group: "work" },
+  { title: "Distressed Opportunities", url: "/distressed-opportunities", group: "work" },
   { title: "Projects", url: "/projects", group: "work" },
   { title: "Documents", url: "/documents", group: "work" },
   { title: "Leads", url: "/leads", group: "crm" },
@@ -991,7 +998,6 @@ const BASE_NAV: NavItem[] = [
   { title: "Calls", url: "/calls", group: "crm" },
   { title: "Assistant", url: "/assistant", group: "tools" },
 ];
-
 const ROLE_EXTRA_NAV: Partial<Record<ProfileRoleId, NavItem[]>> = {
   investor: [
     { title: "Deal Analyzer", url: "/deal-analyzer", group: "work" },

@@ -40,6 +40,7 @@ import {
   Sparkles,
   BadgeCheck,
   HardHat,
+  TriangleAlert,
 } from "lucide-react";
 import { navForRole, type NavItem } from "@/lib/canons";
 import { useAccount } from "@/hooks/use-current-user";
@@ -50,6 +51,7 @@ const ICONS: Record<string, ComponentType<{ className?: string }>> = {
   "/professionals": HardHat,
   "/messages": MessageSquare,
   "/properties": Building2,
+  "/distressed-opportunities": TriangleAlert,
   "/projects": FolderKanban,
   "/documents": Files,
   "/leads": Users,
@@ -74,6 +76,7 @@ const GROUPS: { key: NavItem["group"]; label: string }[] = [
 
 const adminNav = [
   { title: "Admin", url: "/admin", icon: Shield },
+  { title: "Distress Coverage", url: "/admin/distress", icon: TriangleAlert },
   { title: "Checkout Verify", url: "/admin/checkout-verification", icon: CreditCard },
   { title: "Users", url: "/admin/users", icon: Users2 },
   { title: "Promotions", url: "/promotions", icon: Ticket },
