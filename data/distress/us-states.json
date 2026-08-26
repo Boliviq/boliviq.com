@@ -1,0 +1,308 @@
+[
+  {
+    "fips": "02",
+    "code": "AK",
+    "name": "Alaska",
+    "country_code": "US"
+  },
+  {
+    "fips": "01",
+    "code": "AL",
+    "name": "Alabama",
+    "country_code": "US"
+  },
+  {
+    "fips": "05",
+    "code": "AR",
+    "name": "Arkansas",
+    "country_code": "US"
+  },
+  {
+    "fips": "60",
+    "code": "AS",
+    "name": "American Samoa",
+    "country_code": "US"
+  },
+  {
+    "fips": "04",
+    "code": "AZ",
+    "name": "Arizona",
+    "country_code": "US"
+  },
+  {
+    "fips": "06",
+    "code": "CA",
+    "name": "California",
+    "country_code": "US"
+  },
+  {
+    "fips": "08",
+    "code": "CO",
+    "name": "Colorado",
+    "country_code": "US"
+  },
+  {
+    "fips": "10",
+    "code": "DE",
+    "name": "Delaware",
+    "country_code": "US"
+  },
+  {
+    "fips": "12",
+    "code": "FL",
+    "name": "Florida",
+    "country_code": "US"
+  },
+  {
+    "fips": "13",
+    "code": "GA",
+    "name": "Georgia",
+    "country_code": "US"
+  },
+  {
+    "fips": "15",
+    "code": "HI",
+    "name": "Hawaii",
+    "country_code": "US"
+  },
+  {
+    "fips": "19",
+    "code": "IA",
+    "name": "Iowa",
+    "country_code": "US"
+  },
+  {
+    "fips": "16",
+    "code": "ID",
+    "name": "Idaho",
+    "country_code": "US"
+  },
+  {
+    "fips": "17",
+    "code": "IL",
+    "name": "Illinois",
+    "country_code": "US"
+  },
+  {
+    "fips": "18",
+    "code": "IN",
+    "name": "Indiana",
+    "country_code": "US"
+  },
+  {
+    "fips": "20",
+    "code": "KS",
+    "name": "Kansas",
+    "country_code": "US"
+  },
+  {
+    "fips": "21",
+    "code": "KY",
+    "name": "Kentucky",
+    "country_code": "US"
+  },
+  {
+    "fips": "22",
+    "code": "LA",
+    "name": "Louisiana",
+    "country_code": "US"
+  },
+  {
+    "fips": "25",
+    "code": "MA",
+    "name": "Massachusetts",
+    "country_code": "US"
+  },
+  {
+    "fips": "24",
+    "code": "MD",
+    "name": "Maryland",
+    "country_code": "US"
+  },
+  {
+    "fips": "23",
+    "code": "ME",
+    "name": "Maine",
+    "country_code": "US"
+  },
+  {
+    "fips": "26",
+    "code": "MI",
+    "name": "Michigan",
+    "country_code": "US"
+  },
+  {
+    "fips": "27",
+    "code": "MN",
+    "name": "Minnesota",
+    "country_code": "US"
+  },
+  {
+    "fips": "29",
+    "code": "MO",
+    "name": "Missouri",
+    "country_code": "US"
+  },
+  {
+    "fips": "69",
+    "code": "MP",
+    "name": "Northern Mariana Islands",
+    "country_code": "US"
+  },
+  {
+    "fips": "28",
+    "code": "MS",
+    "name": "Mississippi",
+    "country_code": "US"
+  },
+  {
+    "fips": "30",
+    "code": "MT",
+    "name": "Montana",
+    "country_code": "US"
+  },
+  {
+    "fips": "37",
+    "code": "NC",
+    "name": "North Carolina",
+    "country_code": "US"
+  },
+  {
+    "fips": "38",
+    "code": "ND",
+    "name": "North Dakota",
+    "country_code": "US"
+  },
+  {
+    "fips": "31",
+    "code": "NE",
+    "name": "Nebraska",
+    "country_code": "US"
+  },
+  {
+    "fips": "33",
+    "code": "NH",
+    "name": "New Hampshire",
+    "country_code": "US"
+  },
+  {
+    "fips": "34",
+    "code": "NJ",
+    "name": "New Jersey",
+    "country_code": "US"
+  },
+  {
+    "fips": "35",
+    "code": "NM",
+    "name": "New Mexico",
+    "country_code": "US"
+  },
+  {
+    "fips": "32",
+    "code": "NV",
+    "name": "Nevada",
+    "country_code": "US"
+  },
+  {
+    "fips": "36",
+    "code": "NY",
+    "name": "New York",
+    "country_code": "US"
+  },
+  {
+    "fips": "39",
+    "code": "OH",
+    "name": "Ohio",
+    "country_code": "US"
+  },
+  {
+    "fips": "40",
+    "code": "OK",
+    "name": "Oklahoma",
+    "country_code": "US"
+  },
+  {
+    "fips": "41",
+    "code": "OR",
+    "name": "Oregon",
+    "country_code": "US"
+  },
+  {
+    "fips": "42",
+    "code": "PA",
+    "name": "Pennsylvania",
+    "country_code": "US"
+  },
+  {
+    "fips": "72",
+    "code": "PR",
+    "name": "Puerto Rico",
+    "country_code": "US"
+  },
+  {
+    "fips": "45",
+    "code": "SC",
+    "name": "South Carolina",
+    "country_code": "US"
+  },
+  {
+    "fips": "46",
+    "code": "SD",
+    "name": "South Dakota",
+    "country_code": "US"
+  },
+  {
+    "fips": "47",
+    "code": "TN",
+    "name": "Tennessee",
+    "country_code": "US"
+  },
+  {
+    "fips": "48",
+    "code": "TX",
+    "name": "Texas",
+    "country_code": "US"
+  },
+  {
+    "fips": "49",
+    "code": "UT",
+    "name": "Utah",
+    "country_code": "US"
+  },
+  {
+    "fips": "51",
+    "code": "VA",
+    "name": "Virginia",
+    "country_code": "US"
+  },
+  {
+    "fips": "50",
+    "code": "VT",
+    "name": "Vermont",
+    "country_code": "US"
+  },
+  {
+    "fips": "53",
+    "code": "WA",
+    "name": "Washington",
+    "country_code": "US"
+  },
+  {
+    "fips": "55",
+    "code": "WI",
+    "name": "Wisconsin",
+    "country_code": "US"
+  },
+  {
+    "fips": "54",
+    "code": "WV",
+    "name": "West Virginia",
+    "country_code": "US"
+  },
+  {
+    "fips": "56",
+    "code": "WY",
+    "name": "Wyoming",
+    "country_code": "US"
+  }
+]
