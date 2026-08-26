@@ -31,6 +31,7 @@ export const plans: Plan[] = [
     annual: 0,
     features: [
       "10 active properties",
+      "Limited Distressed Opportunities browsing",
       "Basic CRM, pipeline & deal calculator",
       "100 Boliviq Credits / month",
       "Limited reports",
@@ -47,6 +48,7 @@ export const plans: Plan[] = [
     priceYearly: "beginner_yearly",
     features: [
       "Up to 500 active properties",
+      "Expanded Distressed Opportunities filters & map layers",
       "Basic Deal Analysis, Construction Planner & Materials",
       "CRM, Pipeline, Reports & Basic Automations",
       "500 Boliviq Credits / month",
@@ -65,6 +67,7 @@ export const plans: Plan[] = [
     badge: "Most popular",
     features: [
       "Up to 5,000 active properties",
+      "Full Distressed Opportunities + AI distress analysis",
       "Advanced CRM, Pipeline & Construction Planner",
       "Material Takeoffs, Labor Estimates, SOW Generator",
       "AI Reports, Call Scripts & Summaries",

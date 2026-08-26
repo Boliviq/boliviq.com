@@ -40,16 +40,27 @@ import {
   Sparkles,
   BadgeCheck,
   HardHat,
+  TriangleAlert,
+  Radar,
+  Briefcase,
+  Wallet,
 } from "lucide-react";
 import { navForRole, type NavItem } from "@/lib/canons";
 import { useAccount } from "@/hooks/use-current-user";
 
 const ICONS: Record<string, ComponentType<{ className?: string }>> = {
   "/dashboard": LayoutDashboard,
+  "/investor-os": Briefcase,
+  "/investor-os/radar": Radar,
+  "/investor-os/acquisition": Sparkles,
+  "/investor-os/capital": Wallet,
+  "/investor-os/portfolio": Briefcase,
+  "/investor-os/transactions": Kanban,
   "/marketplace": Store,
   "/professionals": HardHat,
   "/messages": MessageSquare,
   "/properties": Building2,
+  "/distressed-opportunities": TriangleAlert,
   "/projects": FolderKanban,
   "/documents": Files,
   "/leads": Users,
@@ -74,6 +85,8 @@ const GROUPS: { key: NavItem["group"]; label: string }[] = [
 
 const adminNav = [
   { title: "Admin", url: "/admin", icon: Shield },
+  { title: "Distress Coverage", url: "/admin/distress", icon: TriangleAlert },
+  { title: "Investor OS", url: "/admin/investor-os", icon: Briefcase },
   { title: "Checkout Verify", url: "/admin/checkout-verification", icon: CreditCard },
   { title: "Users", url: "/admin/users", icon: Users2 },
   { title: "Promotions", url: "/promotions", icon: Ticket },

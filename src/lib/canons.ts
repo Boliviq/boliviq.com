@@ -112,9 +112,9 @@ export const PROFILE_ROLES = [
     ],
     widgets: ["hot_deals", "pipeline", "analyzers", "projects", "leads"],
     shortcuts: [
+      { label: "Investor OS", href: "/investor-os" },
+      { label: "Find deals", href: "/distressed-opportunities" },
       { label: "Deal analyzer", href: "/deal-analyzer" },
-      { label: "Properties", href: "/properties" },
-      { label: "Pipeline", href: "/pipeline" },
     ],
   },
   {
@@ -414,6 +414,7 @@ export type PipelineStageKey = (typeof CRM_PIPELINE_STAGES)[number]["key"];
 export const LEGACY_STATUS_TO_PIPELINE: Record<string, PipelineStageKey> = {
   new: "new",
   researching: "new",
+  watching: "new",
   attempting_contact: "attempting_contact",
   contacted: "contacted",
   qualified: "qualified",
@@ -423,6 +424,8 @@ export const LEGACY_STATUS_TO_PIPELINE: Record<string, PipelineStageKey> = {
   proposal_created: "proposal_created",
   negotiating: "negotiating",
   under_contract: "under_contract",
+  auction_target: "under_contract",
+  due_diligence: "in_progress",
   in_progress: "in_progress",
   closed: "closed",
   lost: "lost",
@@ -938,6 +941,8 @@ export const ADMIN_MODULES = [
   { key: "credits", label: "Credit-wallet management", href: "/assistant" },
   { key: "ai", label: "AI-agent controls", href: "/assistant" },
   { key: "integrations", label: "Integration health", href: "/integrations" },
+  { key: "distress", label: "National Distressed Property Coverage", href: "/admin/distress" },
+  { key: "investor_os", label: "Investor Operating System", href: "/admin/investor-os" },
   { key: "audit", label: "Audit logs", href: "/admin" },
   { key: "coupons", label: "Coupon management", href: "/promotions" },
   { key: "tickets", label: "Support tickets", href: "/support" },
@@ -950,6 +955,13 @@ export type AppHref =
   | "/professionals"
   | "/messages"
   | "/properties"
+  | "/distressed-opportunities"
+  | "/investor-os"
+  | "/investor-os/acquisition"
+  | "/investor-os/radar"
+  | "/investor-os/capital"
+  | "/investor-os/portfolio"
+  | "/investor-os/transactions"
   | "/projects"
   | "/documents"
   | "/leads"
@@ -970,6 +982,8 @@ export type AppHref =
   | "/support"
   | "/admin"
   | "/admin/users"
+  | "/admin/distress"
+  | "/admin/investor-os"
   | "/admin/launch-verification"
   | "/admin/checkout-verification"
   | "/promotions";
@@ -978,10 +992,13 @@ export type NavItem = { title: string; url: AppHref; group: "discover" | "work" 
 
 const BASE_NAV: NavItem[] = [
   { title: "Dashboard", url: "/dashboard", group: "discover" },
+  { title: "Investor OS", url: "/investor-os", group: "discover" },
   { title: "Marketplace", url: "/marketplace", group: "discover" },
   { title: "Professionals", url: "/professionals", group: "discover" },
   { title: "Messages", url: "/messages", group: "discover" },
   { title: "Properties", url: "/properties", group: "work" },
+  { title: "Find Deals", url: "/distressed-opportunities", group: "work" },
+  { title: "Opportunity Radar", url: "/investor-os/radar", group: "work" },
   { title: "Projects", url: "/projects", group: "work" },
   { title: "Documents", url: "/documents", group: "work" },
   { title: "Leads", url: "/leads", group: "crm" },
@@ -991,14 +1008,19 @@ const BASE_NAV: NavItem[] = [
   { title: "Calls", url: "/calls", group: "crm" },
   { title: "Assistant", url: "/assistant", group: "tools" },
 ];
-
 const ROLE_EXTRA_NAV: Partial<Record<ProfileRoleId, NavItem[]>> = {
   investor: [
+    { title: "AI Acquisition", url: "/investor-os/acquisition", group: "work" },
+    { title: "Capital", url: "/investor-os/capital", group: "work" },
+    { title: "Transactions", url: "/investor-os/transactions", group: "work" },
+    { title: "Portfolio", url: "/investor-os/portfolio", group: "work" },
     { title: "Deal Analyzer", url: "/deal-analyzer", group: "work" },
     { title: "Calculators", url: "/calculators", group: "tools" },
     { title: "Reports", url: "/reports", group: "tools" },
   ],
   wholesaler: [
+    { title: "AI Acquisition", url: "/investor-os/acquisition", group: "work" },
+    { title: "Capital", url: "/investor-os/capital", group: "work" },
     { title: "Deal Analyzer", url: "/deal-analyzer", group: "work" },
     { title: "Calculators", url: "/calculators", group: "tools" },
   ],
@@ -1064,7 +1086,7 @@ export function dashboardForRole(role: ProfileRoleId): DashboardConfig {
       { label: "Messages", value: "6", hint: "Showing + disclosure threads" },
     ],
     investor: [
-      { label: "Hot deals", value: "6", hint: "Estimates, not appraisals" },
+      { label: "Opportunities", value: "OS", hint: "Investor OS + Radar" },
       { label: "Pipeline", value: "142", hint: "Canon stages through close" },
       { label: "Open projects", value: "5", hint: "Rehab linked to properties" },
       { label: "Credits", value: "420", hint: "Analysis + estimating agents" },

@@ -223,6 +223,12 @@ function Admin() {
               icon: CheckCircle2,
             },
             {
+              title: "Distressed Property Coverage",
+              desc: "National county registry, sources, ingestion health.",
+              href: "/admin/distress",
+              icon: Building2,
+            },
+            {
               title: "Integrations health",
               desc: "Modular providers and fallback status.",
               href: "/integrations",
