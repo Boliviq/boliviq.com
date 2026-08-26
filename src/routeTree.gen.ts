@@ -42,6 +42,7 @@ import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedMarketplaceRouteImport } from './routes/_authenticated/marketplace'
 import { Route as AuthenticatedMarketingRouteImport } from './routes/_authenticated/marketing'
 import { Route as AuthenticatedLeadsRouteImport } from './routes/_authenticated/leads'
+import { Route as AuthenticatedInvestorOsRouteImport } from './routes/_authenticated/investor-os'
 import { Route as AuthenticatedIntegrationsRouteImport } from './routes/_authenticated/integrations'
 import { Route as AuthenticatedDocumentsRouteImport } from './routes/_authenticated/documents'
 import { Route as AuthenticatedDistressedOpportunitiesRouteImport } from './routes/_authenticated/distressed-opportunities'
@@ -54,12 +55,19 @@ import { Route as AuthenticatedBillingRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedAutomationsRouteImport } from './routes/_authenticated/automations'
 import { Route as AuthenticatedAssistantRouteImport } from './routes/_authenticated/assistant'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedInvestorOsTransactionsRouteImport } from './routes/_authenticated/investor-os.transactions'
+import { Route as AuthenticatedInvestorOsRadarRouteImport } from './routes/_authenticated/investor-os.radar'
+import { Route as AuthenticatedInvestorOsPortfolioRouteImport } from './routes/_authenticated/investor-os.portfolio'
+import { Route as AuthenticatedInvestorOsCapitalRouteImport } from './routes/_authenticated/investor-os.capital'
+import { Route as AuthenticatedInvestorOsAcquisitionRouteImport } from './routes/_authenticated/investor-os.acquisition'
 import { Route as AuthenticatedDistressedOpportunitiesIdRouteImport } from './routes/_authenticated/distressed-opportunities.$id'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin.users'
 import { Route as AuthenticatedAdminLaunchVerificationRouteImport } from './routes/_authenticated/admin.launch-verification'
+import { Route as AuthenticatedAdminInvestorOsRouteImport } from './routes/_authenticated/admin.investor-os'
 import { Route as AuthenticatedAdminDistressRouteImport } from './routes/_authenticated/admin.distress'
 import { Route as AuthenticatedAdminCheckoutVerificationRouteImport } from './routes/_authenticated/admin.checkout-verification'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
+import { Route as AuthenticatedInvestorOsPassportIdRouteImport } from './routes/_authenticated/investor-os.passport.$id'
 
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
@@ -228,6 +236,11 @@ const AuthenticatedLeadsRoute = AuthenticatedLeadsRouteImport.update({
   path: '/leads',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedInvestorOsRoute = AuthenticatedInvestorOsRouteImport.update({
+  id: '/investor-os',
+  path: '/investor-os',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedIntegrationsRoute =
   AuthenticatedIntegrationsRouteImport.update({
     id: '/integrations',
@@ -293,6 +306,36 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedInvestorOsTransactionsRoute =
+  AuthenticatedInvestorOsTransactionsRouteImport.update({
+    id: '/transactions',
+    path: '/transactions',
+    getParentRoute: () => AuthenticatedInvestorOsRoute,
+  } as any)
+const AuthenticatedInvestorOsRadarRoute =
+  AuthenticatedInvestorOsRadarRouteImport.update({
+    id: '/radar',
+    path: '/radar',
+    getParentRoute: () => AuthenticatedInvestorOsRoute,
+  } as any)
+const AuthenticatedInvestorOsPortfolioRoute =
+  AuthenticatedInvestorOsPortfolioRouteImport.update({
+    id: '/portfolio',
+    path: '/portfolio',
+    getParentRoute: () => AuthenticatedInvestorOsRoute,
+  } as any)
+const AuthenticatedInvestorOsCapitalRoute =
+  AuthenticatedInvestorOsCapitalRouteImport.update({
+    id: '/capital',
+    path: '/capital',
+    getParentRoute: () => AuthenticatedInvestorOsRoute,
+  } as any)
+const AuthenticatedInvestorOsAcquisitionRoute =
+  AuthenticatedInvestorOsAcquisitionRouteImport.update({
+    id: '/acquisition',
+    path: '/acquisition',
+    getParentRoute: () => AuthenticatedInvestorOsRoute,
+  } as any)
 const AuthenticatedDistressedOpportunitiesIdRoute =
   AuthenticatedDistressedOpportunitiesIdRouteImport.update({
     id: '/$id',
@@ -308,6 +351,12 @@ const AuthenticatedAdminLaunchVerificationRoute =
   AuthenticatedAdminLaunchVerificationRouteImport.update({
     id: '/launch-verification',
     path: '/launch-verification',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminInvestorOsRoute =
+  AuthenticatedAdminInvestorOsRouteImport.update({
+    id: '/investor-os',
+    path: '/investor-os',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
 const AuthenticatedAdminDistressRoute =
@@ -327,6 +376,12 @@ const ApiPublicPaymentsWebhookRoute =
     id: '/api/public/payments/webhook',
     path: '/api/public/payments/webhook',
     getParentRoute: () => rootRouteImport,
+  } as any)
+const AuthenticatedInvestorOsPassportIdRoute =
+  AuthenticatedInvestorOsPassportIdRouteImport.update({
+    id: '/passport/$id',
+    path: '/passport/$id',
+    getParentRoute: () => AuthenticatedInvestorOsRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -359,6 +414,7 @@ export interface FileRoutesByFullPath {
   '/distressed-opportunities': typeof AuthenticatedDistressedOpportunitiesRouteWithChildren
   '/documents': typeof AuthenticatedDocumentsRoute
   '/integrations': typeof AuthenticatedIntegrationsRoute
+  '/investor-os': typeof AuthenticatedInvestorOsRouteWithChildren
   '/leads': typeof AuthenticatedLeadsRoute
   '/marketing': typeof AuthenticatedMarketingRoute
   '/marketplace': typeof AuthenticatedMarketplaceRoute
@@ -376,9 +432,16 @@ export interface FileRoutesByFullPath {
   '/verification': typeof AuthenticatedVerificationRoute
   '/admin/checkout-verification': typeof AuthenticatedAdminCheckoutVerificationRoute
   '/admin/distress': typeof AuthenticatedAdminDistressRoute
+  '/admin/investor-os': typeof AuthenticatedAdminInvestorOsRoute
   '/admin/launch-verification': typeof AuthenticatedAdminLaunchVerificationRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/distressed-opportunities/$id': typeof AuthenticatedDistressedOpportunitiesIdRoute
+  '/investor-os/acquisition': typeof AuthenticatedInvestorOsAcquisitionRoute
+  '/investor-os/capital': typeof AuthenticatedInvestorOsCapitalRoute
+  '/investor-os/portfolio': typeof AuthenticatedInvestorOsPortfolioRoute
+  '/investor-os/radar': typeof AuthenticatedInvestorOsRadarRoute
+  '/investor-os/transactions': typeof AuthenticatedInvestorOsTransactionsRoute
+  '/investor-os/passport/$id': typeof AuthenticatedInvestorOsPassportIdRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesByTo {
@@ -411,6 +474,7 @@ export interface FileRoutesByTo {
   '/distressed-opportunities': typeof AuthenticatedDistressedOpportunitiesRouteWithChildren
   '/documents': typeof AuthenticatedDocumentsRoute
   '/integrations': typeof AuthenticatedIntegrationsRoute
+  '/investor-os': typeof AuthenticatedInvestorOsRouteWithChildren
   '/leads': typeof AuthenticatedLeadsRoute
   '/marketing': typeof AuthenticatedMarketingRoute
   '/marketplace': typeof AuthenticatedMarketplaceRoute
@@ -428,9 +492,16 @@ export interface FileRoutesByTo {
   '/verification': typeof AuthenticatedVerificationRoute
   '/admin/checkout-verification': typeof AuthenticatedAdminCheckoutVerificationRoute
   '/admin/distress': typeof AuthenticatedAdminDistressRoute
+  '/admin/investor-os': typeof AuthenticatedAdminInvestorOsRoute
   '/admin/launch-verification': typeof AuthenticatedAdminLaunchVerificationRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/distressed-opportunities/$id': typeof AuthenticatedDistressedOpportunitiesIdRoute
+  '/investor-os/acquisition': typeof AuthenticatedInvestorOsAcquisitionRoute
+  '/investor-os/capital': typeof AuthenticatedInvestorOsCapitalRoute
+  '/investor-os/portfolio': typeof AuthenticatedInvestorOsPortfolioRoute
+  '/investor-os/radar': typeof AuthenticatedInvestorOsRadarRoute
+  '/investor-os/transactions': typeof AuthenticatedInvestorOsTransactionsRoute
+  '/investor-os/passport/$id': typeof AuthenticatedInvestorOsPassportIdRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesById {
@@ -465,6 +536,7 @@ export interface FileRoutesById {
   '/_authenticated/distressed-opportunities': typeof AuthenticatedDistressedOpportunitiesRouteWithChildren
   '/_authenticated/documents': typeof AuthenticatedDocumentsRoute
   '/_authenticated/integrations': typeof AuthenticatedIntegrationsRoute
+  '/_authenticated/investor-os': typeof AuthenticatedInvestorOsRouteWithChildren
   '/_authenticated/leads': typeof AuthenticatedLeadsRoute
   '/_authenticated/marketing': typeof AuthenticatedMarketingRoute
   '/_authenticated/marketplace': typeof AuthenticatedMarketplaceRoute
@@ -482,9 +554,16 @@ export interface FileRoutesById {
   '/_authenticated/verification': typeof AuthenticatedVerificationRoute
   '/_authenticated/admin/checkout-verification': typeof AuthenticatedAdminCheckoutVerificationRoute
   '/_authenticated/admin/distress': typeof AuthenticatedAdminDistressRoute
+  '/_authenticated/admin/investor-os': typeof AuthenticatedAdminInvestorOsRoute
   '/_authenticated/admin/launch-verification': typeof AuthenticatedAdminLaunchVerificationRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/_authenticated/distressed-opportunities/$id': typeof AuthenticatedDistressedOpportunitiesIdRoute
+  '/_authenticated/investor-os/acquisition': typeof AuthenticatedInvestorOsAcquisitionRoute
+  '/_authenticated/investor-os/capital': typeof AuthenticatedInvestorOsCapitalRoute
+  '/_authenticated/investor-os/portfolio': typeof AuthenticatedInvestorOsPortfolioRoute
+  '/_authenticated/investor-os/radar': typeof AuthenticatedInvestorOsRadarRoute
+  '/_authenticated/investor-os/transactions': typeof AuthenticatedInvestorOsTransactionsRoute
+  '/_authenticated/investor-os/passport/$id': typeof AuthenticatedInvestorOsPassportIdRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRouteTypes {
@@ -519,6 +598,7 @@ export interface FileRouteTypes {
     | '/distressed-opportunities'
     | '/documents'
     | '/integrations'
+    | '/investor-os'
     | '/leads'
     | '/marketing'
     | '/marketplace'
@@ -536,9 +616,16 @@ export interface FileRouteTypes {
     | '/verification'
     | '/admin/checkout-verification'
     | '/admin/distress'
+    | '/admin/investor-os'
     | '/admin/launch-verification'
     | '/admin/users'
     | '/distressed-opportunities/$id'
+    | '/investor-os/acquisition'
+    | '/investor-os/capital'
+    | '/investor-os/portfolio'
+    | '/investor-os/radar'
+    | '/investor-os/transactions'
+    | '/investor-os/passport/$id'
     | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -571,6 +658,7 @@ export interface FileRouteTypes {
     | '/distressed-opportunities'
     | '/documents'
     | '/integrations'
+    | '/investor-os'
     | '/leads'
     | '/marketing'
     | '/marketplace'
@@ -588,9 +676,16 @@ export interface FileRouteTypes {
     | '/verification'
     | '/admin/checkout-verification'
     | '/admin/distress'
+    | '/admin/investor-os'
     | '/admin/launch-verification'
     | '/admin/users'
     | '/distressed-opportunities/$id'
+    | '/investor-os/acquisition'
+    | '/investor-os/capital'
+    | '/investor-os/portfolio'
+    | '/investor-os/radar'
+    | '/investor-os/transactions'
+    | '/investor-os/passport/$id'
     | '/api/public/payments/webhook'
   id:
     | '__root__'
@@ -624,6 +719,7 @@ export interface FileRouteTypes {
     | '/_authenticated/distressed-opportunities'
     | '/_authenticated/documents'
     | '/_authenticated/integrations'
+    | '/_authenticated/investor-os'
     | '/_authenticated/leads'
     | '/_authenticated/marketing'
     | '/_authenticated/marketplace'
@@ -641,9 +737,16 @@ export interface FileRouteTypes {
     | '/_authenticated/verification'
     | '/_authenticated/admin/checkout-verification'
     | '/_authenticated/admin/distress'
+    | '/_authenticated/admin/investor-os'
     | '/_authenticated/admin/launch-verification'
     | '/_authenticated/admin/users'
     | '/_authenticated/distressed-opportunities/$id'
+    | '/_authenticated/investor-os/acquisition'
+    | '/_authenticated/investor-os/capital'
+    | '/_authenticated/investor-os/portfolio'
+    | '/_authenticated/investor-os/radar'
+    | '/_authenticated/investor-os/transactions'
+    | '/_authenticated/investor-os/passport/$id'
     | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
 }
@@ -902,6 +1005,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedLeadsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/investor-os': {
+      id: '/_authenticated/investor-os'
+      path: '/investor-os'
+      fullPath: '/investor-os'
+      preLoaderRoute: typeof AuthenticatedInvestorOsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/integrations': {
       id: '/_authenticated/integrations'
       path: '/integrations'
@@ -986,6 +1096,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/investor-os/transactions': {
+      id: '/_authenticated/investor-os/transactions'
+      path: '/transactions'
+      fullPath: '/investor-os/transactions'
+      preLoaderRoute: typeof AuthenticatedInvestorOsTransactionsRouteImport
+      parentRoute: typeof AuthenticatedInvestorOsRoute
+    }
+    '/_authenticated/investor-os/radar': {
+      id: '/_authenticated/investor-os/radar'
+      path: '/radar'
+      fullPath: '/investor-os/radar'
+      preLoaderRoute: typeof AuthenticatedInvestorOsRadarRouteImport
+      parentRoute: typeof AuthenticatedInvestorOsRoute
+    }
+    '/_authenticated/investor-os/portfolio': {
+      id: '/_authenticated/investor-os/portfolio'
+      path: '/portfolio'
+      fullPath: '/investor-os/portfolio'
+      preLoaderRoute: typeof AuthenticatedInvestorOsPortfolioRouteImport
+      parentRoute: typeof AuthenticatedInvestorOsRoute
+    }
+    '/_authenticated/investor-os/capital': {
+      id: '/_authenticated/investor-os/capital'
+      path: '/capital'
+      fullPath: '/investor-os/capital'
+      preLoaderRoute: typeof AuthenticatedInvestorOsCapitalRouteImport
+      parentRoute: typeof AuthenticatedInvestorOsRoute
+    }
+    '/_authenticated/investor-os/acquisition': {
+      id: '/_authenticated/investor-os/acquisition'
+      path: '/acquisition'
+      fullPath: '/investor-os/acquisition'
+      preLoaderRoute: typeof AuthenticatedInvestorOsAcquisitionRouteImport
+      parentRoute: typeof AuthenticatedInvestorOsRoute
+    }
     '/_authenticated/distressed-opportunities/$id': {
       id: '/_authenticated/distressed-opportunities/$id'
       path: '/$id'
@@ -1005,6 +1150,13 @@ declare module '@tanstack/react-router' {
       path: '/launch-verification'
       fullPath: '/admin/launch-verification'
       preLoaderRoute: typeof AuthenticatedAdminLaunchVerificationRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/investor-os': {
+      id: '/_authenticated/admin/investor-os'
+      path: '/investor-os'
+      fullPath: '/admin/investor-os'
+      preLoaderRoute: typeof AuthenticatedAdminInvestorOsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/admin/distress': {
@@ -1028,12 +1180,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/investor-os/passport/$id': {
+      id: '/_authenticated/investor-os/passport/$id'
+      path: '/passport/$id'
+      fullPath: '/investor-os/passport/$id'
+      preLoaderRoute: typeof AuthenticatedInvestorOsPassportIdRouteImport
+      parentRoute: typeof AuthenticatedInvestorOsRoute
+    }
   }
 }
 
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminCheckoutVerificationRoute: typeof AuthenticatedAdminCheckoutVerificationRoute
   AuthenticatedAdminDistressRoute: typeof AuthenticatedAdminDistressRoute
+  AuthenticatedAdminInvestorOsRoute: typeof AuthenticatedAdminInvestorOsRoute
   AuthenticatedAdminLaunchVerificationRoute: typeof AuthenticatedAdminLaunchVerificationRoute
   AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
 }
@@ -1042,6 +1202,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminCheckoutVerificationRoute:
     AuthenticatedAdminCheckoutVerificationRoute,
   AuthenticatedAdminDistressRoute: AuthenticatedAdminDistressRoute,
+  AuthenticatedAdminInvestorOsRoute: AuthenticatedAdminInvestorOsRoute,
   AuthenticatedAdminLaunchVerificationRoute:
     AuthenticatedAdminLaunchVerificationRoute,
   AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
@@ -1065,6 +1226,34 @@ const AuthenticatedDistressedOpportunitiesRouteWithChildren =
     AuthenticatedDistressedOpportunitiesRouteChildren,
   )
 
+interface AuthenticatedInvestorOsRouteChildren {
+  AuthenticatedInvestorOsAcquisitionRoute: typeof AuthenticatedInvestorOsAcquisitionRoute
+  AuthenticatedInvestorOsCapitalRoute: typeof AuthenticatedInvestorOsCapitalRoute
+  AuthenticatedInvestorOsPortfolioRoute: typeof AuthenticatedInvestorOsPortfolioRoute
+  AuthenticatedInvestorOsRadarRoute: typeof AuthenticatedInvestorOsRadarRoute
+  AuthenticatedInvestorOsTransactionsRoute: typeof AuthenticatedInvestorOsTransactionsRoute
+  AuthenticatedInvestorOsPassportIdRoute: typeof AuthenticatedInvestorOsPassportIdRoute
+}
+
+const AuthenticatedInvestorOsRouteChildren: AuthenticatedInvestorOsRouteChildren =
+  {
+    AuthenticatedInvestorOsAcquisitionRoute:
+      AuthenticatedInvestorOsAcquisitionRoute,
+    AuthenticatedInvestorOsCapitalRoute: AuthenticatedInvestorOsCapitalRoute,
+    AuthenticatedInvestorOsPortfolioRoute:
+      AuthenticatedInvestorOsPortfolioRoute,
+    AuthenticatedInvestorOsRadarRoute: AuthenticatedInvestorOsRadarRoute,
+    AuthenticatedInvestorOsTransactionsRoute:
+      AuthenticatedInvestorOsTransactionsRoute,
+    AuthenticatedInvestorOsPassportIdRoute:
+      AuthenticatedInvestorOsPassportIdRoute,
+  }
+
+const AuthenticatedInvestorOsRouteWithChildren =
+  AuthenticatedInvestorOsRoute._addFileChildren(
+    AuthenticatedInvestorOsRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedAssistantRoute: typeof AuthenticatedAssistantRoute
@@ -1078,6 +1267,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDistressedOpportunitiesRoute: typeof AuthenticatedDistressedOpportunitiesRouteWithChildren
   AuthenticatedDocumentsRoute: typeof AuthenticatedDocumentsRoute
   AuthenticatedIntegrationsRoute: typeof AuthenticatedIntegrationsRoute
+  AuthenticatedInvestorOsRoute: typeof AuthenticatedInvestorOsRouteWithChildren
   AuthenticatedLeadsRoute: typeof AuthenticatedLeadsRoute
   AuthenticatedMarketingRoute: typeof AuthenticatedMarketingRoute
   AuthenticatedMarketplaceRoute: typeof AuthenticatedMarketplaceRoute
@@ -1109,6 +1299,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedDistressedOpportunitiesRouteWithChildren,
   AuthenticatedDocumentsRoute: AuthenticatedDocumentsRoute,
   AuthenticatedIntegrationsRoute: AuthenticatedIntegrationsRoute,
+  AuthenticatedInvestorOsRoute: AuthenticatedInvestorOsRouteWithChildren,
   AuthenticatedLeadsRoute: AuthenticatedLeadsRoute,
   AuthenticatedMarketingRoute: AuthenticatedMarketingRoute,
   AuthenticatedMarketplaceRoute: AuthenticatedMarketplaceRoute,

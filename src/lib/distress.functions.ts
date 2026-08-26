@@ -8,29 +8,14 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { entitlementsForPlan } from "@/lib/distress/entitlements";
 import { buildDistressAiBrief, type DistressAiRequest } from "@/lib/distress/ai";
-import {
-  ingestRecords,
-  createInMemoryStore,
-  searchProperties,
-} from "@/lib/distress/ingestion/pipeline";
-import { buildDemoRecords } from "@/lib/distress/providers/demo-data";
+import { searchProperties } from "@/lib/distress/ingestion/pipeline";
+import { ensureDemoStore } from "@/lib/distress/demo-store";
 import { listProviderHealth } from "@/lib/distress/providers";
 import { DISTRESS_DISCLAIMER } from "@/lib/distress/types";
 import { hasPaidAccess } from "@/lib/subscription-access";
 
 /** New distress tables are typed loosely until supabase gen types are regenerated. */
 type AnyDb = any;
-
-const demoStore = createInMemoryStore();
-let demoSeeded = false;
-
-function ensureDemoStore() {
-  if (!demoSeeded) {
-    ingestRecords(buildDemoRecords(), demoStore);
-    demoSeeded = true;
-  }
-  return demoStore;
-}
 
 async function resolvePlanTier(supabase: AnyDb, userId: string): Promise<string> {
   const { data } = await supabase

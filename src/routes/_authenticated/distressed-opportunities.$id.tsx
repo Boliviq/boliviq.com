@@ -127,6 +127,11 @@ function DistressedPropertyDetailPage() {
                 Watchlist
               </Button>
               <Button asChild size="sm" variant="outline">
+                <Link to="/investor-os/passport/$id" params={{ id }}>
+                  Property Passport
+                </Link>
+              </Button>
+              <Button asChild size="sm" variant="outline">
                 <Link to="/deal-analyzer">Deal Analyzer</Link>
               </Button>
               <Button asChild size="sm" variant="outline">

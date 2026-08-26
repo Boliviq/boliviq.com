@@ -46,6 +46,20 @@ function Dashboard() {
           Connected workspace — demonstration figures mix with anything you add
         </Badge>
 
+        <Card className="border-[#70bf2b]/40">
+          <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
+            <div>
+              <div className="font-medium">Investor Operating System</div>
+              <p className="text-sm text-muted-foreground">
+                Passport · Radar · Acquisition · Capital · Transactions · Portfolio
+              </p>
+            </div>
+            <Button asChild size="sm" className="bg-[#70bf2b] hover:bg-[#80ce38]">
+              <Link to="/investor-os">Open Investor OS</Link>
+            </Button>
+          </CardContent>
+        </Card>
+
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[
             {
